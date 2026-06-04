@@ -1,0 +1,34 @@
+{
+  "settings": {
+    "point_color": "#E24B4A",
+    "sub_color": "#888888"
+  },
+  "todos": [
+    {
+      "id": 1,
+      "text": "할일으 추가햇을뿐인데",
+      "done": true
+    },
+    {
+      "id": 2,
+      "text": "오 된다 된다",
+      "done": true
+    },
+    {
+      "id": 3,
+      "text": "할일 포인트 조금 키우니까 엄청 크게 보이네",
+      "done": false
+    }
+  ],
+  "pomodoro": {
+    "work": 25,
+    "short_break": 5,
+    "long_break": 15,
+    "repeat": 4
+  },
+  "tracking": {
+    "focus_apps": [],
+    "distract_apps": []
+  },
+  "music": []
+}

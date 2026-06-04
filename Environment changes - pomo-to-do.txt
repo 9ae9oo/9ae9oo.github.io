@@ -1,0 +1,19 @@
+# 터미널 환경 변경
+
+## 확장: vscode.git
+
+다음 기능을 사용하도록 설정: git auth provider
+
+- `GIT_ASKPASS=c:\Users\k9cor\AppData\Local\Programs\cursor\resources\app\extensions\git\dist\askpass.sh`
+- `VSCODE_GIT_ASKPASS_NODE=C:\Users\k9cor\AppData\Local\Programs\cursor\Cursor.exe`
+- `VSCODE_GIT_ASKPASS_EXTRA_ARGS=`
+- `VSCODE_GIT_ASKPASS_MAIN=c:\Users\k9cor\AppData\Local\Programs\cursor\resources\app\extensions\git\dist\askpass-main.js`
+- `VSCODE_GIT_IPC_HANDLE=\\.\pipe\vscode-git-2b50ad9c52-sock`
+- `VSCODE_GIT_IPC_AUTH_TOKEN=a951d9e3b692046c4fc2de36162474ddaa024be93cef6e22b2bd4478a29b10ff`
+
+## 확장: ms-python.debugpy
+
+- `PYDEVD_DISABLE_FILE_VALIDATION=1`
+- `VSCODE_DEBUGPY_ADAPTER_ENDPOINTS=c:\Users\k9cor\.cursor\extensions\ms-python.debugpy-2026.6.0-win32-x64\.noConfigDebugAdapterEndpoints\endpoint-ac7867a9f4d9cbe4.txt`
+- `PATH=${env:PATH};c:\Users\k9cor\.cursor\extensions\ms-python.debugpy-2026.6.0-win32-x64\bundled\scripts\noConfigScripts`
+- `BUNDLED_DEBUGPY_PATH=c:\Users\k9cor\.cursor\extensions\ms-python.debugpy-2026.6.0-win32-x64\bundled\libs\debugpy`

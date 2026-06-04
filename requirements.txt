@@ -1,0 +1,5 @@
+PyQt6
+yt-dlp
+psutil
+pywin32
+plyer

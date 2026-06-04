@@ -1,0 +1,337 @@
+
+<style>
+  :root { --red: #E24B4A; --red-light: #FCEBEB; --red-mid: #F09595; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-sans, sans-serif); color: var(--color-text-primary); }
+  .wrap { padding: 16px 4px 24px; }
+  .week-card { background: var(--color-background-secondary); border-radius: var(--border-radius-lg); border: 1px solid var(--color-border-tertiary); margin-bottom: 12px; overflow: hidden; }
+  .week-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer; user-select: none; }
+  .week-badge { background: var(--red); color: #fff; font-size: 11px; font-weight: 500; border-radius: 20px; padding: 2px 10px; white-space: nowrap; flex-shrink: 0; }
+  .week-title { font-size: 14px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+  .week-sub { font-size: 12px; color: var(--color-text-secondary); }
+  .chevron { font-size: 12px; color: var(--color-text-tertiary); transition: transform 0.2s; }
+  .week-body { display: none; padding: 0 16px 14px; }
+  .week-body.open { display: block; }
+  .chevron.open { transform: rotate(180deg); }
+  .day-list { list-style: none; }
+  .day-item { display: flex; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--color-border-tertiary); align-items: flex-start; }
+  .day-item:last-child { border-bottom: none; }
+  .day-num { font-size: 11px; font-weight: 500; color: #fff; background: var(--red-mid); border-radius: 10px; padding: 1px 7px; min-width: 36px; text-align: center; flex-shrink: 0; margin-top: 1px; }
+  .day-num.done { background: var(--color-border-secondary); color: var(--color-text-secondary); }
+  .day-content { flex: 1; }
+  .day-label { font-size: 13px; font-weight: 500; color: var(--color-text-primary); }
+  .day-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; line-height: 1.5; }
+  .tag { display: inline-block; font-size: 10px; padding: 1px 7px; border-radius: 10px; margin-right: 4px; margin-top: 3px; font-weight: 500; }
+  .tag-env { background: #E1F5EE; color: #0F6E56; }
+  .tag-code { background: #E6F1FB; color: #185FA5; }
+  .tag-ui { background: #FAEEDA; color: #854F0B; }
+  .tag-test { background: #FBEAF0; color: #993556; }
+  .tag-polish { background: #EEEDFE; color: #534AB7; }
+  .divider { height: 1px; background: var(--color-border-tertiary); margin: 8px 0; }
+  .tip-box { background: var(--red-light, #FCEBEB); border-radius: 8px; padding: 10px 14px; margin-top: 8px; font-size: 12px; color: #A32D2D; line-height: 1.6; }
+  .progress-bar { height: 4px; background: var(--color-border-tertiary); border-radius: 2px; margin: 8px 16px 0; }
+  .progress-fill { height: 4px; background: var(--red); border-radius: 2px; }
+  @media (prefers-color-scheme: dark) {
+    .tag-env { background: #085041; color: #9FE1CB; }
+    .tag-code { background: #0C447C; color: #B5D4F4; }
+    .tag-ui { background: #633806; color: #FAC775; }
+    .tag-test { background: #72243E; color: #F4C0D1; }
+    .tag-polish { background: #3C3489; color: #CECBF6; }
+    .tip-box { background: #501313; color: #F7C1C1; }
+  }
+</style>
+<div class="wrap">
+
+<div class="week-card">
+  <div class="week-header" onclick="toggle(this)">
+    <span class="week-badge">1주차</span>
+    <span class="week-title">환경 세팅 + 뼈대 완성</span>
+    <span class="week-sub">Day 1–7</span>
+    <span class="chevron open">▼</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:25%"></div></div>
+  <div class="week-body open">
+    <div class="tip-box">🎯 목표: 앱이 실제로 <b>열리는 것</b>을 먼저. 기능보다 구조 우선.</div>
+    <ul class="day-list" style="margin-top:10px">
+      <li class="day-item">
+        <span class="day-num">1일</span>
+        <div class="day-content">
+          <div class="day-label">개발환경 구성</div>
+          <div class="day-desc">Python 3.11 설치 확인, VS Code + Cursor AI 세팅, 가상환경(venv) 생성, requirements.txt 작성</div>
+          <span class="tag tag-env">환경</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">2일</span>
+        <div class="day-content">
+          <div class="day-label">PyQt6 기초 개념 + 창 띄우기</div>
+          <div class="day-desc">PyQt6 설치, QApplication·QWidget 개념 이해, 빈 300px 세로 창 띄우기</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">3일</span>
+        <div class="day-content">
+          <div class="day-label">폴더 구조 + main.py</div>
+          <div class="day-desc">문서의 폴더 구조 그대로 생성, main.py → window.py 연결, 타이틀바(핀·설정·최소화·닫기) 배치</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">4일</span>
+        <div class="day-content">
+          <div class="day-label">Pretendard 폰트 + 테마 색상</div>
+          <div class="day-desc">폰트 로드 시도 → 실패 시 폴백 처리, 색상 변수(포인트: 레드, 서브: 그레이) 전역 상수로 정리</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">5일</span>
+        <div class="day-content">
+          <div class="day-label">storage.py 완성</div>
+          <div class="day-desc">JSON 자동 로드/저장 구현, 기본값 스키마 정의, 리셋 함수 작성</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">6일</span>
+        <div class="day-content">
+          <div class="day-label">UI 이미지 보면서 레이아웃 스케치</div>
+          <div class="day-desc">제공한 UI 이미지를 기준으로 각 구역의 픽셀 높이 계획, Cursor에게 레이아웃 초안 요청</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">7일</span>
+        <div class="day-content">
+          <div class="day-label">1주차 복습 + 에러 해결</div>
+          <div class="day-desc">한 주간 발생한 에러 정리, 개념 재정리, Cursor AI에 궁금한 것 집중 질문</div>
+          <span class="tag tag-test">점검</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="week-card">
+  <div class="week-header" onclick="toggle(this)">
+    <span class="week-badge">2주차</span>
+    <span class="week-title">핵심 기능 구현</span>
+    <span class="week-sub">Day 8–14</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:50%"></div></div>
+  <div class="week-body">
+    <div class="tip-box">🎯 목표: <b>포모도로 + 투두</b> 두 가지만 완벽하게. 음악·추적은 다음 주.</div>
+    <ul class="day-list" style="margin-top:10px">
+      <li class="day-item">
+        <span class="day-num">8일</span>
+        <div class="day-content">
+          <div class="day-label">포모도로 타이머 — 로직</div>
+          <div class="day-desc">QTimer로 카운트다운 구현, 작업/짧은휴식/긴휴식 전환, 세션 카운터</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">9일</span>
+        <div class="day-content">
+          <div class="day-label">포모도로 타이머 — 원형 UI</div>
+          <div class="day-desc">QPainter로 원형 타이머 그리기(빨간 원이 줄어드는 형태), 중앙 시간·세션 텍스트 배치</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">10일</span>
+        <div class="day-content">
+          <div class="day-label">투두 리스트 — 추가·삭제</div>
+          <div class="day-desc">입력창 + 추가 버튼, 체크박스 토글, 완료 항목 하단 이동, JSON 저장 연동</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">11일</span>
+        <div class="day-content">
+          <div class="day-label">투두 리스트 — 수정·순서변경</div>
+          <div class="day-desc">수정 버튼(인라인 편집), ▲▼ 순서 버튼, 완료 텍스트 취소선 스타일</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">12일</span>
+        <div class="day-content">
+          <div class="day-label">설정 드로어 — 기본 틀</div>
+          <div class="day-desc">톱니바퀴 클릭 시 오른쪽으로 450px 드로어 열기, 탭 5개 구조(뽀모도로/트래킹/음악/테마/기타)</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">13일</span>
+        <div class="day-content">
+          <div class="day-label">포모도로 설정 탭 + 알림</div>
+          <div class="day-desc">작업/휴식 시간 스피너, 반복 설정, Windows 알림(plyer 또는 win10toast), 소리 체크박스</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">14일</span>
+        <div class="day-content">
+          <div class="day-label">2주차 통합 테스트</div>
+          <div class="day-desc">포모도로·투두·설정 연동 확인, JSON 저장/불러오기 검증, 이상한 부분 Cursor에 질문</div>
+          <span class="tag tag-test">점검</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="week-card">
+  <div class="week-header" onclick="toggle(this)">
+    <span class="week-badge">3주차</span>
+    <span class="week-title">음악·추적 기능 + 설정 완성</span>
+    <span class="week-sub">Day 15–21</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:75%"></div></div>
+  <div class="week-body">
+    <div class="tip-box">🎯 목표: <b>mpv + yt-dlp</b> 음악 재생, 앱 사용량 추적, 테마 설정까지.</div>
+    <ul class="day-list" style="margin-top:10px">
+      <li class="day-item">
+        <span class="day-num">15일</span>
+        <div class="day-content">
+          <div class="day-label">yt-dlp + mpv 설치 및 개념 이해</div>
+          <div class="day-desc">yt-dlp로 오디오 스트림 URL 추출 개념, mpv를 subprocess로 실행하는 방식 이해</div>
+          <span class="tag tag-env">환경</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">16일</span>
+        <div class="day-content">
+          <div class="day-label">음악 플레이어 — 재생/정지</div>
+          <div class="day-desc">유튜브 URL → 오디오 재생, 재생·일시정지·이전·다음 버튼, 백그라운드 스레드 처리</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">17일</span>
+        <div class="day-content">
+          <div class="day-label">음악 설정 탭 — 링크 관리</div>
+          <div class="day-desc">링크 추가·삭제·수정·순서변경 UI, 10자 초과 시 ... 처리 + hover 툴팁</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">18일</span>
+        <div class="day-content">
+          <div class="day-label">앱 사용량 추적 — 창 목록</div>
+          <div class="day-desc">psutil + pywin32로 활성 창 목록 드롭다운 구현, 집중/딴짓 리스트에 추가</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">19일</span>
+        <div class="day-content">
+          <div class="day-label">앱 사용량 추적 — 시간 측정</div>
+          <div class="day-desc">활성 창 감지 루프, 집중/딴짓 시간 카운터, 메인 화면 HH:MM:SS 표시</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">20일</span>
+        <div class="day-content">
+          <div class="day-label">테마 설정 탭</div>
+          <div class="day-desc">포인트·서브 컬러 스와치 선택, 전체 UI 실시간 색상 반영, 드로어 방향 토글</div>
+          <span class="tag tag-ui">UI</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">21일</span>
+        <div class="day-content">
+          <div class="day-label">3주차 통합 + 버그 수정</div>
+          <div class="day-desc">전체 기능 연동 테스트, 크래시 원인 파악, 에러 로그 확인</div>
+          <span class="tag tag-test">점검</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<div class="week-card">
+  <div class="week-header" onclick="toggle(this)">
+    <span class="week-badge">4주차</span>
+    <span class="week-title">디자인 다듬기 + 마무리</span>
+    <span class="week-sub">Day 22–28</span>
+    <span class="chevron">▼</span>
+  </div>
+  <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+  <div class="week-body">
+    <div class="tip-box">🎯 목표: <b>안정적 실행</b> 확보 후, UI 완성도·편의 기능 순으로.</div>
+    <ul class="day-list" style="margin-top:10px">
+      <li class="day-item">
+        <span class="day-num">22일</span>
+        <div class="day-content">
+          <div class="day-label">전체 UI 폴리시 1 — 간격·정렬</div>
+          <div class="day-desc">여백, 구분선, 폰트 크기 UI 이미지와 비교하며 맞추기, 라운드 코너 10px 점검</div>
+          <span class="tag tag-polish">디자인</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">23일</span>
+        <div class="day-content">
+          <div class="day-label">전체 UI 폴리시 2 — 타이머·투두</div>
+          <div class="day-desc">원형 타이머 안티앨리어싱, 투두 체크박스 스타일, 스크롤바 기본 정리</div>
+          <span class="tag tag-polish">디자인</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">24일</span>
+        <div class="day-content">
+          <div class="day-label">핀 버튼 + 창 드래그 조절</div>
+          <div class="day-desc">항상 위(topmost) 토글 구현, 하단 우측 코너 드래그로 세로 크기 조절</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">25일</span>
+        <div class="day-content">
+          <div class="day-label">데이터 리셋 버튼 + 설정 저장</div>
+          <div class="day-desc">설정 탭 리셋 버튼 → 확인 다이얼로그 → JSON 초기화, 모든 설정값 저장 확인</div>
+          <span class="tag tag-code">코드</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">26일</span>
+        <div class="day-content">
+          <div class="day-label">실사용 테스트 — 하루 종일 켜두기</div>
+          <div class="day-desc">실제 작업 중 앱 켜두며 크래시·메모리 누수 확인, 불편한 UX 메모</div>
+          <span class="tag tag-test">점검</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">27일</span>
+        <div class="day-content">
+          <div class="day-label">발견된 버그 수정</div>
+          <div class="day-desc">26일 메모 기반 수정, Cursor AI에 어려운 부분 집중 요청</div>
+          <span class="tag tag-test">점검</span>
+        </div>
+      </li>
+      <li class="day-item">
+        <span class="day-num">28일</span>
+        <div class="day-content">
+          <div class="day-label">v1.0 완성 + 차후 기능 메모</div>
+          <div class="day-desc">requirements.txt 최종 정리, 드래그 정렬·애니메이션 등 차후 기능 TODO 주석으로 정리</div>
+          <span class="tag tag-polish">마무리</span>
+        </div>
+      </li>
+    </ul>
+  </div>
+</div>
+
+</div>
+<script>
+function toggle(header) {
+  const body = header.nextElementSibling.nextElementSibling;
+  const chevron = header.querySelector('.chevron');
+  body.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+</script>
