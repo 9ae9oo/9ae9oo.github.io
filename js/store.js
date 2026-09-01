@@ -27,11 +27,10 @@ window.MW = window.MW || {};
         notify: true,         // 브라우저 알림 사용
         sound: true,          // 알람 소리 사용
         icalUrl: '',
-        sidebarCollapsed: false,
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true  // 캘린더 상단 해빗 트래커 펼침 여부
       },
-      pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4 },  // legacy 파이썬 앱과 동일한 기본값
+      pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       motto: { text: '', date: '' },   // 오늘의 마음가짐 (홈에서만 표시, 체크 없음)
       playlists: [],
       player: { playlistId: null, index: 0, mode: 'seq' },
@@ -140,10 +139,14 @@ window.MW = window.MW || {};
     return out;
   }
 
-  function write() {
+  /** 자동 저장이 되었다는 것을 조용히 알려줍니다 (연속 입력 중에는 한 번만) */
+  var notifySaved = U.debounce(function () { U.toast('저장됨', 'save'); }, 1200);
+
+  function write(silent) {
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
       writeFailed = false;
+      if (!silent) notifySaved();
     } catch (e) {
       if (!writeFailed) {
         writeFailed = true;
@@ -181,7 +184,7 @@ window.MW = window.MW || {};
 
     on: function (fn) { subs.push(fn); return fn; },
 
-    flush: write,
+    flush: function () { write(true); },
 
     /* ------------------------------------------------------ 백업 / 복구 */
 
@@ -192,13 +195,13 @@ window.MW = window.MW || {};
     importJson: function (text) {
       var parsed = JSON.parse(text);          // 실패 시 호출부에서 catch
       state = migrate(parsed);
-      write();
+      write(true);
       emit();
     },
 
     reset: function () {
       state = defaults();
-      write();
+      write(true);
       emit();
     },
 

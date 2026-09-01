@@ -5,27 +5,44 @@
 #app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
 
 /* --------------------------------------------------------------- 상단 음악바 */
-#musicbar {
+#topbar {
   flex: 0 0 auto;
   height: var(--topbar-h);
   background: var(--surface-0);
   border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   padding: 0 14px;
   position: relative;
   z-index: 60;
 }
 
-.mb-brand {
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  font-size: 15px;
+/* 상단 네비게이션 — 페이지 이동 */
+.topnav { display: flex; align-items: center; gap: 2px; }
+.topnav-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 7px 12px; border-radius: var(--radius-sm);
+  color: var(--text-muted); font-size: 13.5px; font-weight: 500;
   white-space: nowrap;
-  color: var(--text);
 }
-.mb-brand span { color: var(--accent); }
+.topnav-item:hover { background: var(--surface-2); color: var(--text); }
+.topnav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+.topnav-item .ico { font-size: 14px; }
+
+/* 플로팅 위젯 버튼 */
+.top-widgets { display: flex; align-items: center; gap: 4px; }
+.top-pomo {
+  width: auto; padding: 0 10px; height: 30px;
+  font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
+  color: var(--text-muted); background: var(--surface-1); border: 1px solid var(--border);
+}
+.top-pomo::before { content: '🍅'; margin-right: 5px; font-size: 11px; }
+.top-pomo:hover { background: var(--surface-2); color: var(--text); }
+.top-pomo.running { color: var(--accent); border-color: var(--accent); }
+.top-pomo.active { box-shadow: inset 0 0 0 1px var(--accent); }
+
+#musicbar { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 0 1 auto; }
 
 .mb-controls { display: flex; align-items: center; gap: 2px; }
 .mb-controls .btn-icon { color: var(--text-muted); border-radius: 50%; }
@@ -33,7 +50,11 @@
 .mb-play { background: var(--accent) !important; color: #0f1117 !important; width: 34px; height: 34px; }
 .mb-play:hover { background: #8aa2fd !important; }
 
-.mb-now { min-width: 0; flex: 1; display: flex; flex-direction: column; justify-content: center; }
+.mb-now {
+  min-width: 0; max-width: 240px; flex: 0 1 240px;
+  display: flex; flex-direction: column; justify-content: center;
+  overflow: hidden;
+}
 .mb-now-title {
   font-size: 13px; font-weight: 500;
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -42,9 +63,6 @@
 
 .mb-mode { font-size: 11px; }
 .mb-mode.on { color: var(--accent); background: var(--accent-dim); }
-
-.mb-burger { color: var(--text-muted); flex-shrink: 0; }
-.mb-burger:hover { background: var(--surface-2); color: var(--text); }
 
 .mb-sep { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; }
 
@@ -84,55 +102,9 @@
 
 /* --------------------------------------------------------------- 본문 배치 */
 #body { flex: 1; display: flex; min-height: 0; }
+#main { flex: 1; min-width: 0; }
 
-#sidebar {
-  flex: 0 0 var(--sidebar-w);
-  width: var(--sidebar-w);
-  background: var(--surface-0);
-  border-right: 1px solid var(--border);
-  overflow-y: auto;
-  padding: 14px 12px 20px;
-  display: flex; flex-direction: column; gap: 14px;
-}
 
-.side-card {
-  background: var(--surface-1);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-}
-.side-title {
-  font-size: 11px; font-weight: 600; color: var(--text-dim);
-  letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 8px;
-  display: flex; align-items: center; gap: 6px;
-}
-
-.nav { display: flex; flex-direction: column; gap: 2px; }
-.nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 11px; border-radius: var(--radius-sm);
-  color: var(--text-muted); font-size: 13.5px; font-weight: 500;
-  text-align: left; width: 100%;
-}
-.nav-item:hover { background: var(--surface-2); color: var(--text); }
-.nav-item.active { background: var(--accent-dim); color: var(--accent); }
-.nav-item .ico { font-size: 15px; width: 18px; text-align: center; }
-.nav-sep { height: 1px; background: var(--border); margin: 8px 2px; }
-
-/* 접힌 사이드바 — 아이콘만 남는 좁은 레일 */
-body.sidebar-collapsed #sidebar {
-  flex-basis: 56px;
-  width: 56px;
-  padding: 10px 6px 16px;
-  align-items: center;
-}
-body.sidebar-collapsed #sidebar .side-card {
-  width: 100%; padding: 8px 4px; background: none; border: none;
-}
-body.sidebar-collapsed #sidebar .side-title { display: none; }
-body.sidebar-collapsed #sidebar .nav-item { justify-content: center; padding: 9px 0; }
-body.sidebar-collapsed #sidebar .nav-item .lbl { display: none; }
-body.sidebar-collapsed #sidebar .nav-item .ico { width: auto; font-size: 17px; }
 
 #main { flex: 1; min-width: 0; overflow-y: auto; position: relative; }
 
@@ -237,28 +209,20 @@ body.sidebar-collapsed #sidebar .nav-item .ico { width: auto; font-size: 17px; }
 @media (max-width: 900px) {
   :root { --topbar-h: 52px; }
 
-  /* 좁은 화면에서는 브랜드를 줄이고 곡 정보에 자리를 내줍니다 */
-  .mb-burger { display: none; }        /* 모바일에는 사이드바가 없으므로 접기 버튼도 숨김 */
+  /* 좁은 화면: 네비는 하단 탭바가 맡고, 상단은 위젯 + 음악만 */
   .mb-sep { display: none; }
-  .mb-brand { font-size: 0; }
-  .mb-brand span { font-size: 0; }
-  .mb-brand::before { content: 'MW'; font-size: 14px; color: var(--accent); }
-  #musicbar { gap: 8px; padding: 0 10px; }
+  #topbar { gap: 6px; padding: 0 8px; }
   .mb-controls .btn-icon { width: 28px; height: 28px; }
   .mb-play { width: 32px; height: 32px; }
+  .top-pomo { padding: 0 7px; }
+  .top-pomo::before { display: none; }
 
   #body { flex-direction: column; overflow-y: auto; }
-  #sidebar {
-    flex: 0 0 auto; width: 100%; border-right: none;
-    border-bottom: 1px solid var(--border); overflow: visible;
-  }
-  #sidebar .nav-desktop { display: none; }
   #main { overflow: visible; flex: 1 0 auto; }
-  .page { padding: 16px 14px 40px; }
+  .page { padding: 16px 14px calc(var(--tabbar-h) + 24px); }
 
-  /* 홈이 아닌 라우트에서는 사이드바 위젯을 감춤 */
-  body:not([data-route="home"]) #sidebar { display: none; }
-
+  /* 좁은 화면에서는 상단 네비 대신 하단 탭바 */
+  .desktop-only { display: none !important; }
   #tabbar { display: flex; }
 
   .float.open {
@@ -308,3 +272,12 @@ body.sidebar-collapsed #sidebar .nav-item .ico { width: auto; font-size: 17px; }
   font-variant-numeric: tabular-nums; margin-right: auto;
 }
 .home-money .value.minus { color: var(--red); }
+
+/* --------------------------------------------------------- 작업 페이지 */
+.work-sketch {
+  background: var(--surface-0); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 12.5px; line-height: 1.75; color: var(--text-muted);
+  overflow-x: auto; white-space: pre;
+}

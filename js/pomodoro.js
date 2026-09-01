@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MW.pomodoro — 뽀모도로 타이머
+   MW.pomodoro — 뽀모도로 타이머 (플로팅 위젯 + 상단바 미니 표시)
    legacy/app/pomodoro.py 의 PomodoroTimer 세션 전환 로직을 그대로 옮겼습니다.
    (작업 → 마지막 회차면 긴 휴식, 아니면 짧은 휴식 → 다시 작업)
    원형 게이지는 QPainter drawPie 대신 SVG stroke-dasharray 로 그립니다.
@@ -74,10 +74,12 @@ window.MW = window.MW || {};
         LABEL[session] + ' 시간입니다 (' + Math.round(total() / 60) + '분)'
       );
       U.toast(LABEL[finished] + ' 완료 → ' + LABEL[session]);
+      if (conf().autoNext) start();          // 자동 다음 세션
     }
   }
 
   function render() {
+    renderMini();
     if (!ui.time) return;
     if (remaining === null) remaining = total();
     var t = total();
@@ -94,7 +96,7 @@ window.MW = window.MW || {};
     ui.ring.classList.toggle('long', session === 'longBreak');
     ui.play.textContent = running ? '❚❚' : '▶';
     ui.play.title = running ? '일시정지' : '시작';
-    document.title = running ? U.fmtClock(remaining) + ' · ' + LABEL[session] + ' — Mini Workspace' : 'Mini Workspace';
+    document.title = running ? U.fmtClock(remaining) + ' · ' + LABEL[session] + ' — Creator Workspace' : 'Creator Workspace';
   }
 
   function svgRing() {
@@ -108,6 +110,17 @@ window.MW = window.MW || {};
     svg.appendChild(track); svg.appendChild(bar);
     ui.bar = bar;
     return svg;
+  }
+
+  /** 상단바의 작은 남은시간 표시 — 플로팅을 닫아도 시간이 보이도록 */
+  function renderMini() {
+    var mini = document.querySelector('.top-pomo .tp-time');
+    if (!mini) return;
+    if (remaining === null) remaining = total();
+    mini.textContent = U.fmtClock(remaining);
+    var btn = mini.parentNode;
+    btn.classList.toggle('running', running);
+    btn.title = LABEL[session] + ' ' + U.fmtClock(remaining) + (running ? ' (진행 중)' : ' (멈춤)');
   }
 
   function mount(container) {
@@ -128,20 +141,41 @@ window.MW = window.MW || {};
       el('button.btn.btn-icon', { text: '⏭', title: '다음 세션', onclick: function () { next(false); } })
     ]);
 
-    // 시간 설정은 설정 → “시간 · 해빗” 탭으로 옮겼습니다 (사이드바를 좁게 유지하기 위해)
-    container.appendChild(el('div.pomo', {}, [ui.ring, btns]));
+    // 자동 다음 세션 — 세션이 끝나면 멈추지 않고 바로 이어서 시작합니다
+    var autoRow = el('label.pomo-auto', { title: '세션이 끝나면 다음 세션을 자동으로 시작합니다' }, [
+      el('input', {
+        type: 'checkbox', checked: !!conf().autoNext,
+        onchange: function () {
+          var v = this.checked;
+          MW.store.update(function (s) { s.pomodoro.autoNext = v; });
+        }
+      }),
+      el('span', { text: '자동 다음 세션' })
+    ]);
+
+    // 시간 설정은 설정 → “시간 · 해빗” 탭에서 합니다
+    container.appendChild(el('div.pomo', {}, [ui.ring, btns, autoRow]));
     if (remaining === null) remaining = total();
     render();
   }
 
+  var float = null;
+
+  function init() {
+    float = MW.shell.registerFloat('pomodoro', {
+      title: '🍅 뽀모도로',
+      rect: { x: Math.max(24, window.innerWidth - 780), y: 96, w: 300, h: 380 },
+      onOpen: function (api) { mount(api.body); }
+    });
+    renderMini();
+  }
+
   MW.pomodoro = {
+    init: init,
     mount: mount,
-    /** 설정 페이지에서 값이 바뀌었을 때 사이드바 위젯도 새로 그리기 위해 */
+    renderMini: renderMini,
+    /** 설정 페이지에서 시간 값이 바뀌었을 때 다시 그리기 위해 */
     refresh: function () { if (ui.time) { if (!running) remaining = total(); render(); } },
-    /** 사이드바가 접히면 링을 작게 줄입니다 (CSS 로 크기만 바뀝니다) */
-    setCompact: function (on) {
-      if (ui.ring) ui.ring.classList.toggle('compact', !!on);
-    },
     state: function () { return { session: session, count: count, remaining: remaining, running: running }; }
   };
 })();

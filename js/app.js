@@ -82,12 +82,14 @@ window.MW = window.MW || {};
   var renderAll = U.debounce(function () {
     var route = MW.shell.route();
     if (route === 'home') renderHome();
+    else if (route === 'work') MW.work.render();
     else if (route === 'calendar') MW.calendar.render();
     else if (route === 'ledger') MW.ledger.render();
     else if (route === 'settings') MW.settings.render();
     MW.todo.render();
     MW.memo.render();
     MW.music.render();
+    MW.pomodoro.renderMini();
     MW.habitGrid.renderAlarms();
     MW.shell.syncFloatButtons();
   }, 40);
@@ -98,14 +100,16 @@ window.MW = window.MW || {};
     MW.store.load();
 
     MW.music.mount($('#musicbar'));
-    MW.pomodoro.mount($('#pomo-slot'));
+    MW.pomodoro.init();
     MW.todo.init();
     MW.memo.init();
+    MW.work.mount($('#page-work-body'));
     MW.calendar.mount($('#page-calendar-body'));
     MW.ledger.mount($('#page-ledger-body'));
     MW.settings.mount($('#page-settings-body'));
 
     MW.shell.onRoute('home', renderHome);
+    MW.shell.onRoute('work', function () { MW.work.render(); });
     MW.shell.onRoute('calendar', function () { MW.calendar.render(); });
     MW.shell.onRoute('ledger', function () { MW.ledger.render(); });
     MW.shell.onRoute('settings', function () { MW.settings.render(); });

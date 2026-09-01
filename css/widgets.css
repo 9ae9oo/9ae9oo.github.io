@@ -27,6 +27,15 @@
 .pomo-btns .main { width: 42px; height: 42px; background: var(--accent); border-color: var(--accent); color: #0f1117; font-size: 15px; }
 .pomo-btns .main:hover { background: #8aa2fd; }
 
+/* 자동 다음 세션 토글 */
+.pomo-auto {
+  display: flex; align-items: center; gap: 7px;
+  font-size: 12.5px; color: var(--text-muted); cursor: pointer;
+  padding: 6px 10px; border-radius: 999px; background: var(--surface-0);
+  border: 1px solid var(--border);
+}
+.pomo-auto:hover { border-color: var(--border-accent); color: var(--text); }
+
 .pomo-setting { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
 .pomo-setting label { font-size: 10px; color: var(--text-dim); display: block; text-align: center; margin-bottom: 2px; }
 .pomo-setting input { text-align: center; padding: 5px 2px; font-size: 12px; }
@@ -141,17 +150,6 @@ input[type="checkbox"].chk:checked::after {
 .md hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
 .md del { color: var(--text-dim); }
 .md a { text-decoration: underline; }
-
-/* 사이드바를 접었을 때: 링을 작게 줄이고 버튼만 남깁니다 */
-.pomo-ring.compact { width: 44px; height: 44px; }
-.pomo-ring.compact svg { width: 44px; height: 44px; }
-.pomo-ring.compact .track, .pomo-ring.compact .bar { stroke-width: 5; }
-.pomo-ring.compact .pomo-session, .pomo-ring.compact .pomo-count { display: none; }
-.pomo-ring.compact .pomo-time { font-size: 10px; font-weight: 600; }
-body.sidebar-collapsed .pomo { gap: 6px; }
-body.sidebar-collapsed .pomo-btns { flex-direction: column; gap: 4px; }
-body.sidebar-collapsed .pomo-btns .btn-icon { width: 28px; height: 28px; font-size: 11px; }
-body.sidebar-collapsed .pomo-btns .main { width: 34px; height: 34px; font-size: 13px; }
 
 /* 설정: 해빗 편집 카드 */
 .habit-edit {

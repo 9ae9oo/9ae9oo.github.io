@@ -192,7 +192,7 @@ window.MW = window.MW || {};
       t.style.transition = 'opacity .25s';
       t.style.opacity = '0';
       setTimeout(function () { t.remove(); }, 260);
-    }, kind === 'err' ? 4200 : 2400);
+    }, kind === 'err' ? 4200 : kind === 'save' ? 1100 : 2400);
   }
 
   MW.util = {

@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MW.calendar — 캘린더 전용 페이지 (월/주/일 + 해빗 트래커 내장)
+   MW.calendar — 캘린더 전용 페이지 (월/주/일)
    · 투두와 데이터를 공유합니다 (날짜가 있는 투두만 필터해서 표시).
    · 반복 일정은 원본 1건만 저장하고 렌더 시점에 전개합니다.
      수정·삭제는 기획대로 "전체 일괄"만 지원합니다 (특정 회차 예외 없음).
@@ -273,11 +273,6 @@ window.MW = window.MW || {};
         })
       ]),
 
-      el('section', {}, [
-        el('h4', { text: '해빗' }),
-        el('div.small.dim', { text: '해빗 체크는 페이지 위쪽 트래커에서 합니다.' }),
-        el('div.small.dim', { text: MW.habitGrid.todaySummary(), style: { marginTop: '4px' } })
-      ])
     ]);
   }
 
@@ -519,8 +514,7 @@ window.MW = window.MW || {};
   function render() {
     if (!root) return;
     U.clear(root);
-    // 해빗 트래커는 페이지 맨 위 고정 섹션 (보고 있는 주 기준, 접기 가능)
-    root.appendChild(MW.habitGrid.weekSection(view === 'month' ? new Date() : cursor));
+    // 해빗 트래커는 홈에만 둡니다 (캘린더에도 두면 같은 내용이 반복됩니다)
     root.appendChild(toolbar());
     if (view === 'month') renderMonth(root);
     else if (view === 'week') renderWeek(root);
