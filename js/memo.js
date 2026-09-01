@@ -176,7 +176,7 @@ window.MW = window.MW || {};
     init: function () {
       float = MW.shell.registerFloat('memo', {
         title: '📝 메모장',
-        rect: { x: window.innerWidth - 420, y: 96, w: 380, h: 480 },
+        rect: { x: Math.max(24, window.innerWidth - 800), y: 96, w: 380, h: 480 },
         onOpen: render
       });
     },

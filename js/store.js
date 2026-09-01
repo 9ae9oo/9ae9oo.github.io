@@ -28,6 +28,7 @@ window.MW = window.MW || {};
         sound: true,          // 알람 소리 사용
         icalUrl: '',
         sidebarCollapsed: false,
+        floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true  // 캘린더 상단 해빗 트래커 펼침 여부
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4 },  // legacy 파이썬 앱과 동일한 기본값

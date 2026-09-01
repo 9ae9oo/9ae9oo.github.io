@@ -239,7 +239,7 @@ window.MW = window.MW || {};
     init: function () {
       float = MW.shell.registerFloat('todo', {
         title: '✅ 투두리스트',
-        rect: { x: 300, y: 120, w: 360, h: 460 },
+        rect: { x: Math.max(24, window.innerWidth - 400), y: 96, w: 360, h: 460 },
         onOpen: render
       });
     },

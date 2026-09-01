@@ -31,8 +31,9 @@
   color: var(--text-dim); letter-spacing: 0.05em;
   border-bottom: 1px solid var(--border);
 }
-.cal-dow div:first-child { color: var(--coral); }
-.cal-dow div:last-child { color: var(--accent); }
+/* 주말 색은 위치가 아니라 요일로 정합니다 (주 시작 요일이 바뀌어도 맞도록) */
+.cal-dow div.sun { color: var(--coral); }
+.cal-dow div.sat { color: var(--accent); }
 
 .cal-weeks { display: grid; grid-template-rows: repeat(6, minmax(84px, auto)); }
 .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); }
@@ -226,7 +227,16 @@
   position: fixed; right: 16px; bottom: 16px; width: 320px; max-width: calc(100vw - 32px);
   background: var(--surface-1); border: 1px solid var(--amber);
   border-radius: var(--radius); box-shadow: var(--shadow);
-  display: none; flex-direction: column; z-index: 450; overflow: hidden;
+  display: none; flex-direction: column; z-index: 450;
+  max-height: 60vh; overflow: auto;
+}
+/* 모바일에서는 하단 탭바 위로 띄웁니다 */
+@media (max-width: 900px) {
+  .alarm-card {
+    left: 12px; right: 12px; width: auto;
+    bottom: calc(var(--tabbar-h) + 12px);
+    max-height: 45vh;
+  }
 }
 .alarm-card.open { display: flex; }
 .alarm-head {

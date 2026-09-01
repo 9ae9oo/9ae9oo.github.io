@@ -79,14 +79,31 @@ window.MW = window.MW || {};
     node.appendChild(grip);
     document.body.appendChild(node);
 
-    var rect = opts.rect || { x: 120, y: 100, w: 340, h: 420 };
+    // 위치·크기는 사용자가 옮긴 그대로 저장했다가 다음에 열 때 복원합니다
+    var saved = (MW.store.state.settings.floats || {})[id];
+    var rect = saved || opts.rect || { x: 120, y: 100, w: 340, h: 420 };
+    rect = {
+      x: U.clamp(rect.x, 0, Math.max(0, window.innerWidth - 120)),
+      y: U.clamp(rect.y, 0, Math.max(0, window.innerHeight - 80)),
+      w: Math.max(260, rect.w), h: Math.max(200, rect.h)
+    };
     node.style.left = rect.x + 'px';
     node.style.top = rect.y + 'px';
     node.style.width = rect.w + 'px';
     node.style.height = rect.h + 'px';
 
-    dragMove(head, node);
-    dragResize(grip, node);
+    function remember() {
+      MW.store.touch(function (st) {
+        if (!st.settings.floats) st.settings.floats = {};
+        st.settings.floats[id] = {
+          x: node.offsetLeft, y: node.offsetTop,
+          w: node.offsetWidth, h: node.offsetHeight
+        };
+      });
+    }
+
+    dragMove(head, node, remember);
+    dragResize(grip, node, remember);
     node.addEventListener('mousedown', raise);
     node.addEventListener('touchstart', raise, { passive: true });
     function raise() { zTop += 1; node.style.zIndex = zTop; }
@@ -117,7 +134,7 @@ window.MW = window.MW || {};
 
   function isMobile() { return window.matchMedia('(max-width: 900px)').matches; }
 
-  function dragMove(handle, node) {
+  function dragMove(handle, node, onEnd) {
     var sx = 0, sy = 0, ox = 0, oy = 0, active = false;
     function down(e) {
       if (isMobile()) return;                       // 모바일은 전체화면 시트
@@ -139,6 +156,7 @@ window.MW = window.MW || {};
       if (e.cancelable) e.preventDefault();
     }
     function up() {
+      if (active && onEnd) onEnd();
       active = false;
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);
@@ -149,7 +167,7 @@ window.MW = window.MW || {};
     handle.addEventListener('touchstart', down, { passive: false });
   }
 
-  function dragResize(grip, node) {
+  function dragResize(grip, node, onEnd) {
     var sx = 0, sy = 0, ow = 0, oh = 0, active = false;
     function down(e) {
       if (isMobile()) return;
@@ -166,6 +184,7 @@ window.MW = window.MW || {};
       node.style.height = Math.max(200, oh + p.y - sy) + 'px';
     }
     function up() {
+      if (active && onEnd) onEnd();
       active = false;
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);

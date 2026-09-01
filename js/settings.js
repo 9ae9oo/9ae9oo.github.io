@@ -48,7 +48,11 @@ window.MW = window.MW || {};
     }
 
     pls.forEach(function (pl) {
-      var urlInput = el('input.field', { placeholder: 'https://www.youtube.com/watch?v=...' });
+      var addTrack = function () { if (MW.music.addTrack(pl.id, urlInput.value)) urlInput.value = ''; };
+      var urlInput = el('input.field', {
+        placeholder: 'https://www.youtube.com/watch?v=...',
+        onkeydown: function (e) { if (e.key === 'Enter') addTrack(); }
+      });
 
       var tracks = el('div', {}, pl.tracks.length ? pl.tracks.map(function (tr, i) {
         return el('div.track-item', {}, [
@@ -116,12 +120,7 @@ window.MW = window.MW || {};
         ]),
         el('div.row', { style: { marginTop: '10px' } }, [
           urlInput,
-          el('button.btn.btn-primary.btn-sm', {
-            text: '곡 추가',
-            onclick: function () {
-              if (MW.music.addTrack(pl.id, urlInput.value)) urlInput.value = '';
-            }
-          })
+          el('button.btn.btn-primary.btn-sm', { text: '곡 추가', onclick: addTrack })
         ]),
         el('div', { style: { marginTop: '10px' } }, [tracks])
       ]));
@@ -174,7 +173,19 @@ window.MW = window.MW || {};
     ]));
 
     MW.store.state.ledger.types.forEach(function (t) {
-      var newCat = el('input.field', { placeholder: '대분류 이름' });
+      var addCat = function () {
+        var v = newCat.value.trim();
+        if (!v) return;
+        MW.store.update(function (s2) {
+          var x = s2.ledger.types.find(function (y) { return y.id === t.id; });
+          if (x) x.categories.push({ id: U.uid('c'), name: v });
+        });
+        newCat.value = '';
+      };
+      var newCat = el('input.field', {
+        placeholder: '대분류 이름',
+        onkeydown: function (e) { if (e.key === 'Enter') addCat(); }
+      });
       host.appendChild(el('div.card', {}, [
         el('div.row', {}, [
           el('input.field', {
@@ -219,18 +230,7 @@ window.MW = window.MW || {};
         })),
         el('div.row', { style: { marginTop: '10px' } }, [
           newCat,
-          el('button.btn.btn-sm', {
-            text: '대분류 추가',
-            onclick: function () {
-              var v = newCat.value.trim();
-              if (!v) return;
-              MW.store.update(function (s) {
-                var x = s.ledger.types.find(function (y) { return y.id === t.id; });
-                if (x) x.categories.push({ id: U.uid('c'), name: v });
-              });
-              newCat.value = '';
-            }
-          })
+          el('button.btn.btn-sm', { text: '대분류 추가', onclick: addCat })
         ])
       ]));
     });
@@ -256,7 +256,11 @@ window.MW = window.MW || {};
   /** 해빗 하나의 편집 카드 — 이름 · 색 · 알람 시각 목록 */
   function habitCard(h) {
     var times = MW.habits.timesOf(h);
-    var newTime = el('input.field', { type: 'time', style: { width: 'auto' } });
+    var addAlarm = function () { if (MW.habits.addTime(h.id, newTime.value)) newTime.value = ''; };
+    var newTime = el('input.field', {
+      type: 'time', style: { width: 'auto' },
+      onkeydown: function (e) { if (e.key === 'Enter') addAlarm(); }
+    });
 
     return el('div.habit-edit', {}, [
       el('div.row', {}, [
@@ -296,10 +300,7 @@ window.MW = window.MW || {};
           ]);
         })) : el('span.small.dim', { text: '없음 — 하루 1회 체크형으로 동작합니다' }),
         newTime,
-        el('button.btn.btn-sm', {
-          text: '＋ 알람',
-          onclick: function () { if (MW.habits.addTime(h.id, newTime.value)) newTime.value = ''; }
-        })
+        el('button.btn.btn-sm', { text: '＋ 알람', onclick: addAlarm })
       ]),
       el('div.small.dim', {
         text: '알람 개수가 하루 목표 횟수입니다. 알람이 울리면 [체크] 또는 [패스] 를 고르고, 놓친 알람은 다음에 열 때 모아서 보여줍니다.',
@@ -350,37 +351,39 @@ window.MW = window.MW || {};
 
     host.appendChild(icalCard());
 
-    var habitInput = el('input.field', { placeholder: '새 해빗 이름 (예: 물 마시기)' });
+    var addHabit = function () { if (MW.habits.add(habitInput.value)) habitInput.value = ''; };
+    var habitInput = el('input.field', {
+      placeholder: '새 해빗 이름 (예: 물 마시기)',
+      onkeydown: function (e) { if (e.key === 'Enter') addHabit(); }
+    });
     host.appendChild(el('div.card', {}, [
       el('h3', {}, ['해빗 ', el('span.muted', { text: '— 캘린더 위쪽과 홈 트래커에 표시됩니다' })]),
       el('div.row', {}, [
         habitInput,
-        el('button.btn.btn-primary.btn-sm', {
-          text: '추가',
-          onclick: function () { if (MW.habits.add(habitInput.value)) habitInput.value = ''; }
-        })
+        el('button.btn.btn-primary.btn-sm', { text: '추가', onclick: addHabit })
       ]),
       el('div', { style: { marginTop: '10px' } }, MW.habits.all().length
         ? MW.habits.all().map(habitCard)
         : [el('div.empty', { text: '해빗이 없습니다.' })])
     ]));
 
-    var groupInput = el('input.field', { placeholder: '새 그룹 이름' });
+    var addGroup = function () {
+      var v = groupInput.value.trim();
+      if (!v) return;
+      MW.store.update(function (st) {
+        st.todoGroups.push({ id: U.uid('g'), name: v, color: MW.todo.COLORS[st.todoGroups.length % MW.todo.COLORS.length] });
+      });
+      groupInput.value = '';
+    };
+    var groupInput = el('input.field', {
+      placeholder: '새 그룹 이름',
+      onkeydown: function (e) { if (e.key === 'Enter') addGroup(); }
+    });
     host.appendChild(el('div.card', {}, [
       el('h3', {}, ['투두 · 메모 그룹 ', el('span.muted', { text: '— 그룹 색이 캘린더 표시색의 기본값이 됩니다' })]),
       el('div.row', {}, [
         groupInput,
-        el('button.btn.btn-primary.btn-sm', {
-          text: '추가',
-          onclick: function () {
-            var v = groupInput.value.trim();
-            if (!v) return;
-            MW.store.update(function (st) {
-              st.todoGroups.push({ id: U.uid('g'), name: v, color: MW.todo.COLORS[st.todoGroups.length % MW.todo.COLORS.length] });
-            });
-            groupInput.value = '';
-          }
-        })
+        el('button.btn.btn-primary.btn-sm', { text: '추가', onclick: addGroup })
       ]),
       el('div', { style: { marginTop: '10px' } }, MW.store.state.todoGroups.map(function (g) {
         return el('div.row', { style: { padding: '5px 0' } }, [
