@@ -533,6 +533,66 @@ window.MW = window.MW || {};
     ]));
   }
 
+  /* ------------------------------------------------------------ 테마 */
+
+  var ACCENT_PRESETS = [
+    { name: '블루 (기본)', color: '#6b8afd' },
+    { name: '그린', color: '#4ade80' },
+    { name: '퍼플', color: '#a78bfa' },
+    { name: '틸', color: '#2dd4bf' },
+    { name: '코랄', color: '#fb7185' },
+    { name: '엠버', color: '#fbbf24' },
+    { name: '레드', color: '#f87171' }
+  ];
+  var DEFAULT_THEME = { mode: 'dark', accent: '#6b8afd' };
+
+  function setTheme(patch) {
+    MW.store.update(function (s) {
+      s.settings.theme = Object.assign({}, s.settings.theme, patch);
+    });
+  }
+
+  function renderTheme(host) {
+    var t = MW.store.state.settings.theme || DEFAULT_THEME;
+    var accent = /^#[0-9a-fA-F]{6}$/.test(t.accent) ? t.accent : DEFAULT_THEME.accent;
+
+    var modeSeg = el('div.seg', {}, [
+      el('button' + (t.mode !== 'light' ? '.active' : ''), {
+        type: 'button', text: '🌙 다크', onclick: function () { setTheme({ mode: 'dark' }); }
+      }),
+      el('button' + (t.mode === 'light' ? '.active' : ''), {
+        type: 'button', text: '☀️ 라이트', onclick: function () { setTheme({ mode: 'light' }); }
+      })
+    ]);
+
+    var colorInput = el('input.theme-color', {
+      type: 'color', value: accent,
+      oninput: function () { setTheme({ accent: this.value }); }
+    });
+    var swatches = el('div.theme-swatches', {}, ACCENT_PRESETS.map(function (p) {
+      return el('button.swatch' + (accent.toLowerCase() === p.color ? '.active' : ''), {
+        type: 'button', title: p.name, style: { background: p.color },
+        onclick: function () { setTheme({ accent: p.color }); }
+      });
+    }));
+
+    host.appendChild(el('div.card', {}, [
+      el('h3', { text: '화면 모드' }),
+      el('div.small.dim', { text: '이 브라우저에만 저장됩니다. 다른 기기·브라우저는 따로 고릅니다.', style: { marginBottom: '10px' } }),
+      modeSeg
+    ]));
+
+    host.appendChild(el('div.card', {}, [
+      el('h3', { text: '강조 색상' }),
+      el('div.small.dim', { text: '버튼·선택 표시·활성 탭 등에 쓰입니다.', style: { marginBottom: '10px' } }),
+      el('div.row', { style: { gap: '10px', flexWrap: 'wrap' } }, [colorInput, swatches]),
+      el('button.btn.btn-sm', {
+        text: '기본값으로', style: { marginTop: '12px' },
+        onclick: function () { setTheme(DEFAULT_THEME); }
+      })
+    ]));
+  }
+
   function exportJson() {
     try {
       var blob = new Blob([MW.store.exportJson()], { type: 'application/json' });
@@ -575,6 +635,7 @@ window.MW = window.MW || {};
     { id: 'time', label: '시간 · 해빗', fn: renderTime },
     { id: 'music', label: '음악', fn: renderMusic },
     { id: 'categories', label: '장부 카테고리', fn: renderCategories },
+    { id: 'theme', label: '테마', fn: renderTheme },
     { id: 'general', label: '일반 · 데이터', fn: renderGeneral }
   ];
 

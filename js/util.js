@@ -195,6 +195,29 @@ window.MW = window.MW || {};
     }, kind === 'err' ? 4200 : kind === 'save' ? 1100 : 2400);
   }
 
+  /* ------------------------------------------------------------ 색상 (테마) */
+
+  function hexToRgb(hex) {
+    var s = String(hex || '').replace('#', '');
+    if (s.length === 3) s = s.split('').map(function (c) { return c + c; }).join('');
+    var num = parseInt(s, 16);
+    if (isNaN(num) || s.length !== 6) return { r: 107, g: 138, b: 253 };  // 기본 강조색으로 대체
+    return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
+  }
+
+  /** hex → 'rgba(r,g,b,alpha)' — 옅게 깐 배경색(-dim 토큰)을 만들 때 씁니다 */
+  function rgbaOf(hex, alpha) {
+    var c = hexToRgb(hex);
+    return 'rgba(' + c.r + ',' + c.g + ',' + c.b + ',' + alpha + ')';
+  }
+
+  /** hex 를 흰색 쪽으로 amt(0~1)만큼 섞습니다 — hover 색을 만들 때 씁니다 */
+  function lighten(hex, amt) {
+    var c = hexToRgb(hex);
+    function mix(v) { return Math.round(v + (255 - v) * amt); }
+    return 'rgb(' + mix(c.r) + ',' + mix(c.g) + ',' + mix(c.b) + ')';
+  }
+
   MW.util = {
     WEEKDAYS: WEEKDAYS,
     $: $, $$: $$, el: el, append: append, clear: clear, on: on, escapeHtml: escapeHtml,
@@ -204,6 +227,7 @@ window.MW = window.MW || {};
     daysBetween: daysBetween, fmtDate: fmtDate, fmtLongDate: fmtLongDate,
     fmtMin: fmtMin, parseMin: parseMin, fmtClock: fmtClock,
     won: won, num: num, parseNum: parseNum,
-    uid: uid, clamp: clamp, debounce: debounce, safeUrl: safeUrl, toast: toast
+    uid: uid, clamp: clamp, debounce: debounce, safeUrl: safeUrl, toast: toast,
+    hexToRgb: hexToRgb, rgbaOf: rgbaOf, lighten: lighten
   };
 })();

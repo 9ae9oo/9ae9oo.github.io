@@ -267,6 +267,24 @@ window.MW = window.MW || {};
     } catch (e) { /* 무시 */ }
   }
 
+  /* ----------------------------------------------------------------- 테마 */
+
+  /**
+   * 설정 → 테마의 mode(dark/light)·accent 색을 실제 화면에 적용합니다.
+   * --accent 계열 변수만 갈아끼우므로 다른 색(성공·경고 등)은 그대로 유지됩니다.
+   */
+  function applyTheme() {
+    var t = (MW.store.state.settings && MW.store.state.settings.theme) || {};
+    var mode = t.mode === 'light' ? 'light' : 'dark';
+    var accent = /^#[0-9a-fA-F]{6}$/.test(t.accent || '') ? t.accent : '#6b8afd';
+    var root = document.documentElement;
+    root.dataset.theme = mode;
+    root.style.colorScheme = mode;
+    root.style.setProperty('--accent', accent);
+    root.style.setProperty('--accent-dim', U.rgbaOf(accent, 0.12));
+    root.style.setProperty('--accent-hover', U.lighten(accent, 0.18));
+  }
+
   /* --------------------------------------------------------------- 초기화 */
 
   function init() {
@@ -283,6 +301,7 @@ window.MW = window.MW || {};
     init: init, go: go, onRoute: onRoute, route: function () { return current; },
     registerFloat: registerFloat, floats: floats, syncFloatButtons: syncButtons, isMobile: isMobile,
     modal: modal, closeModal: closeModal, confirm: confirmDialog,
-    requestNotify: requestNotify, notify: notify, playSound: playSound
+    requestNotify: requestNotify, notify: notify, playSound: playSound,
+    applyTheme: applyTheme
   };
 })();

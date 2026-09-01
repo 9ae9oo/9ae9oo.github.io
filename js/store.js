@@ -28,7 +28,8 @@ window.MW = window.MW || {};
         sound: true,          // 알람 소리 사용
         icalUrl: '',
         floats: {},           // 플로팅 창 위치·크기 기억
-        habitPanelOpen: true  // 캘린더 상단 해빗 트래커 펼침 여부
+        habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
+        theme: { mode: 'dark', accent: '#6b8afd' }  // mode: 'dark' | 'light'
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       motto: { text: '', date: '' },   // 오늘의 마음가짐 (홈에서만 표시, 체크 없음)
@@ -98,6 +99,11 @@ window.MW = window.MW || {};
     var out = Object.assign({}, base, data);
     out.version = VERSION;
     out.settings = Object.assign({}, base.settings, data.settings || {});
+    // theme 은 중첩 객체라 얕은 병합으로는 accent 가 없는 절반짜리 값이 그대로 남을 수 있어 따로 채웁니다
+    if (!out.settings.theme || typeof out.settings.theme !== 'object') out.settings.theme = Object.assign({}, base.settings.theme);
+    else out.settings.theme = Object.assign({}, base.settings.theme, out.settings.theme);
+    if (out.settings.theme.mode !== 'light') out.settings.theme.mode = 'dark';
+    if (!/^#[0-9a-fA-F]{6}$/.test(out.settings.theme.accent || '')) out.settings.theme.accent = base.settings.theme.accent;
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
