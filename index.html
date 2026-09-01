@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="웹툰 작가를 위한 통합 브라우저 작업 도구 — 뽀모도로, 투두, 메모, 캘린더, 정산 장부를 한 탭에서.">
+<meta name="color-scheme" content="dark">
+<title>Mini Workspace</title>
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/shell.css">
+<link rel="stylesheet" href="./css/widgets.css">
+<link rel="stylesheet" href="./css/calendar.css">
+<link rel="stylesheet" href="./css/ledger.css">
+</head>
+<body data-route="home">
+
+<div id="app">
+
+  <!-- 상단 고정 음악바 (music.js 가 내용을 채웁니다) -->
+  <header id="musicbar"></header>
+
+  <div id="body">
+
+    <!-- 사이드바(PC) — 모바일에서는 홈 화면 상단으로 내려옵니다 -->
+    <aside id="sidebar">
+      <div class="side-card">
+        <div class="side-title">🍅 뽀모도로</div>
+        <div id="pomo-slot"></div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-title">🎯 오늘의 목표</div>
+        <div id="goals-slot"></div>
+      </div>
+
+      <div class="side-card">
+        <div class="side-title">🪟 플로팅 위젯</div>
+        <div class="nav">
+          <button class="nav-item" data-float="memo"><span class="ico">📝</span>메모장</button>
+          <button class="nav-item" data-float="todo"><span class="ico">✅</span>투두리스트</button>
+        </div>
+      </div>
+
+      <nav class="nav nav-desktop">
+        <button class="nav-item" data-nav="home"><span class="ico">🏠</span>홈</button>
+        <button class="nav-item" data-nav="calendar"><span class="ico">📅</span>캘린더</button>
+        <button class="nav-item" data-nav="ledger"><span class="ico">💰</span>정산 장부</button>
+        <div class="nav-sep"></div>
+        <button class="nav-item" data-nav="settings"><span class="ico">⚙️</span>설정</button>
+      </nav>
+    </aside>
+
+    <!-- 페이지 영역 -->
+    <main id="main">
+
+      <section class="page active" data-page="home">
+        <div class="page-head">
+          <h1>홈</h1>
+          <p>오늘 하루를 한눈에. 타이머와 목표는 왼쪽(모바일은 위쪽)에 항상 붙어 있습니다.</p>
+        </div>
+        <div id="page-home-body"></div>
+      </section>
+
+      <section class="page" data-page="calendar">
+        <div class="page-head">
+          <h1>캘린더</h1>
+          <p>월 · 주 · 일 뷰와 해빗 트래커. 날짜를 붙인 할 일도 함께 표시됩니다.</p>
+        </div>
+        <div id="page-calendar-body"></div>
+      </section>
+
+      <section class="page" data-page="ledger">
+        <div class="page-head">
+          <h1>정산 장부</h1>
+          <p>거래 기록 하나에서 예산 대시보드 · 잔액 · 원천세 · 부가세 목록이 모두 파생됩니다.</p>
+        </div>
+        <div id="page-ledger-body"></div>
+      </section>
+
+      <section class="page" data-page="settings">
+        <div class="page-head">
+          <h1>설정</h1>
+          <p>재생목록, 장부 카테고리, 해빗과 그룹처럼 가끔 손대는 관리는 모두 여기에서.</p>
+        </div>
+        <div id="page-settings-body"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 하단 탭바 (모바일 전용) -->
+  <nav id="tabbar" class="mobile-only">
+    <button class="tabbar-item" data-nav="home"><span class="ico">🏠</span>홈</button>
+    <button class="tabbar-item" data-nav="calendar"><span class="ico">📅</span>캘린더</button>
+    <button class="tabbar-item" data-nav="ledger"><span class="ico">💰</span>장부</button>
+    <button class="tabbar-item" data-float="todo"><span class="ico">✅</span>할일</button>
+    <button class="tabbar-item" data-nav="settings"><span class="ico">⚙️</span>설정</button>
+  </nav>
+
+</div>
+
+<div id="toast-wrap"></div>
+
+<!-- 번들러 없이 순서대로 로드합니다 (file:// 로 열어도 동작하도록 ES module 을 쓰지 않습니다) -->
+<script src="./js/util.js"></script>
+<script src="./js/store.js"></script>
+<script src="./js/shell.js"></script>
+<script src="./js/markdown.js"></script>
+<script src="./js/pomodoro.js"></script>
+<script src="./js/goals.js"></script>
+<script src="./js/music.js"></script>
+<script src="./js/todo.js"></script>
+<script src="./js/memo.js"></script>
+<script src="./js/habits.js"></script>
+<script src="./js/calendar.js"></script>
+<script src="./js/ledger.js"></script>
+<script src="./js/settings.js"></script>
+<script src="./js/app.js"></script>
+
+</body>
+</html>

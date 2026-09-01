@@ -1,0 +1,836 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mini Workspace 기획서 v2.0</title>
+<link href="https://fonts.googleapis.com/css2?family=Pretendard:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface-0: #161820;
+  --surface-1: #1c1f2b;
+  --surface-2: #252836;
+  --border: #2e3244;
+  --border-accent: #3d4259;
+  --text: #e1e4ed;
+  --text-muted: #8b90a5;
+  --text-dim: #5c6078;
+  --accent: #6b8afd;
+  --accent-dim: rgba(107,138,253,0.12);
+  --green: #4ade80;
+  --green-dim: rgba(74,222,128,0.12);
+  --red: #f87171;
+  --red-dim: rgba(248,113,113,0.12);
+  --amber: #fbbf24;
+  --amber-dim: rgba(251,191,36,0.12);
+  --purple: #a78bfa;
+  --purple-dim: rgba(167,139,250,0.12);
+  --teal: #2dd4bf;
+  --teal-dim: rgba(45,212,191,0.12);
+  --coral: #fb7185;
+  --coral-dim: rgba(251,113,133,0.12);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 3rem 2rem 6rem;
+}
+
+/* Header */
+.doc-header {
+  margin-bottom: 4rem;
+  padding-bottom: 2rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.doc-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  margin-bottom: 0.5rem;
+}
+
+.doc-header .subtitle {
+  font-size: 1rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.doc-header .meta {
+  margin-top: 1.2rem;
+  display: flex;
+  gap: 2rem;
+  font-size: 0.82rem;
+  color: var(--text-dim);
+}
+
+/* Section */
+.section {
+  margin-bottom: 3.5rem;
+}
+
+.section-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+}
+
+.section h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-bottom: 1rem;
+}
+
+.section h3 {
+  font-size: 1.05rem;
+  font-weight: 600;
+  margin-top: 1.8rem;
+  margin-bottom: 0.8rem;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--accent);
+}
+
+.section p {
+  color: var(--text-muted);
+  font-size: 0.92rem;
+  margin-bottom: 0.8rem;
+  max-width: 680px;
+}
+
+/* Cards */
+.card-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1.2rem 0;
+}
+
+@media (max-width: 640px) {
+  .card-grid { grid-template-columns: 1fr; }
+}
+
+.card {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.2rem 1.4rem;
+}
+
+.card.full { grid-column: 1 / -1; }
+
+.card-icon {
+  font-size: 1.4rem;
+  margin-bottom: 0.6rem;
+}
+
+.card h4 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+.card p {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Badge */
+.badge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+  margin-left: 0.5rem;
+  vertical-align: middle;
+}
+
+.badge-sidebar { background: var(--accent-dim); color: var(--accent); }
+.badge-floating { background: var(--coral-dim); color: var(--coral); }
+.badge-page { background: var(--teal-dim); color: var(--teal); }
+.badge-removed { background: var(--red-dim); color: var(--red); }
+.badge-later { background: var(--amber-dim); color: var(--amber); }
+
+/* Spec Table */
+.spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+  margin: 1rem 0;
+}
+
+.spec-table th {
+  text-align: left;
+  font-weight: 600;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-0);
+}
+
+.spec-table td {
+  padding: 0.7rem 1rem;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.spec-table td:first-child {
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  width: 160px;
+}
+
+.spec-table td:last-child {
+  color: var(--text-muted);
+}
+
+/* Hierarchy */
+.hierarchy {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.2rem 0;
+}
+
+.h-level {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  padding: 0.8rem 0;
+}
+
+.h-level + .h-level { border-top: 1px solid var(--border); }
+
+.h-tag {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  min-width: 90px;
+  text-align: center;
+}
+
+.h-tag.sidebar { background: var(--accent-dim); color: var(--accent); }
+.h-tag.floating { background: var(--coral-dim); color: var(--coral); }
+.h-tag.page { background: var(--teal-dim); color: var(--teal); }
+
+.h-items {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  flex: 1;
+}
+
+.h-items strong { color: var(--text); font-weight: 500; }
+
+/* Flow */
+.flow-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 1.2rem 0;
+}
+
+.flow-step {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.flow-line {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 24px;
+}
+
+.flow-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex-shrink: 0;
+  margin-top: 6px;
+}
+
+.flow-connector {
+  width: 1px;
+  height: 32px;
+  background: var(--border);
+}
+
+.flow-content {
+  padding-bottom: 1rem;
+}
+
+.flow-content strong {
+  font-size: 0.88rem;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.flow-content span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+/* Data model */
+.data-model {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1.2rem 0;
+  font-family: 'Pretendard', monospace;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  line-height: 1.8;
+}
+
+.data-model .field {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.data-model .type {
+  color: var(--text-dim);
+}
+
+.data-model .desc {
+  color: var(--text-muted);
+}
+
+/* Callout */
+.callout {
+  background: var(--surface-1);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  padding: 1rem 1.2rem;
+  margin: 1.2rem 0;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.callout.warning { border-left-color: var(--amber); }
+.callout.danger { border-left-color: var(--red); }
+
+.callout strong { color: var(--text); }
+
+/* Removed */
+.removed {
+  opacity: 0.4;
+  text-decoration: line-through;
+}
+
+/* Footer */
+.doc-footer {
+  margin-top: 4rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-dim);
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<!-- HEADER -->
+<header class="doc-header">
+  <h1>Mini Workspace</h1>
+  <div class="subtitle">웹툰 작가를 위한 통합 브라우저 작업 도구 — 기획서 v2.0</div>
+  <div class="meta">
+    <span>작성일 2026.09.01</span>
+    <span>HTML / CSS / JavaScript</span>
+    <span>반응형 (PC + 모바일)</span>
+  </div>
+</header>
+
+<!-- 1. 프로젝트 개요 -->
+<section class="section">
+  <div class="section-label">01 — Overview</div>
+  <h2>프로젝트 개요</h2>
+  <p>Mini Workspace는 웹툰 작가의 일상 업무에 필요한 도구들을 하나의 브라우저 탭 안에 통합한 웹 앱입니다. 별도 설치 없이 브라우저만 있으면 PC와 모바일 모두에서 동작하며, 모든 데이터는 브라우저 내장 저장소(LocalStorage)에 보관되어 새로고침 후에도 유지됩니다.</p>
+  <p>원래 Python(PyQt6) 데스크톱 앱으로 구상되었으나, 빠른 개발과 모바일 대응을 위해 웹 기술(HTML/CSS/JS)로 전환되었습니다. 이전에 제미나이로 만들었던 "WorkSpace Pro" 프로토타입에서 정산 장부와 음악 플레이어 요소를 흡수 통합했습니다.</p>
+
+  <div class="callout">
+    <strong>별개 프로젝트 주의:</strong> 초기 대화에서 논의된 "독립형 YouTube/SoundCloud 음악 플레이어"는 이 Mini Workspace와 별개의 프로젝트입니다. 여기서의 음악 플레이어는 워크스페이스 상단 바에 내장된 위젯입니다.
+  </div>
+</section>
+
+<!-- 2. 위젯 아키텍처 -->
+<section class="section">
+  <div class="section-label">02 — Architecture</div>
+  <h2>위젯 아키텍처 (3단계)</h2>
+  <p>모든 위젯은 사용 빈도와 정보량에 따라 3가지 레벨로 나뉩니다. PC에서는 여러 위젯이 동시에 표시되고, 모바일에서는 한 번에 하나씩 전체 화면으로 전환됩니다.</p>
+
+  <div class="hierarchy">
+    <div class="h-level">
+      <span class="h-tag sidebar">사이드바 고정</span>
+      <div class="h-items">
+        <strong>작업 중 실시간으로 곁눈질하는 것들</strong><br>
+        뽀모도로 타이머, 오늘의 목표
+      </div>
+    </div>
+    <div class="h-level">
+      <span class="h-tag sidebar">상단 고정바</span>
+      <div class="h-items">
+        <strong>항상 접근 가능해야 하는 것</strong><br>
+        음악 플레이어 (접히지 않음, 화면 최상단)
+      </div>
+    </div>
+    <div class="h-level">
+      <span class="h-tag floating">플로팅 팝업</span>
+      <div class="h-items">
+        <strong>필요할 때만 열고 닫는 것들</strong><br>
+        메모장 (포스트잇), 투두리스트
+      </div>
+    </div>
+    <div class="h-level">
+      <span class="h-tag page">전용 페이지</span>
+      <div class="h-items">
+        <strong>정보량이 많아 넓은 화면이 필요한 것들</strong><br>
+        캘린더 (월/주/일 + 해빗 트래커), 정산 장부 (가계부 대시보드)
+      </div>
+    </div>
+  </div>
+
+  <h3>PC vs 모바일 동작 차이</h3>
+  <table class="spec-table">
+    <thead><tr><th>영역</th><th>PC</th><th>모바일</th></tr></thead>
+    <tbody>
+      <tr><td>음악 상단바</td><td>항상 상단 고정</td><td>미니바로 축소</td></tr>
+      <tr><td>사이드바</td><td>항상 옆에 표시</td><td>하단 탭 바로 변환</td></tr>
+      <tr><td>플로팅 위젯</td><td>여러 개 동시 열기 가능</td><td>전체 화면 1개씩</td></tr>
+      <tr><td>전용 페이지</td><td>넓은 레이아웃</td><td>세로 스크롤 최적화</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 3. 음악 플레이어 -->
+<section class="section">
+  <div class="section-label">03 — Music Player</div>
+  <h2>음악 플레이어 <span class="badge badge-sidebar">상단 고정바</span></h2>
+  <p>화면 최상단에 항상 고정되어, 사이드바 토글이나 페이지 전환과 무관하게 언제든 음악 조작이 가능합니다.</p>
+
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>지원 서비스</td><td>YouTube만 (SoundCloud 제외)</td></tr>
+      <tr><td>재생목록</td><td>최대 5개</td></tr>
+      <tr><td>재생 방식</td><td>순차 재생 + 셔플(랜덤)</td></tr>
+      <tr><td>곡 추가</td><td>URL 붙여넣기 → oEmbed API로 제목 자동 조회. 실패 시 수동 입력 안내</td></tr>
+      <tr><td>곡 관리</td><td>별도 설정 페이지에서만 (추가/삭제/순서변경/드래그)</td></tr>
+    </tbody>
+  </table>
+
+  <h3>상단바 구성</h3>
+  <p>현재 재생 중인 플레이리스트의 곡 목록이 메인 뷰로 표시됩니다. 재생목록 전환은 전용 버튼을 누르면 열리는 팝업/사이드 패널에서 5개 중 선택합니다.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">🎵</div>
+      <h4>상단바 표시 요소</h4>
+      <p>재생목록 이름 · 현재곡 제목 · ◀ ▶/Ⅱ ▶ 컨트롤 · 순차/셔플 전환 · 목록 전환 버튼</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">⚙️</div>
+      <h4>설정 페이지 (별도)</h4>
+      <p>재생목록 5개 관리 (생성/이름변경/삭제) · YouTube URL 붙여넣기 → 자동 제목 · 곡 순서 드래그 · 곡 삭제</p>
+    </div>
+  </div>
+</section>
+
+<!-- 4. 캘린더 -->
+<section class="section">
+  <div class="section-label">04 — Calendar</div>
+  <h2>캘린더 <span class="badge badge-page">전용 페이지</span></h2>
+  <p>월간/주간/일간 3종 뷰를 전환하며, 해빗 트래커가 모든 뷰에 통합 표시됩니다. 투두리스트와 데이터를 공유하고, 브라우저 데스크톱 알림을 지원합니다.</p>
+
+  <h3>기본 뷰: 월간</h3>
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>기본 화면</td><td>월간 그리드 + 옆/상/하단에 그 달 상세 요약 패널</td></tr>
+      <tr><td>날짜 미리보기</td><td>각 칸에 일정 요약(점 또는 짧은 텍스트) 표시</td></tr>
+      <tr><td>상세 보기</td><td>미리보기 클릭 → 상세 패널 열림 (시간, 제목, 색상)</td></tr>
+      <tr><td>해빗 표시</td><td>각 날짜 칸에 ●●○ 형태로 완료 여부 점 표시</td></tr>
+    </tbody>
+  </table>
+
+  <h3>주간 뷰</h3>
+  <p>요일별 컬럼 레이아웃. 각 요일 안에 일정 블록 + 해빗 체크 줄이 함께 표시됩니다.</p>
+
+  <h3>일간 뷰 (데일리 플래너)</h3>
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>상단 영역</td><td>종일 일정 + 시간 없는 해빗/투두</td></tr>
+      <tr><td>타임라인</td><td>세로 스크롤, 사용자가 설정한 기상시간부터 24시간</td></tr>
+      <tr><td>일정 추가</td><td>타임라인 위에서 드래그로 시간대 직접 선택 (구글 캘린더 방식)</td></tr>
+      <tr><td>메모</td><td>새 기능 없이 기존 메모장 위젯을 플로팅으로 옆에 배치해서 사용</td></tr>
+    </tbody>
+  </table>
+
+  <h3>일정 기능</h3>
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>반복 일정</td><td>일/주/월 단위 반복 지원 (시간 단위 불필요)</td></tr>
+      <tr><td>반복 수정</td><td>전체 일괄 수정/삭제만 (특정 회차 예외처리 없음)</td></tr>
+      <tr><td>색상 태그</td><td>일정마다 색을 직접 지정 가능 (투두는 그룹색 기본값에서 상속)</td></tr>
+      <tr><td>알림</td><td>브라우저 데스크톱 알림 (Notification API). 탭이 열려 있을 때만 작동 — 수용됨</td></tr>
+    </tbody>
+  </table>
+
+  <h3>외부 캘린더 연동</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">📅</div>
+      <h4>1단계: iCal 읽기 전용 <span class="badge badge-sidebar">우선</span></h4>
+      <p>구글 캘린더의 iCal URL을 설정에 붙여넣으면 일정을 읽어와서 캘린더에 표시. 로그인 불필요, 설정 간단.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔗</div>
+      <h4>2단계: Google Calendar API <span class="badge badge-later">나중에</span></h4>
+      <p>양방향 동기화 (이미 API 키 보유). 우리 앱에서 일정 추가/수정 시 구글에도 반영. 스마트폰 앱 대체.</p>
+    </div>
+  </div>
+</section>
+
+<!-- 5. 해빗 트래커 -->
+<section class="section">
+  <div class="section-label">05 — Habit Tracker</div>
+  <h2>해빗 트래커 <span class="badge badge-page">캘린더 내장</span></h2>
+  <p>독립 위젯이 아니라 캘린더의 월간/주간/일간 모든 뷰에 통합 표시됩니다.</p>
+
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>체크 방식</td><td>단순 체크 (했다/안했다만, 횟수·양 기록 없음)</td></tr>
+      <tr><td>반복 주기</td><td>매일 반복만 (요일 지정 불필요)</td></tr>
+      <tr><td>스트릭</td><td>연속 달성일(🔥) 일간 뷰에서 표시</td></tr>
+      <tr><td>월간 표시</td><td>날짜 칸에 ●○ 점으로 완료 여부</td></tr>
+      <tr><td>주간 표시</td><td>요일 컬럼에 체크박스 줄</td></tr>
+      <tr><td>일간 표시</td><td>해빗 전체 목록 + 연속 달성일 수치</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 6. 투두리스트 -->
+<section class="section">
+  <div class="section-label">06 — Todo List</div>
+  <h2>투두리스트 <span class="badge badge-floating">플로팅</span></h2>
+  <p>예정된 일정 관리가 아닌, 생각날 때마다 던져두는 "인박스" 개념의 할 일 목록입니다. 캘린더와 데이터를 공유합니다.</p>
+
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>개념</td><td>인박스형 — 날짜 없이도 추가 가능, 떠오르는 것을 바로 기록</td></tr>
+      <tr><td>기본 정보</td><td>제목 + 완료 여부</td></tr>
+      <tr><td>그룹(폴더)</td><td>카테고리별 분류 (예: 전체/업무메모/개인일정/기타). 탭 전환으로 해당 그룹만 보기</td></tr>
+      <tr><td>정렬</td><td>그룹 내 드래그로 직접 순서 변경. 완료 항목은 자동으로 흐려지고 하단으로</td></tr>
+      <tr><td>날짜 연동</td><td>날짜를 붙인 투두는 캘린더 해당 날짜에도 표시됨</td></tr>
+    </tbody>
+  </table>
+
+  <h3>캘린더 색상 연동</h3>
+  <p>그룹마다 기본 색을 지정합니다 (예: 업무메모=파랑, 개인일정=녹색). 그 그룹의 투두는 캘린더에서 자동으로 해당 색으로 표시됩니다. 특정 항목만 원하면 개별적으로 색을 덮어쓸 수 있습니다.</p>
+
+  <h3>데이터 공유 구조</h3>
+  <p>투두 데이터는 단일 저장소 하나에 관리됩니다. 캘린더 페이지에서는 날짜가 있는 투두만 필터링해서 보여주고, 플로팅 투두창에서는 전체 목록을 보여줍니다. 어디서 체크하든 같은 데이터가 동시에 갱신됩니다.</p>
+</section>
+
+<!-- 7. 메모장 -->
+<section class="section">
+  <div class="section-label">07 — Memo</div>
+  <h2>메모장 <span class="badge badge-floating">플로팅</span></h2>
+  <p>포스트잇처럼 여러 개를 추가/삭제할 수 있는 플로팅 메모 위젯입니다.</p>
+
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>명세</th></tr></thead>
+    <tbody>
+      <tr><td>서식 지원</td><td>마크다운 문법: 볼드, 이탤릭, 밑줄, 취소선, 체크박스([ ]), 코드블럭, 인용, 링크, 수평선(---)</td></tr>
+      <tr><td>입력 방식</td><td>하이브리드 — 기호 직접 타이핑 + 툴바 버튼(B/I/U 등) 클릭 시 기호 자동 삽입. 둘 다 지원</td></tr>
+      <tr><td>렌더링</td><td>실시간 미리보기 (입력하면서 바로 서식 변환, 별도 미리보기 모드 없음)</td></tr>
+      <tr><td>그룹</td><td>투두와 동일하게 카테고리별 분류 가능</td></tr>
+      <tr><td>형태</td><td>여러 개 포스트잇처럼 추가/삭제 가능</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 8. 정산 장부 (가계부) -->
+<section class="section">
+  <div class="section-label">08 — Financial Ledger</div>
+  <h2>정산 장부 (가계부) <span class="badge badge-page">전용 페이지</span></h2>
+  <p>카테고리형 개인 수입/지출 장부입니다. 하나의 거래 기록 원본에서 예산 대시보드, 잔액 계산, 부가세 필터 등 모든 파생 뷰가 자동으로 계산됩니다.</p>
+
+  <div class="callout warning">
+    <strong>세무 안내:</strong> 원천세(3.3%) 계산 등은 참고용이며, 실제 세무 신고 전에는 홈택스 또는 세무사를 통한 확인을 권장합니다.
+  </div>
+
+  <h3>데이터 모델: 거래 기록 (단일 원본)</h3>
+  <div class="data-model">
+    <span class="field">날짜</span> <span class="type">date</span> <span class="desc">— 거래 발생일</span><br>
+    <span class="field">타입</span> <span class="type">enum</span> <span class="desc">— 수입 / 업무 / 지출 / 세금 / 저축 / 상환 (편집·확장 가능, 설정 페이지에서 관리)</span><br>
+    <span class="field">대분류</span> <span class="type">enum</span> <span class="desc">— 타입에 종속되는 하위 카테고리 (업무→어시비/소재비/SW/HW, 지출→식비/병원/교통 등)</span><br>
+    <span class="field">금액</span> <span class="type">number</span> <span class="desc">— 원 단위</span><br>
+    <span class="field">내역</span> <span class="type">text</span> <span class="desc">— 무엇/누구에 대한 거래인지</span><br>
+    <span class="field">결제수단</span> <span class="type">enum</span> <span class="desc">— 계좌 / 카드 / 현금 / 기타</span><br>
+    <span class="field">메모</span> <span class="type">text</span> <span class="desc">— 자유 메모</span>
+  </div>
+
+  <h3>타입 → 대분류 계층 구조</h3>
+  <p>대분류는 타입에 종속됩니다. 거래 입력 시 타입을 먼저 선택하면 해당하는 대분류만 드롭다운에 표시됩니다. 다른 타입의 대분류를 자유롭게 섞어 쓸 수 없습니다.</p>
+
+  <div class="card-grid">
+    <div class="card">
+      <h4>수입</h4>
+      <p>MG/RS, 주식, 예금/기타</p>
+    </div>
+    <div class="card">
+      <h4>업무</h4>
+      <p>어시비, 소재비, 소프트웨어, 하드웨어, 도서/기타</p>
+    </div>
+    <div class="card">
+      <h4>지출 (변동)</h4>
+      <p>식비, 병원, 관리/공과금, 쇼핑/여가, 교통/기타</p>
+    </div>
+    <div class="card">
+      <h4>지출 (고정)</h4>
+      <p>보험, 통신비</p>
+    </div>
+    <div class="card">
+      <h4>세금</h4>
+      <p>소득세, 부가세, 기타</p>
+    </div>
+    <div class="card">
+      <h4>저축 / 상환</h4>
+      <p>사용자 정의 카테고리</p>
+    </div>
+  </div>
+
+  <h3>파생 뷰 (자동 계산)</h3>
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>(a) 예산 vs 실제 대시보드</strong>
+        <span>타입→대분류로 그룹핑. 예산/실제/차이 표시. 색상: 예산 내 = 파랑, 초과 = 빨강</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>(b) 결제수단별 분류</strong>
+        <span>현금+계좌이체 합산 → 통장잔액 유추. 통장잔액 − 이번달 카드값 = 쓸 수 있는 돈</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div></div>
+      <div class="flow-content">
+        <strong>(c) 업무지출 자동 필터</strong>
+        <span>타입=업무인 거래만 자동 추출 → 부가가치세 신고용 목록</span>
+      </div>
+    </div>
+  </div>
+
+  <h3>수입-지출 요약 계산식</h3>
+  <div class="data-model">
+    <span class="field">수입</span> − (<span class="field">업무</span> + <span class="field">지출</span> + <span class="field">세금</span> + <span class="field">저축</span> + <span class="field">상환</span>) = <span class="desc">순 수입 요약</span>
+  </div>
+
+  <h3>이월금</h3>
+  <p>매달 직접 수동 입력합니다 (자동 계산 아님). 계좌/현금 잔액과 지난달 카드 청구액을 입력합니다.</p>
+
+  <h3>대시보드 UI 구성</h3>
+  <table class="spec-table">
+    <thead><tr><th>영역</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>상단 4개 카드</td><td>수입 / 지출 합계 / 통장 잔액 / 쓸 수 있는 돈</td></tr>
+      <tr><td>이월금 입력</td><td>계좌/현금 + 지난달 카드 직접 입력 박스</td></tr>
+      <tr><td>카테고리 상세</td><td>전체 카드를 탭 없이 스크롤. 타입별(수입/업무/지출/저축 등) 순서대로 나열</td></tr>
+      <tr><td>거래 추가</td><td>대시보드에서는 안 함. 별도 "거래내역" 탭에서만</td></tr>
+    </tbody>
+  </table>
+
+  <h3>표시 형태: 2종</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">📊</div>
+      <h4>전체 표 (스크롤)</h4>
+      <p>참고 이미지(실제 스프레드시트) 형식 그대로. 월별 그룹핑 + 합계행. 모든 달이 이어져서 전체 추이 확인 가능.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📋</div>
+      <h4>월간 요약 뷰</h4>
+      <p>한 달만 선택해서 깔끔하게 보기. 상단에 요약 카드(총 지급액, 총 원천세 등), 아래에 그 달 거래 목록만 표시.</p>
+    </div>
+  </div>
+
+  <h3>어시스턴트 등록</h3>
+  <table class="spec-table">
+    <thead><tr><th>필드</th><th>설명</th></tr></thead>
+    <tbody>
+      <tr><td>이름 (필수)</td><td>어시스턴트 이름 또는 필명</td></tr>
+      <tr><td>공정/역할 (필수)</td><td>담당 업무 (예: 채색, 선화, 배경)</td></tr>
+      <tr><td>자유 메모</td><td>연락처, 계좌, 특이사항 등 어떤 정보든 자유롭게 기록</td></tr>
+    </tbody>
+  </table>
+
+  <h3>원천세 (3.3%) 계산</h3>
+  <p>별도의 독립 도구가 아니라, 가계부에서 "업무 → 어시비" 카테고리를 선택하고 등록된 어시스턴트를 지정했을 때 자동으로 계산됩니다. 사업소득세 3% + 지방세 0.3% = 3.3%.</p>
+
+  <h3>부가세</h3>
+  <p>부가세 세액은 직접 입력 (별도 계산기 방식). 업무 타입 거래만 자동 필터링해서 모아보는 것으로 신고 준비를 돕습니다.</p>
+
+  <h3>카테고리 관리</h3>
+  <p>타입과 대분류의 추가/수정/삭제는 별도 설정 페이지에서 관리합니다. 거래 입력 중에는 새 카테고리를 만들 수 없습니다. (음악 플레이어와 동일한 "재생과 편집 분리" 원칙)</p>
+</section>
+
+<!-- 9. 제외된 기능 -->
+<section class="section">
+  <div class="section-label">09 — Excluded</div>
+  <h2>제외된 기능</h2>
+  <p>검토 후 의도적으로 제외하기로 결정된 기능들입니다.</p>
+
+  <table class="spec-table">
+    <thead><tr><th>기능</th><th>제외 사유</th></tr></thead>
+    <tbody>
+      <tr><td><span class="removed">컷별 9단계 공정표</span></td><td>캘린더 일간 뷰 + 해빗 트래커로 대체 가능. 63컷×9단계 표는 정보량이 과도</td></tr>
+      <tr><td><span class="removed">화수별 진행 트래커</span></td><td>캘린더의 반복 일정과 투두 조합으로 충분히 관리 가능</td></tr>
+      <tr><td><span class="removed">SoundCloud 지원</span></td><td>YouTube만으로도 충분하며 기술 복잡성(CORS 우회) 대비 효과 적음</td></tr>
+      <tr><td><span class="removed">YouTube 검색 기능</span></td><td>URL 직접 붙여넣기로 충분. 검색 API는 할당량 제한이 있어 불안정</td></tr>
+      <tr><td><span class="removed">로컬 MP3/WAV 재생</span></td><td>브라우저 재시작 시 파일 링크가 끊어지는 근본적 한계</td></tr>
+      <tr><td><span class="removed">스마트폰 전용 앱</span></td><td>구글 캘린더 앱으로 대체, iCal 연동으로 데이터 동기화</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 10. 기술 스택 & 데이터 -->
+<section class="section">
+  <div class="section-label">10 — Technical</div>
+  <h2>기술 스택 및 데이터 저장</h2>
+
+  <table class="spec-table">
+    <thead><tr><th>항목</th><th>내용</th></tr></thead>
+    <tbody>
+      <tr><td>프론트엔드</td><td>HTML + CSS + JavaScript (프레임워크 미정)</td></tr>
+      <tr><td>데이터 저장</td><td>LocalStorage 또는 IndexedDB (브라우저 내장)</td></tr>
+      <tr><td>음악 재생</td><td>YouTube IFrame API</td></tr>
+      <tr><td>제목 조회</td><td>YouTube oEmbed API (무료, 키 불필요)</td></tr>
+      <tr><td>캘린더 연동</td><td>iCal(.ics) 읽기 (1단계) → Google Calendar API (2단계, 선택)</td></tr>
+      <tr><td>알림</td><td>Web Notification API (브라우저 열려있을 때만)</td></tr>
+      <tr><td>백업/복구</td><td>JSON 파일 내보내기/불러오기</td></tr>
+    </tbody>
+  </table>
+
+  <h3>핵심 설계 원칙</h3>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-icon">🔗</div>
+      <h4>단일 원본 (Single Source of Truth)</h4>
+      <p>거래 기록, 투두, 해빗 등 각 위젯의 원본 데이터는 하나만 존재하고, 여러 화면에서 파생되어 표시됩니다.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🔀</div>
+      <h4>재생과 편집 분리</h4>
+      <p>자주 쓰는 기능(재생, 입력)과 가끔 쓰는 기능(설정, 카테고리 관리)을 분리하여 UI를 깔끔하게 유지합니다.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">📱</div>
+      <h4>반응형 전환</h4>
+      <p>PC에서는 넓게 펼치고, 모바일에서는 하나씩 전환. CSS 미디어 쿼리로 자동 전환.</p>
+    </div>
+    <div class="card">
+      <div class="card-icon">🧩</div>
+      <h4>위젯 독립성</h4>
+      <p>각 위젯은 독립적으로 동작하되, 필요한 곳에서만 데이터를 공유합니다 (투두↔캘린더, 공정표 마감일→캘린더).</p>
+    </div>
+  </div>
+</section>
+
+<!-- 11. 개발 우선순위 -->
+<section class="section">
+  <div class="section-label">11 — Roadmap</div>
+  <h2>개발 우선순위 (안)</h2>
+  <p>핵심 인프라(App Shell)를 먼저 만들고, 위젯을 하나씩 채워 넣는 순서입니다.</p>
+
+  <div class="flow-steps">
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>0단계: App Shell</strong>
+        <span>상단 음악바 영역 + 사이드바(PC)/하단탭(모바일) 구조 + 페이지 전환 라우팅 + 반응형 기반</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>1단계: 음악 플레이어</strong>
+        <span>YouTube 재생, 재생목록 5개, 순차/셔플, 설정 페이지</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>2단계: 메모장 + 투두</strong>
+        <span>포스트잇 메모, 마크다운 실시간 렌더링, 인박스형 투두, 그룹 분류</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>3단계: 캘린더</strong>
+        <span>월/주/일 뷰, 해빗 트래커, 투두 연동, 반복 일정, iCal 읽기</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div><div class="flow-connector"></div></div>
+      <div class="flow-content">
+        <strong>4단계: 정산 장부</strong>
+        <span>거래 입력/수정, 대시보드(4카드+카테고리 스크롤), 전체표/월간요약, 어시스턴트 등록, 부가세 필터</span>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="flow-line"><div class="flow-dot"></div></div>
+      <div class="flow-content">
+        <strong>5단계: 연동·확장</strong>
+        <span>Google Calendar API 양방향 동기화 (선택), JSON 백업/복구</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="doc-footer">
+  Mini Workspace 기획서 v2.0 — 2026.09.01 작성<br>
+  이 문서는 Claude Design을 통한 UI/UX 설계의 기반 자료로 사용됩니다.
+</footer>
+
+</div>
+</body>
+</html>

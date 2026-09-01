@@ -1,0 +1,150 @@
+/* ==========================================================================
+   위젯 — 뽀모도로 / 오늘의 목표 / 메모(포스트잇) / 투두
+   ========================================================================== */
+
+/* --------------------------------------------------------------- 뽀모도로 */
+.pomo { display: flex; flex-direction: column; align-items: center; gap: 10px; }
+.pomo-ring { position: relative; width: 168px; height: 168px; }
+.pomo-ring svg { transform: rotate(-90deg); display: block; }
+.pomo-ring .track { fill: none; stroke: var(--surface-2); stroke-width: 12; }
+.pomo-ring .bar {
+  fill: none; stroke: var(--accent); stroke-width: 12; stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s linear, stroke 0.3s;
+}
+.pomo-ring.short .bar { stroke: var(--green); }
+.pomo-ring.long .bar { stroke: var(--teal); }
+
+.pomo-center {
+  position: absolute; inset: 0;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px;
+}
+.pomo-session { font-size: 11px; font-weight: 600; letter-spacing: 0.06em; color: var(--text-dim); }
+.pomo-time { font-size: 30px; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.pomo-count { font-size: 11px; color: var(--text-dim); }
+
+.pomo-btns { display: flex; align-items: center; gap: 8px; }
+.pomo-btns .btn-icon { width: 34px; height: 34px; border-radius: 50%; font-size: 13px; }
+.pomo-btns .main { width: 42px; height: 42px; background: var(--accent); border-color: var(--accent); color: #0f1117; font-size: 15px; }
+.pomo-btns .main:hover { background: #8aa2fd; }
+
+.pomo-setting { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; width: 100%; }
+.pomo-setting label { font-size: 10px; color: var(--text-dim); display: block; text-align: center; margin-bottom: 2px; }
+.pomo-setting input { text-align: center; padding: 5px 2px; font-size: 12px; }
+
+/* --------------------------------------------------------- 오늘의 목표 */
+.goal-list { display: flex; flex-direction: column; gap: 2px; margin-bottom: 8px; }
+.goal-item { display: flex; align-items: flex-start; gap: 8px; padding: 5px 4px; border-radius: 6px; }
+.goal-item:hover { background: var(--surface-2); }
+.goal-item .g-text { flex: 1; font-size: 13px; line-height: 1.45; word-break: break-word; }
+.goal-item.done .g-text { color: var(--text-dim); text-decoration: line-through; }
+.goal-item .btn-x { opacity: 0; color: var(--text-dim); font-size: 12px; }
+.goal-item:hover .btn-x { opacity: 1; }
+
+input[type="checkbox"].chk {
+  appearance: none; -webkit-appearance: none;
+  width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;
+  border: 1.5px solid var(--border-accent); border-radius: 4px;
+  background: var(--surface-0); cursor: pointer; position: relative;
+}
+input[type="checkbox"].chk:checked { background: var(--accent); border-color: var(--accent); }
+input[type="checkbox"].chk:checked::after {
+  content: ''; position: absolute; left: 4.5px; top: 1px;
+  width: 4px; height: 8px; border: solid #0f1117; border-width: 0 2px 2px 0; transform: rotate(45deg);
+}
+
+/* --------------------------------------------------------------- 투두 */
+.todo-tabs { display: flex; gap: 4px; overflow-x: auto; margin-bottom: 10px; padding-bottom: 2px; }
+.todo-tab {
+  font-size: 12px; padding: 4px 10px; border-radius: 999px; white-space: nowrap;
+  color: var(--text-muted); background: var(--surface-2);
+}
+.todo-tab.active { background: var(--accent-dim); color: var(--accent); }
+
+.todo-add { display: flex; gap: 6px; margin-bottom: 10px; }
+
+.todo-list { display: flex; flex-direction: column; gap: 3px; }
+.todo-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 8px; border-radius: var(--radius-sm);
+  background: var(--surface-0); border: 1px solid transparent;
+}
+.todo-item:hover { border-color: var(--border); }
+.todo-item.dragging { opacity: 0.4; }
+.todo-item.drag-over { border-color: var(--accent); }
+.todo-item .grip { color: var(--text-dim); cursor: grab; font-size: 12px; line-height: 1.6; user-select: none; }
+.todo-item .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
+.todo-item .t-main { flex: 1; min-width: 0; }
+.todo-item .t-title { font-size: 13px; line-height: 1.45; word-break: break-word; }
+.todo-item .t-meta { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
+.todo-item.done { opacity: 0.5; }
+.todo-item.done .t-title { text-decoration: line-through; }
+.todo-item .t-actions { display: flex; gap: 2px; opacity: 0; }
+.todo-item:hover .t-actions { opacity: 1; }
+
+/* --------------------------------------------------------------- 메모 */
+.memo-toolbar-top { display: flex; gap: 6px; margin-bottom: 10px; }
+
+.memo-card {
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--amber);
+  border-radius: var(--radius-sm);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.memo-head { display: flex; align-items: center; gap: 6px; padding: 7px 8px; background: var(--surface-2); }
+.memo-head .m-title {
+  flex: 1; background: transparent; border: none; outline: none;
+  font-size: 13px; font-weight: 600; color: var(--text); min-width: 0;
+}
+.memo-head select { width: auto; padding: 3px 6px; font-size: 11px; }
+
+.memo-tools { display: flex; flex-wrap: wrap; gap: 2px; padding: 5px 6px; border-bottom: 1px solid var(--border); }
+.memo-tools button {
+  font-size: 11px; padding: 2px 7px; border-radius: 5px; color: var(--text-muted);
+  border: 1px solid transparent;
+}
+.memo-tools button:hover { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+
+.memo-input {
+  width: 100%; background: transparent; border: none; outline: none; resize: none;
+  padding: 9px 10px; font-size: 13px; line-height: 1.65; color: var(--text-muted);
+  font-family: var(--font); min-height: 54px; display: block;
+}
+.memo-preview { padding: 4px 10px 10px; font-size: 13px; line-height: 1.7; border-top: 1px dashed var(--border); }
+.memo-preview:empty { display: none; }
+.memo-label { font-size: 10px; color: var(--text-dim); padding: 5px 10px 0; letter-spacing: 0.05em; }
+
+/* 마크다운 렌더 결과 */
+.md h1, .md h2, .md h3 { font-size: 15px; font-weight: 700; margin: 8px 0 4px; }
+.md h2 { font-size: 14px; }
+.md h3 { font-size: 13.5px; color: var(--text-muted); }
+.md p { margin: 4px 0; }
+.md ul, .md ol { margin: 4px 0 4px 18px; }
+.md li { margin: 2px 0; }
+.md li.task { list-style: none; margin-left: -16px; }
+.md li.task input { margin-right: 6px; vertical-align: -1px; }
+.md li.task.checked { color: var(--text-dim); text-decoration: line-through; }
+.md code {
+  background: var(--surface-2); border-radius: 4px; padding: 1px 5px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; color: var(--teal);
+}
+.md pre {
+  background: var(--surface-2); border-radius: var(--radius-sm); padding: 9px 11px;
+  overflow-x: auto; margin: 6px 0;
+}
+.md pre code { background: none; padding: 0; color: var(--text-muted); }
+.md blockquote {
+  border-left: 3px solid var(--border-accent); padding: 2px 0 2px 10px;
+  margin: 6px 0; color: var(--text-muted);
+}
+.md hr { border: none; border-top: 1px solid var(--border); margin: 10px 0; }
+.md del { color: var(--text-dim); }
+.md a { text-decoration: underline; }
+
+/* 모바일: 링을 조금 줄여 첫 화면에 목표까지 들어오게 */
+@media (max-width: 900px) {
+  .pomo-ring { width: 132px; height: 132px; }
+  .pomo-ring svg { width: 132px; height: 132px; }
+  .pomo-time { font-size: 25px; }
+}

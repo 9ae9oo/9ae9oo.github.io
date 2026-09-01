@@ -1,0 +1,104 @@
+/* ==========================================================================
+   정산 장부 (가계부)
+   ========================================================================== */
+
+.lg-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+
+.stat-grid {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px; margin-bottom: 16px;
+}
+.stat {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius); padding: 14px 16px;
+}
+.stat .label { font-size: 11px; color: var(--text-dim); letter-spacing: 0.05em; font-weight: 600; }
+.stat .value { font-size: 21px; font-weight: 700; letter-spacing: -0.02em; margin-top: 4px; font-variant-numeric: tabular-nums; }
+.stat .hint { font-size: 11px; color: var(--text-dim); margin-top: 3px; }
+.stat.income .value { color: var(--green); }
+.stat.expense .value { color: var(--coral); }
+.stat.bank .value { color: var(--accent); }
+.stat.free .value { color: var(--amber); }
+.stat.free .value.minus { color: var(--red); }
+
+.carry-box { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+
+.cat-group { margin-top: 16px; }
+.cat-group h3 {
+  font-size: 13px; font-weight: 700; margin-bottom: 8px;
+  display: flex; align-items: baseline; gap: 8px;
+}
+.cat-group h3 .sum { font-size: 12px; color: var(--text-muted); font-weight: 500; font-variant-numeric: tabular-nums; }
+
+.cat-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 10px; }
+.cat-card {
+  background: var(--surface-1); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 11px 12px;
+}
+.cat-card .name { font-size: 13px; font-weight: 600; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+.cat-card .amounts { display: flex; justify-content: space-between; font-size: 12px; color: var(--text-muted); font-variant-numeric: tabular-nums; }
+.cat-card .bar { height: 5px; background: var(--surface-3); border-radius: 3px; margin-top: 7px; overflow: hidden; }
+.cat-card .bar span { display: block; height: 100%; background: var(--accent); border-radius: 3px; }
+.cat-card.over .bar span { background: var(--red); }
+.cat-card.over .diff { color: var(--red); font-weight: 600; }
+.cat-card .diff { color: var(--accent); }
+.cat-card .budget-input {
+  width: 100%; margin-top: 7px; font-size: 11px; padding: 4px 7px;
+  background: var(--surface-0); border: 1px solid var(--border); border-radius: 5px; color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------- 거래 표 */
+.tx-table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius); }
+table.tx {
+  width: 100%; border-collapse: collapse; font-size: 12.5px; min-width: 720px;
+  background: var(--surface-1);
+}
+table.tx th {
+  text-align: left; font-size: 10.5px; font-weight: 600; color: var(--text-dim);
+  text-transform: uppercase; letter-spacing: 0.06em; padding: 9px 12px;
+  background: var(--surface-0); border-bottom: 1px solid var(--border);
+  position: sticky; top: 0; z-index: 2;
+}
+table.tx td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+table.tx tr:hover td { background: var(--surface-2); }
+table.tx td.num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+table.tx tr.month-head td {
+  background: var(--surface-0); font-weight: 700; font-size: 12px; color: var(--accent);
+  position: sticky; top: 32px; z-index: 1;
+}
+table.tx tr.month-sum td { background: var(--surface-2); font-weight: 600; }
+table.tx tr.month-sum:hover td { background: var(--surface-2); }
+.amount-in { color: var(--green); }
+.amount-out { color: var(--coral); }
+.tx-actions { display: flex; gap: 2px; }
+
+.tx-form { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; align-items: end; }
+.tx-form .form-row { min-width: 0; }
+.wt-note {
+  background: var(--amber-dim); border-left: 3px solid var(--amber);
+  border-radius: 0 6px 6px 0; padding: 7px 10px; font-size: 12px; color: var(--amber);
+}
+
+.callout {
+  background: var(--surface-1); border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  padding: 11px 14px; font-size: 12.5px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.65;
+}
+.callout.warn { border-left-color: var(--amber); }
+.callout strong { color: var(--text); }
+
+.asst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.asst-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
+.asst-card .n { font-size: 14px; font-weight: 600; }
+.asst-card .r { font-size: 12px; color: var(--accent); margin-bottom: 6px; }
+.asst-card .m { font-size: 12px; color: var(--text-muted); white-space: pre-wrap; line-height: 1.6; }
+
+@media (max-width: 900px) {
+  .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .carry-box { grid-template-columns: minmax(0, 1fr); }
+  .tx-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 480px) {
+  .stat-grid { grid-template-columns: minmax(0, 1fr); }
+  .tx-form { grid-template-columns: minmax(0, 1fr); }
+}
