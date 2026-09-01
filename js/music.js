@@ -244,6 +244,10 @@ window.MW = window.MW || {};
       onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
     });
 
+    bar.appendChild(el('button.btn.btn-ghost.btn-icon.mb-burger', {
+      text: '☰', title: '사이드바 접기', 'aria-label': '사이드바 접기',
+      dataset: { sidebarToggle: '1' }
+    }));
     bar.appendChild(el('div.mb-brand', {}, [ 'Mini ', el('span', { text: 'Workspace' }) ]));
     bar.appendChild(el('div.mb-controls', {}, [
       el('button.btn.btn-icon', { text: '◀', title: '이전 곡', onclick: prevTrack }),
@@ -256,6 +260,16 @@ window.MW = window.MW || {};
       text: '☰', title: '재생목록', dataset: { pop: 'music' },
       onclick: function () { popover ? closePopover() : openPopover(); }
     }));
+
+    // 어느 페이지에 있든 바로 띄울 수 있도록 플로팅 위젯 버튼을 상단바에 둡니다
+    bar.appendChild(el('div.mb-sep'));
+    bar.appendChild(el('button.btn.btn-icon.mb-widget', {
+      text: '📝', title: '메모장', 'aria-label': '메모장', dataset: { float: 'memo' }
+    }));
+    bar.appendChild(el('button.btn.btn-icon.mb-widget', {
+      text: '✅', title: '투두리스트', 'aria-label': '투두리스트', dataset: { float: 'todo' }
+    }));
+
     bar.appendChild(el('div', { id: 'yt-host' }));
 
     renderBar();

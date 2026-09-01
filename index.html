@@ -21,32 +21,20 @@
 
   <div id="body">
 
-    <!-- 사이드바(PC) — 모바일에서는 홈 화면 상단으로 내려옵니다 -->
+    <!-- 사이드바(PC) — 상단바의 ☰ 로 아이콘 레일까지 접힙니다.
+         모바일에서는 홈 화면 상단으로 내려오고 네비는 하단 탭바가 맡습니다. -->
     <aside id="sidebar">
       <div class="side-card">
         <div class="side-title">🍅 뽀모도로</div>
         <div id="pomo-slot"></div>
       </div>
 
-      <div class="side-card">
-        <div class="side-title">🎯 오늘의 목표</div>
-        <div id="goals-slot"></div>
-      </div>
-
-      <div class="side-card">
-        <div class="side-title">🪟 플로팅 위젯</div>
-        <div class="nav">
-          <button class="nav-item" data-float="memo"><span class="ico">📝</span>메모장</button>
-          <button class="nav-item" data-float="todo"><span class="ico">✅</span>투두리스트</button>
-        </div>
-      </div>
-
       <nav class="nav nav-desktop">
-        <button class="nav-item" data-nav="home"><span class="ico">🏠</span>홈</button>
-        <button class="nav-item" data-nav="calendar"><span class="ico">📅</span>캘린더</button>
-        <button class="nav-item" data-nav="ledger"><span class="ico">💰</span>정산 장부</button>
+        <button class="nav-item" data-nav="home" title="홈"><span class="ico">🏠</span><span class="lbl">홈</span></button>
+        <button class="nav-item" data-nav="calendar" title="캘린더"><span class="ico">📅</span><span class="lbl">캘린더</span></button>
+        <button class="nav-item" data-nav="ledger" title="정산 장부"><span class="ico">💰</span><span class="lbl">정산 장부</span></button>
         <div class="nav-sep"></div>
-        <button class="nav-item" data-nav="settings"><span class="ico">⚙️</span>설정</button>
+        <button class="nav-item" data-nav="settings" title="설정"><span class="ico">⚙️</span><span class="lbl">설정</span></button>
       </nav>
     </aside>
 
@@ -56,7 +44,7 @@
       <section class="page active" data-page="home">
         <div class="page-head">
           <h1>홈</h1>
-          <p>오늘 하루를 한눈에. 타이머와 목표는 왼쪽(모바일은 위쪽)에 항상 붙어 있습니다.</p>
+          <p>오늘 하루를 한눈에. 타이머는 왼쪽(모바일은 위쪽), 메모·할 일은 상단바 버튼으로 언제든 띄웁니다.</p>
         </div>
         <div id="page-home-body"></div>
       </section>
@@ -64,7 +52,7 @@
       <section class="page" data-page="calendar">
         <div class="page-head">
           <h1>캘린더</h1>
-          <p>월 · 주 · 일 뷰와 해빗 트래커. 날짜를 붙인 할 일도 함께 표시됩니다.</p>
+          <p>위쪽 해빗 트래커는 이번 주, 아래 달력은 월 · 주 · 일 뷰. 날짜를 붙인 할 일도 함께 표시됩니다.</p>
         </div>
         <div id="page-calendar-body"></div>
       </section>
@@ -93,7 +81,6 @@
     <button class="tabbar-item" data-nav="home"><span class="ico">🏠</span>홈</button>
     <button class="tabbar-item" data-nav="calendar"><span class="ico">📅</span>캘린더</button>
     <button class="tabbar-item" data-nav="ledger"><span class="ico">💰</span>장부</button>
-    <button class="tabbar-item" data-float="todo"><span class="ico">✅</span>할일</button>
     <button class="tabbar-item" data-nav="settings"><span class="ico">⚙️</span>설정</button>
   </nav>
 
@@ -107,11 +94,12 @@
 <script src="./js/shell.js"></script>
 <script src="./js/markdown.js"></script>
 <script src="./js/pomodoro.js"></script>
-<script src="./js/goals.js"></script>
+<script src="./js/motto.js"></script>
 <script src="./js/music.js"></script>
 <script src="./js/todo.js"></script>
 <script src="./js/memo.js"></script>
 <script src="./js/habits.js"></script>
+<script src="./js/habitgrid.js"></script>
 <script src="./js/calendar.js"></script>
 <script src="./js/ledger.js"></script>
 <script src="./js/settings.js"></script>

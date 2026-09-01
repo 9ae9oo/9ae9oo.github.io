@@ -142,6 +142,33 @@ input[type="checkbox"].chk:checked::after {
 .md del { color: var(--text-dim); }
 .md a { text-decoration: underline; }
 
+/* 사이드바를 접었을 때: 링을 작게 줄이고 버튼만 남깁니다 */
+.pomo-ring.compact { width: 44px; height: 44px; }
+.pomo-ring.compact svg { width: 44px; height: 44px; }
+.pomo-ring.compact .track, .pomo-ring.compact .bar { stroke-width: 5; }
+.pomo-ring.compact .pomo-session, .pomo-ring.compact .pomo-count { display: none; }
+.pomo-ring.compact .pomo-time { font-size: 10px; font-weight: 600; }
+body.sidebar-collapsed .pomo { gap: 6px; }
+body.sidebar-collapsed .pomo-btns { flex-direction: column; gap: 4px; }
+body.sidebar-collapsed .pomo-btns .btn-icon { width: 28px; height: 28px; font-size: 11px; }
+body.sidebar-collapsed .pomo-btns .main { width: 34px; height: 34px; font-size: 13px; }
+
+/* 설정: 해빗 편집 카드 */
+.habit-edit {
+  background: var(--surface-0); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px; margin-bottom: 8px;
+}
+.time-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 600; padding: 3px 6px 3px 9px;
+  border-radius: 999px; background: var(--surface-2); color: var(--text-muted);
+  margin-right: 4px;
+}
+.time-chip button { color: var(--text-dim); font-size: 10px; }
+.time-chip button:hover { color: var(--red); }
+.pomo-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+@media (max-width: 700px) { .pomo-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
 /* 모바일: 링을 조금 줄여 첫 화면에 목표까지 들어오게 */
 @media (max-width: 900px) {
   .pomo-ring { width: 132px; height: 132px; }

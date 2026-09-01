@@ -173,7 +173,10 @@ window.MW = window.MW || {};
     var y = cursor.getFullYear(), m = cursor.getMonth();
     var cells = U.monthGrid(y, m);
 
-    var dow = el('div.cal-dow', {}, U.WEEKDAYS.map(function (w) { return el('div', { text: w }); }));
+    var names = U.weekdayNames();
+    var dow = el('div.cal-dow', {}, names.map(function (w) {
+      return el('div' + (w === '일' ? '.sun' : w === '토' ? '.sat' : ''), { text: w });
+    }));
     var weeks = el('div.cal-weeks');
 
     for (var w = 0; w < 6; w++) {
@@ -199,8 +202,7 @@ window.MW = window.MW || {};
           }, [
             el('div.cal-num', {}, [el('span.n', { text: String(d.getDate()) })]),
             el('div', { style: { display: 'flex', flexDirection: 'column', gap: '2px' } }, shown),
-            items.length > 3 ? el('div.cal-more', { text: '+' + (items.length - 3) + ' 더보기' }) : null,
-            MW.habits.dots(day)
+            items.length > 3 ? el('div.cal-more', { text: '+' + (items.length - 3) + ' 더보기' }) : null
           ]));
         })(cells[w * 7 + i]);
       }
@@ -273,7 +275,8 @@ window.MW = window.MW || {};
 
       el('section', {}, [
         el('h4', { text: '해빗' }),
-        MW.habits.dayList(day)
+        el('div.small.dim', { text: '해빗 체크는 페이지 위쪽 트래커에서 합니다.' }),
+        el('div.small.dim', { text: MW.habitGrid.todaySummary(), style: { marginTop: '4px' } })
       ])
     ]);
   }
@@ -288,28 +291,52 @@ window.MW = window.MW || {};
       (function (d) {
         var day = U.ymd(d);
         var evs = eventsOn(day);
+        var timed = evs.filter(function (e) { return !e.allDay && e.start !== null && e.start !== undefined; });
+        var allDayEvs = evs.filter(function (e) { return e.allDay || e.start === null || e.start === undefined; });
+        var untimed = [];      // 시간이 지정되지 않은 일정은 시간 일정 아래로
         var tds = todosOn(day);
+
+        function evPill(ev, showTime) {
+          return el('div.cal-pill', {
+            style: { borderLeftColor: ev.color || COLORS[0], whiteSpace: 'normal' },
+            text: (showTime ? U.fmtMin(ev.start) + ' ' : '') + ev.title,
+            onclick: function (e) { e.stopPropagation(); eventDialog({ event: ev }); }
+          });
+        }
+
+        var todoBox = el('div.todo-list');
+        MW.todo.renderList(todoBox, {
+          filter: function (t) { return t.date === day; },
+          draggable: false, showMeta: false, emptyText: ''
+        });
+
+        // 두 번째 카드: 시간 지정 일정 → 시간 미지정 → 할 일
+        var bodyCard = el('div.week-card', {}, [
+          timed.length
+            ? el('div.week-stack', {}, timed.map(function (ev) { return evPill(ev, true); }))
+            : el('div.week-none', { text: '시간 일정 없음' }),
+          untimed.length ? el('div.week-divider', { text: '시간 미지정' }) : null,
+          untimed.length ? el('div.week-stack', {}, untimed.map(function (ev) { return evPill(ev, false); })) : null,
+          tds.length ? el('div.week-divider', { text: '할 일' }) : null,
+          tds.length ? todoBox : null
+        ]);
+
         var col = el('div.week-col' + (U.isToday(d) ? '.today' : ''), {
           ondblclick: function () { eventDialog({ date: day }); }
         }, [
           el('div.week-col-head', {
-            onclick: function () { selected = day; view = 'day'; cursor = d; render(); },
-            style: { cursor: 'pointer' }
+            title: '일간 뷰로 보기',
+            onclick: function () { selected = day; view = 'day'; cursor = d; render(); }
           }, [
             el('span.d', { text: String(d.getDate()) }),
             el('span.w' + (d.getDay() === 0 ? '.sun' : d.getDay() === 6 ? '.sat' : ''), { text: U.WEEKDAYS[d.getDay()] })
           ]),
-          evs.length || tds.length
-            ? el('div', { style: { display: 'flex', flexDirection: 'column', gap: '3px' } },
-                evs.map(function (ev) {
-                  return el('div.cal-pill', {
-                    style: { borderLeftColor: ev.color || COLORS[0], whiteSpace: 'normal' },
-                    text: (ev.allDay || ev.start === null ? '종일 ' : U.fmtMin(ev.start) + ' ') + ev.title,
-                    onclick: function () { eventDialog({ event: ev }); }
-                  });
-                }).concat(tds.map(todoPill)))
-            : el('div.small.dim', { text: '—' }),
-          MW.habits.weekRow(day)
+          el('div.week-card.allday', {}, [
+            allDayEvs.length
+              ? el('div.week-stack', {}, allDayEvs.map(function (ev) { return evPill(ev, false); }))
+              : el('div.week-none', { text: '종일 없음' })
+          ]),
+          bodyCard
         ]);
         grid.appendChild(col);
       })(U.addDays(start, i));
@@ -327,23 +354,15 @@ window.MW = window.MW || {};
     var timed = evs.filter(function (e) { return !e.allDay && e.start !== null && e.start !== undefined; });
     var allDayEvs = evs.filter(function (e) { return e.allDay || e.start === null || e.start === undefined; });
 
-    /* 상단: 종일 일정 + 시간 없는 투두 + 해빗 */
-    var topTodos = el('div.todo-list');
-    MW.todo.renderList(topTodos, {
-      filter: function (t) { return t.date === day; },
-      draggable: false, showMeta: false, emptyText: '이 날짜의 할 일이 없습니다.'
-    });
-
     var top = el('div.day-top', {}, [
       el('div.card', {}, [
-        el('h3', { text: '종일 · 시간 없는 항목' }),
+        el('h3', { text: '종일 일정' }),
         allDayEvs.length ? el('div', {}, allDayEvs.map(function (ev) {
           return el('div.ev-row', { onclick: function () { eventDialog({ event: ev }); } }, [
             el('div.ev-bar', { style: { background: ev.color || COLORS[0] } }),
             el('div.ev-main', {}, [el('div.ev-title', { text: ev.title })])
           ]);
-        })) : el('div.small.dim', { text: '종일 일정 없음', style: { marginBottom: '8px' } }),
-        topTodos
+        })) : el('div.small.dim', { text: '종일 일정이 없습니다.' })
       ])
     ]);
 
@@ -416,21 +435,36 @@ window.MW = window.MW || {};
       eventDialog({ date: day, start: a % 1440, end: b % 1440 === 0 ? 1439 : b % 1440 });
     }
 
-    host.appendChild(el('div.day-layout', {}, [
-      el('div', {}, [top, timeline]),
-      el('div.cal-side', {}, [
-        el('h3', { text: U.fmtLongDate(day) }),
-        el('div.sub', { text: '기상 ' + U.pad2(wake) + ':00 기준 · 드래그해서 일정 추가' }),
-        el('section', {}, [
-          el('h4', { text: '해빗 · 연속 달성일' }),
-          MW.habits.dayList(day)
-        ]),
-        el('section', {}, [
-          el('h4', { text: '메모' }),
-          el('div.small.dim', { text: '메모는 별도 기능 없이 플로팅 메모장을 옆에 띄워 사용합니다.' }),
+    // 시간이 지정되지 않은 그날의 할 일 — 타임라인 오른쪽 열
+    var sideTodos = el('div.todo-list');
+    MW.todo.renderList(sideTodos, {
+      filter: function (t) { return t.date === day; },
+      draggable: false, showMeta: false, emptyText: '시간 없이 오늘 할 일이 없습니다.'
+    });
+
+    host.appendChild(el('div', {}, [
+      top,
+      el('div.day-layout', {}, [
+        timeline,
+        el('div.card.day-side', {}, [
+          el('h3', { text: '시간 미지정 할 일' }),
+          el('div.small.dim', {
+            text: '기상 ' + U.pad2(wake) + ':00 기준 · 타임라인을 드래그하면 일정이 추가됩니다.',
+            style: { marginBottom: '10px' }
+          }),
+          sideTodos,
           el('button.btn.btn-sm', {
-            text: '📝 메모장 열기', style: { width: '100%', marginTop: '6px' },
-            onclick: function () { MW.shell.floats.memo.open(); }
+            text: '＋ 할 일 추가', style: { width: '100%', marginTop: '8px' },
+            onclick: function () {
+              var input = el('input.field', { placeholder: '할 일 제목' });
+              MW.shell.modal({
+                title: U.fmtDate(day) + ' 할 일 추가',
+                body: [el('div.form-row', {}, [el('label', { text: '제목' }), input])],
+                onOk: function () {
+                  if (!MW.todo.add(input.value, null, day)) { U.toast('제목을 입력해 주세요.', 'warn'); return false; }
+                }
+              });
+            }
           })
         ])
       ])
@@ -456,26 +490,37 @@ window.MW = window.MW || {};
     return U.fmtLongDate(cursor);
   }
 
+  /**
+   * 툴바 — 왼쪽에 기간 이동, 오른쪽 끝에 [+ 일정 추가]와 월/주/일 전환을 고정합니다.
+   * 화면 폭이 변해도 월/주/일 버튼 위치가 흔들리지 않도록 오른쪽에 여백을 둡니다.
+   */
   function toolbar() {
     return el('div.cal-toolbar', {}, [
       el('button.btn.btn-icon', { text: '‹', title: '이전', onclick: function () { moveCursor(-1); } }),
-      el('button.btn.btn-icon', { text: '›', title: '다음', onclick: function () { moveCursor(1); } }),
-      el('button.btn.btn-sm', { text: '오늘', onclick: function () { cursor = new Date(); selected = U.ymd(cursor); render(); } }),
       el('div.cal-title', { text: titleText() }),
+      el('button.btn.btn-icon', { text: '›', title: '다음', onclick: function () { moveCursor(1); } }),
+      el('button.btn.btn-sm', {
+        text: '오늘',
+        onclick: function () { cursor = new Date(); selected = U.ymd(cursor); render(); }
+      }),
       el('span.spacer'),
+      el('button.btn.btn-primary.btn-sm', {
+        text: '＋ 일정 추가', onclick: function () { eventDialog({ date: selected }); }
+      }),
       el('div.cal-views', {}, ['month', 'week', 'day'].map(function (v) {
         return el('button' + (view === v ? '.active' : ''), {
           text: { month: '월', week: '주', day: '일' }[v],
           onclick: function () { view = v; if (v !== 'month') cursor = U.parseYmd(selected) || cursor; render(); }
         });
-      })),
-      el('button.btn.btn-primary.btn-sm', { text: '＋ 일정', onclick: function () { eventDialog({ date: selected }); } })
+      }))
     ]);
   }
 
   function render() {
     if (!root) return;
     U.clear(root);
+    // 해빗 트래커는 페이지 맨 위 고정 섹션 (보고 있는 주 기준, 접기 가능)
+    root.appendChild(MW.habitGrid.weekSection(view === 'month' ? new Date() : cursor));
     root.appendChild(toolbar());
     if (view === 'month') renderMonth(root);
     else if (view === 'week') renderWeek(root);

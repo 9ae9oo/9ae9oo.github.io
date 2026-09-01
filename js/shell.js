@@ -38,6 +38,23 @@ window.MW = window.MW || {};
 
   function onRoute(route, fn) { routeHandlers[route] = fn; }
 
+  /* ------------------------------------------------- 사이드바 접기/펼치기 */
+
+  function applySidebar() {
+    var collapsed = !!MW.store.state.settings.sidebarCollapsed;
+    document.body.classList.toggle('sidebar-collapsed', collapsed);
+    $$('[data-sidebar-toggle]').forEach(function (b) {
+      b.title = collapsed ? '사이드바 펼치기' : '사이드바 접기';
+      b.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
+    });
+    if (MW.pomodoro) MW.pomodoro.setCompact(collapsed);
+  }
+
+  function toggleSidebar() {
+    MW.store.touch(function (s) { s.settings.sidebarCollapsed = !s.settings.sidebarCollapsed; });
+    applySidebar();
+  }
+
   /* ---------------------------------------------------------- 플로팅 창 */
 
   var floats = {};
@@ -257,12 +274,15 @@ window.MW = window.MW || {};
       var f = floats[t.dataset.float];
       if (f) f.toggle();
     });
+    U.on(document.body, 'click', '[data-sidebar-toggle]', toggleSidebar);
+    applySidebar();
     apply(parseHash());
   }
 
   MW.shell = {
     init: init, go: go, onRoute: onRoute, route: function () { return current; },
     registerFloat: registerFloat, floats: floats, syncFloatButtons: syncButtons, isMobile: isMobile,
+    toggleSidebar: toggleSidebar, applySidebar: applySidebar,
     modal: modal, closeModal: closeModal, confirm: confirmDialog,
     requestNotify: requestNotify, notify: notify, playSound: playSound
   };

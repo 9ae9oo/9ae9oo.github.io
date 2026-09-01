@@ -2,8 +2,16 @@
    캘린더 — 월 / 주 / 일 뷰 + 해빗 트래커
    ========================================================================== */
 
-.cal-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
-.cal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; min-width: 150px; }
+.cal-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 14px; flex-wrap: wrap;
+  padding-right: 4px;
+}
+.cal-toolbar .cal-views { margin-left: 8px; margin-right: 4px; }
+.cal-title {
+  font-size: 17px; font-weight: 700; letter-spacing: -0.02em;
+  min-width: 168px; text-align: center;
+}
 .cal-views { display: flex; gap: 2px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px; }
 .cal-views button { font-size: 12.5px; padding: 5px 12px; border-radius: 6px; color: var(--text-muted); }
 .cal-views button.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
@@ -62,9 +70,6 @@
 .cal-pill.done { text-decoration: line-through; opacity: 0.5; }
 .cal-more { font-size: 10px; color: var(--text-dim); }
 
-.hb-dots { display: flex; gap: 3px; margin-top: auto; padding-top: 3px; }
-.hb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--surface-3); display: block; }
-.hb-dot.on { background: var(--green); }
 
 /* --------------------------------------------------------------- 상세 패널 */
 .cal-side {
@@ -98,25 +103,24 @@
 .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
 .week-col {
   border: 1px solid var(--border); border-radius: var(--radius-sm);
-  background: var(--surface-1); padding: 8px; min-height: 260px;
-  display: flex; flex-direction: column; gap: 5px;
+  background: var(--surface-1); padding: 8px; min-height: 190px;
+  display: flex; flex-direction: column;
 }
 .week-col.today { border-color: var(--accent); }
-.week-col-head { display: flex; align-items: baseline; gap: 5px; margin-bottom: 2px; }
+.week-col-head {
+  display: flex; align-items: baseline; gap: 5px;
+  margin-bottom: 7px; cursor: pointer; border-radius: 5px; padding: 2px 4px;
+}
+.week-col-head:hover { background: var(--surface-2); }
 .week-col-head .d { font-size: 15px; font-weight: 700; }
 .week-col-head .w { font-size: 11px; color: var(--text-dim); }
 .week-col-head .w.sun { color: var(--coral); }
 .week-col-head .w.sat { color: var(--accent); }
 
-.hb-week { display: flex; flex-wrap: wrap; gap: 3px; margin-top: auto; padding-top: 7px; border-top: 1px dashed var(--border); }
-.hb-chip {
-  font-size: 10px; padding: 2px 6px; border-radius: 999px;
-  border: 1px solid var(--border); color: var(--text-dim); background: var(--surface-0);
-}
-.hb-chip.on { font-weight: 700; }
 
 /* ------------------------------------------------------------------- 일간 */
 .day-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.day-layout > .timeline { min-width: 0; }
 
 .day-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
 
@@ -162,3 +166,95 @@
   .week-grid { grid-template-columns: minmax(0, 1fr); }
   .cal-weeks { grid-template-rows: repeat(6, minmax(62px, auto)); }
 }
+
+/* ==========================================================================
+   해빗 트래커 — 날짜 × 해빗 그리드
+   ========================================================================== */
+.hb-panel {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-1); margin-bottom: 16px; overflow: hidden;
+}
+.hb-panel-head {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 11px 14px; text-align: left;
+  color: var(--text); font-size: 13.5px;
+}
+.hb-panel-head:hover { background: var(--surface-2); }
+.hb-caret { font-size: 10px; color: var(--text-dim); width: 12px; }
+.hb-panel-sub { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+.hb-panel-body { padding: 4px 14px 14px; }
+.hb-panel-hint { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+
+.hg-scroll { overflow-x: auto; padding-bottom: 2px; }
+.hg { display: flex; flex-direction: column; gap: 3px; min-width: min-content; }
+
+.hg-row { display: grid; grid-template-columns: 132px repeat(var(--hg-cols), minmax(22px, 1fr)); gap: 3px; }
+.hg.wide .hg-row {
+  grid-template-columns: 132px repeat(var(--hg-cols), minmax(44px, 104px));
+  justify-content: start;
+}
+.hg.wide .hg-cell { height: 30px; font-size: 12px; }
+
+.hg-label {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  font-size: 12px; color: var(--text-muted); padding-right: 6px;
+}
+.hg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.hg-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg-target { color: var(--text-dim); font-size: 11px; flex-shrink: 0; }
+
+.hg-cell-head {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  font-size: 10px; color: var(--text-dim); line-height: 1.25; padding-bottom: 3px;
+}
+.hg-cell-head.today { color: var(--accent); font-weight: 700; }
+.hg-cell-head .w { font-size: 9px; opacity: 0.75; }
+
+.hg-cell {
+  height: 26px; border-radius: 5px;
+  background: var(--surface-0); border: 1px solid var(--border);
+  color: #0f1117; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.08s;
+}
+.hg-cell:hover { transform: scale(1.08); border-color: var(--border-accent); }
+.hg-cell.future { opacity: 0.4; }
+.hg-cell.full { box-shadow: 0 0 0 2px var(--text) inset; }
+
+/* --------------------------------------------------------------- 알람 카드 */
+.alarm-card {
+  position: fixed; right: 16px; bottom: 16px; width: 320px; max-width: calc(100vw - 32px);
+  background: var(--surface-1); border: 1px solid var(--amber);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  display: none; flex-direction: column; z-index: 450; overflow: hidden;
+}
+.alarm-card.open { display: flex; }
+.alarm-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--amber-dim); color: var(--amber);
+  font-size: 13px;
+}
+.alarm-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-top: 1px solid var(--border);
+}
+.alarm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.alarm-main { flex: 1; min-width: 0; }
+.alarm-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alarm-time { font-size: 11px; color: var(--text-dim); }
+.alarm-foot { padding: 8px 12px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+
+/* --------------------------------------------------------- 주간 뷰 카드 */
+.week-card {
+  background: var(--surface-0); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 7px 8px;
+}
+.week-card.allday { border-style: dashed; }
+.week-card + .week-card { margin-top: 6px; }
+.week-stack { display: flex; flex-direction: column; gap: 3px; }
+.week-none { font-size: 11px; color: var(--text-dim); }
+.week-divider {
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em;
+  margin: 7px 0 4px; padding-top: 5px; border-top: 1px dashed var(--border);
+}
+.day-side { align-self: start; }

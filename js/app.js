@@ -16,36 +16,12 @@ window.MW = window.MW || {};
 
     var today = U.ymd(new Date());
     var evs = MW.calendar.eventsOn(today);
-    var todos = MW.store.state.todos;
-    var openTodos = todos.filter(function (t) { return !t.done; });
-    var dated = todos.filter(function (t) { return t.date === today; });
-    var habits = MW.habits.all();
-    var doneHabits = habits.filter(function (h) { return MW.habits.isDone(h.id, today); });
     var sum = MW.ledger.summary(U.ym(new Date()));
 
-    host.appendChild(el('div.stat-grid', {}, [
-      el('div.stat', {}, [
-        el('div.label', { text: '오늘 일정' }),
-        el('div.value', { text: evs.length + '건' }),
-        el('div.hint', { text: evs.length ? evs[0].title : '비어 있습니다' })
-      ]),
-      el('div.stat', {}, [
-        el('div.label', { text: '남은 할 일' }),
-        el('div.value', { text: openTodos.length + '개' }),
-        el('div.hint', { text: '오늘 지정 ' + dated.length + '개' })
-      ]),
-      el('div.stat', {}, [
-        el('div.label', { text: '오늘 해빗' }),
-        el('div.value', { text: doneHabits.length + ' / ' + habits.length }),
-        el('div.hint', { text: habits.length ? '체크는 캘린더에서' : '설정에서 추가해 주세요' })
-      ]),
-      el('div.stat.free', {}, [
-        el('div.label', { text: '이번달 쓸 수 있는 돈' }),
-        el('div.value' + (sum.free < 0 ? '.minus' : ''), { text: U.won(sum.free) }),
-        el('div.hint', { text: '수입 ' + U.won(sum.income) + ' · 지출 ' + U.won(sum.expense) })
-      ])
-    ]));
+    // 1) 오늘의 마음가짐 — 체크 없는 한 줄
+    host.appendChild(MW.motto.node());
 
+    // 2) 오늘 일정 · 오늘 할 일 (요약 카드는 아래 목록과 내용이 겹쳐서 두지 않습니다)
     var evCard = el('div.card', {}, [
       el('h3', {}, ['오늘 일정 ', el('span.muted', { text: U.fmtLongDate(today) })]),
       evs.length ? el('div', {}, evs.map(function (ev) {
@@ -71,7 +47,7 @@ window.MW = window.MW || {};
     });
 
     var todoCard = el('div.card', {}, [
-      el('h3', {}, ['인박스 · 오늘 할 일']),
+      el('h3', { text: '인박스 · 오늘 할 일' }),
       todoBox,
       el('button.btn.btn-sm', {
         text: '투두 창 열기', style: { marginTop: '8px' },
@@ -79,13 +55,25 @@ window.MW = window.MW || {};
       })
     ]);
 
-    host.appendChild(el('div', {
-      style: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '14px', alignItems: 'start' }
-    }, [evCard, todoCard]));
+    host.appendChild(el('div.home-cols', {}, [evCard, todoCard]));
 
+    // 3) 해빗 트래커 — 칸이 넓은 홈에서는 이번 달 전체를 봅니다
     host.appendChild(el('div.card', {}, [
-      el('h3', { text: '오늘의 해빗' }),
-      MW.habits.dayList(today)
+      el('h3', {}, [
+        '해빗 트래커 ',
+        el('span.muted', { text: U.ym(new Date()).replace('-', '년 ') + '월 · ' + MW.habitGrid.todaySummary() })
+      ]),
+      MW.habitGrid.monthGridNode(new Date())
+    ]));
+
+    // 4) 장부 한 줄 요약
+    host.appendChild(el('div.card.home-money', {
+      onclick: function () { MW.shell.go('ledger'); },
+      title: '정산 장부로 이동'
+    }, [
+      el('span.label', { text: '이번 달 쓸 수 있는 돈' }),
+      el('span.value' + (sum.free < 0 ? '.minus' : ''), { text: U.won(sum.free) }),
+      el('span.small.dim', { text: '수입 ' + U.won(sum.income) + ' · 지출 ' + U.won(sum.expense) })
     ]));
   }
 
@@ -97,10 +85,10 @@ window.MW = window.MW || {};
     else if (route === 'calendar') MW.calendar.render();
     else if (route === 'ledger') MW.ledger.render();
     else if (route === 'settings') MW.settings.render();
-    MW.goals.render();
     MW.todo.render();
     MW.memo.render();
     MW.music.render();
+    MW.habitGrid.renderAlarms();
     MW.shell.syncFloatButtons();
   }, 40);
 
@@ -111,7 +99,6 @@ window.MW = window.MW || {};
 
     MW.music.mount($('#musicbar'));
     MW.pomodoro.mount($('#pomo-slot'));
-    MW.goals.mount($('#goals-slot'));
     MW.todo.init();
     MW.memo.init();
     MW.calendar.mount($('#page-calendar-body'));
@@ -127,9 +114,13 @@ window.MW = window.MW || {};
     MW.store.on(renderAll);
     renderHome();
 
-    // 일정 알림 확인 (탭이 열려 있는 동안만 동작)
-    setInterval(MW.calendar.checkNotifications, 30000);
-    MW.calendar.checkNotifications();
+    // 일정 알림 · 해빗 알람 확인 (탭이 열려 있는 동안만 동작)
+    function tickAlarms() {
+      MW.calendar.checkNotifications();
+      MW.habitGrid.check();
+    }
+    setInterval(tickAlarms, 30000);
+    tickAlarms();
 
     // 자정을 넘기면 "오늘"이 바뀌므로 다시 그림
     var day = U.ymd(new Date());

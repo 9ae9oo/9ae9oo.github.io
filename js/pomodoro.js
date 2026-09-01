@@ -88,7 +88,10 @@ window.MW = window.MW || {};
     ui.count.textContent = count + ' / ' + conf().repeat;
     ui.bar.style.strokeDasharray = C;
     ui.bar.style.strokeDashoffset = C * (1 - ratio);
-    ui.ring.className = 'pomo-ring ' + (session === 'work' ? 'work' : session === 'shortBreak' ? 'short' : 'long');
+    // className 을 통째로 갈아끼우면 compact 클래스가 지워지므로 개별 토글합니다
+    ui.ring.classList.toggle('work', session === 'work');
+    ui.ring.classList.toggle('short', session === 'shortBreak');
+    ui.ring.classList.toggle('long', session === 'longBreak');
     ui.play.textContent = running ? '❚❚' : '▶';
     ui.play.title = running ? '일시정지' : '시작';
     document.title = running ? U.fmtClock(remaining) + ' · ' + LABEL[session] + ' — Mini Workspace' : 'Mini Workspace';
@@ -105,20 +108,6 @@ window.MW = window.MW || {};
     svg.appendChild(track); svg.appendChild(bar);
     ui.bar = bar;
     return svg;
-  }
-
-  function numInput(key, label) {
-    var input = el('input.field', {
-      type: 'number', min: '1', max: '180', value: conf()[key],
-      onchange: function () {
-        var v = U.clamp(Math.round(U.parseNum(this.value)) || 1, 1, 180);
-        this.value = v;
-        MW.store.update(function (s) { s.pomodoro[key] = v; });
-        if (!running) { remaining = total(); }
-        render();
-      }
-    });
-    return el('div', {}, [el('label', { text: label }), input]);
   }
 
   function mount(container) {
@@ -139,14 +128,8 @@ window.MW = window.MW || {};
       el('button.btn.btn-icon', { text: '⏭', title: '다음 세션', onclick: function () { next(false); } })
     ]);
 
-    var settings = el('div.pomo-setting', {}, [
-      numInput('work', '집중'),
-      numInput('shortBreak', '짧은휴식'),
-      numInput('longBreak', '긴휴식'),
-      numInput('repeat', '반복')
-    ]);
-
-    container.appendChild(el('div.pomo', {}, [ui.ring, btns, settings]));
+    // 시간 설정은 설정 → “시간 · 해빗” 탭으로 옮겼습니다 (사이드바를 좁게 유지하기 위해)
+    container.appendChild(el('div.pomo', {}, [ui.ring, btns]));
     if (remaining === null) remaining = total();
     render();
   }
@@ -155,6 +138,10 @@ window.MW = window.MW || {};
     mount: mount,
     /** 설정 페이지에서 값이 바뀌었을 때 사이드바 위젯도 새로 그리기 위해 */
     refresh: function () { if (ui.time) { if (!running) remaining = total(); render(); } },
+    /** 사이드바가 접히면 링을 작게 줄입니다 (CSS 로 크기만 바뀝니다) */
+    setCompact: function (on) {
+      if (ui.ring) ui.ring.classList.toggle('compact', !!on);
+    },
     state: function () { return { session: session, count: count, remaining: remaining, running: running }; }
   };
 })();

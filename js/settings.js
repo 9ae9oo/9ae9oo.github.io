@@ -9,7 +9,7 @@ window.MW = window.MW || {};
   'use strict';
   var U = MW.util, el = U.el;
 
-  var tab = 'music';
+  var tab = 'time';
   var root = null;
 
   /* ------------------------------------------------------------ 음악 */
@@ -236,96 +236,92 @@ window.MW = window.MW || {};
     });
   }
 
-  /* ------------------------------------------------- 해빗 · 투두 그룹 */
+  /* ------------------------------------------ 시간 · 해빗 · 그룹 */
 
-  function renderGroups(host) {
-    var habitInput = el('input.field', { placeholder: '새 해빗 이름 (매일 반복)' });
-    host.appendChild(el('div.card', {}, [
-      el('h3', {}, ['해빗 ', el('span.muted', { text: '— 캘린더 월/주/일 뷰에 함께 표시됩니다' })]),
-      el('div.row', {}, [
-        habitInput,
-        el('button.btn.btn-primary.btn-sm', {
-          text: '추가',
-          onclick: function () { if (MW.habits.add(habitInput.value)) habitInput.value = ''; }
-        })
-      ]),
-      el('div', { style: { marginTop: '10px' } }, MW.habits.all().length
-        ? MW.habits.all().map(function (h) {
-            return el('div.hb-item', {}, [
-              el('span.dot', { style: { background: h.color, width: '10px', height: '10px', borderRadius: '50%' } }),
-              el('span.hb-name', { text: h.name }),
-              el('span.small.dim', { text: '🔥 ' + MW.habits.streak(h.id, U.ymd(new Date())) + '일' }),
-              el('button.btn.btn-ghost.btn-icon.btn-sm', {
-                text: '✕', title: '삭제',
-                onclick: function () {
-                  MW.shell.confirm('"' + h.name + '" 해빗과 기록을 모두 삭제할까요?', function () { MW.habits.remove(h.id); });
-                }
-              })
-            ]);
-          })
-        : [el('div.empty', { text: '해빗이 없습니다.' })])
-    ]));
+  function pomoInput(key, label) {
+    return el('div.form-row', {}, [
+      el('label', { text: label }),
+      el('input.field', {
+        type: 'number', min: '1', max: '180', value: MW.store.state.pomodoro[key],
+        onchange: function () {
+          var v = U.clamp(Math.round(U.parseNum(this.value)) || 1, 1, 180);
+          this.value = v;
+          MW.store.update(function (s) { s.pomodoro[key] = v; });
+          MW.pomodoro.refresh();
+        }
+      })
+    ]);
+  }
 
-    var groupInput = el('input.field', { placeholder: '새 그룹 이름' });
-    host.appendChild(el('div.card', {}, [
-      el('h3', {}, ['투두 · 메모 그룹 ', el('span.muted', { text: '— 그룹 색이 캘린더 표시색의 기본값이 됩니다' })]),
+  /** 해빗 하나의 편집 카드 — 이름 · 색 · 알람 시각 목록 */
+  function habitCard(h) {
+    var times = MW.habits.timesOf(h);
+    var newTime = el('input.field', { type: 'time', style: { width: 'auto' } });
+
+    return el('div.habit-edit', {}, [
       el('div.row', {}, [
-        groupInput,
-        el('button.btn.btn-primary.btn-sm', {
-          text: '추가',
+        el('input', {
+          type: 'color', value: h.color, title: '트래커 칸 색상',
+          style: { width: '34px', height: '30px', background: 'none', border: 'none', cursor: 'pointer' },
+          onchange: function () {
+            var v = this.value;
+            MW.habits.patch(h.id, function (x) { x.color = v; });
+          }
+        }),
+        el('input.field', {
+          value: h.name, style: { flex: '1' },
+          onchange: function () {
+            var v = this.value.trim() || '이름 없음';
+            MW.habits.patch(h.id, function (x) { x.name = v; });
+          }
+        }),
+        el('span.chip', { text: '하루 ' + MW.habits.targetOf(h) + '회' }),
+        el('span.small.dim', { text: '🔥 ' + MW.habits.streak(h.id, U.ymd(new Date())) + '일' }),
+        el('button.btn.btn-ghost.btn-icon.btn-sm', {
+          text: '✕', title: '삭제',
           onclick: function () {
-            var v = groupInput.value.trim();
-            if (!v) return;
-            MW.store.update(function (s) {
-              s.todoGroups.push({ id: U.uid('g'), name: v, color: MW.todo.COLORS[s.todoGroups.length % MW.todo.COLORS.length] });
-            });
-            groupInput.value = '';
+            MW.shell.confirm('"' + h.name + '" 해빗과 기록을 모두 삭제할까요?', function () { MW.habits.remove(h.id); });
           }
         })
       ]),
-      el('div', { style: { marginTop: '10px' } }, MW.store.state.todoGroups.map(function (g) {
-        return el('div.row', { style: { padding: '5px 0' } }, [
-          el('input', {
-            type: 'color', value: g.color,
-            style: { width: '34px', height: '28px', background: 'none', border: 'none', cursor: 'pointer' },
-            onchange: function () {
-              var v = this.value;
-              MW.store.update(function (s) {
-                var x = s.todoGroups.find(function (y) { return y.id === g.id; });
-                if (x) x.color = v;
-              });
-            }
-          }),
-          el('input.field', {
-            value: g.name, style: { flex: '1' },
-            onchange: function () {
-              var v = this.value.trim() || '이름 없음';
-              MW.store.update(function (s) {
-                var x = s.todoGroups.find(function (y) { return y.id === g.id; });
-                if (x) x.name = v;
-              });
-            }
-          }),
-          el('button.btn.btn-ghost.btn-icon.btn-sm', {
-            text: '✕', title: '삭제',
-            onclick: function () {
-              MW.store.update(function (s) {
-                s.todoGroups = s.todoGroups.filter(function (y) { return y.id !== g.id; });
-              });
-            }
-          })
-        ]);
-      }))
-    ]));
+      el('div.row-wrap', { style: { marginTop: '8px', alignItems: 'center' } }, [
+        el('span.small.dim', { text: '알람' }),
+        times.length ? el('span', {}, times.map(function (t) {
+          return el('span.time-chip', {}, [
+            t,
+            el('button', {
+              text: '✕', title: '이 알람 삭제',
+              onclick: function () { MW.habits.removeTime(h.id, t); }
+            })
+          ]);
+        })) : el('span.small.dim', { text: '없음 — 하루 1회 체크형으로 동작합니다' }),
+        newTime,
+        el('button.btn.btn-sm', {
+          text: '＋ 알람',
+          onclick: function () { if (MW.habits.addTime(h.id, newTime.value)) newTime.value = ''; }
+        })
+      ]),
+      el('div.small.dim', {
+        text: '알람 개수가 하루 목표 횟수입니다. 알람이 울리면 [체크] 또는 [패스] 를 고르고, 놓친 알람은 다음에 열 때 모아서 보여줍니다.',
+        style: { marginTop: '6px' }
+      })
+    ]);
   }
 
-  /* ------------------------------------------------------------ 일반 */
-
-  function renderGeneral(host) {
-    var s = MW.store.state.settings;
-
+  function renderTime(host) {
     host.appendChild(el('div.card', {}, [
-      el('h3', { text: '일반' }),
+      el('h3', {}, ['뽀모도로 시간 ', el('span.muted', { text: '— 분 단위' })]),
+      el('div.form-grid.pomo-grid', {}, [
+        pomoInput('work', '집중'),
+        pomoInput('shortBreak', '짧은 휴식'),
+        pomoInput('longBreak', '긴 휴식'),
+        pomoInput('repeat', '반복 횟수')
+      ])
+    ]));
+
+    var s = MW.store.state.settings;
+    host.appendChild(el('div.card', {}, [
+      el('h3', { text: '캘린더 시간' }),
       el('div.form-grid', {}, [
         el('div.form-row', {}, [
           el('label', { text: '기상 시각 (일간 뷰 타임라인 시작)' }),
@@ -339,39 +335,94 @@ window.MW = window.MW || {};
           }))
         ]),
         el('div.form-row', {}, [
-          el('label', { text: '알림 / 소리' }),
-          el('div.row', {}, [
-            el('label.row.small.muted', { style: { gap: '5px', cursor: 'pointer' } }, [
-              el('input', {
-                type: 'checkbox', checked: s.notify,
-                onchange: function () {
-                  var v = this.checked;
-                  MW.store.update(function (st) { st.settings.notify = v; });
-                  if (v) MW.shell.requestNotify();
-                }
-              }), '알림'
-            ]),
-            el('label.row.small.muted', { style: { gap: '5px', cursor: 'pointer' } }, [
-              el('input', {
-                type: 'checkbox', checked: s.sound,
-                onchange: function () {
-                  var v = this.checked;
-                  MW.store.update(function (st) { st.settings.sound = v; });
-                }
-              }), '소리'
-            ])
-          ])
+          el('label', { text: '한 주의 시작 요일' }),
+          el('select.field', {
+            onchange: function () {
+              var v = +this.value;
+              MW.store.update(function (st) { st.settings.weekStart = v; });
+            }
+          }, U.WEEKDAYS.map(function (w, i) {
+            return el('option', { value: i, text: w + '요일', selected: i === +s.weekStart });
+          }))
         ])
-      ]),
-      el('button.btn.btn-sm', {
-        text: '🔔 브라우저 알림 권한 요청', style: { marginTop: '10px' },
-        onclick: function () { MW.shell.requestNotify(); }
-      }),
-      el('div.small.dim', {
-        text: '데스크톱 알림은 이 탭이 열려 있을 때만 동작합니다.', style: { marginTop: '6px' }
-      })
+      ])
     ]));
 
+    host.appendChild(icalCard());
+
+    var habitInput = el('input.field', { placeholder: '새 해빗 이름 (예: 물 마시기)' });
+    host.appendChild(el('div.card', {}, [
+      el('h3', {}, ['해빗 ', el('span.muted', { text: '— 캘린더 위쪽과 홈 트래커에 표시됩니다' })]),
+      el('div.row', {}, [
+        habitInput,
+        el('button.btn.btn-primary.btn-sm', {
+          text: '추가',
+          onclick: function () { if (MW.habits.add(habitInput.value)) habitInput.value = ''; }
+        })
+      ]),
+      el('div', { style: { marginTop: '10px' } }, MW.habits.all().length
+        ? MW.habits.all().map(habitCard)
+        : [el('div.empty', { text: '해빗이 없습니다.' })])
+    ]));
+
+    var groupInput = el('input.field', { placeholder: '새 그룹 이름' });
+    host.appendChild(el('div.card', {}, [
+      el('h3', {}, ['투두 · 메모 그룹 ', el('span.muted', { text: '— 그룹 색이 캘린더 표시색의 기본값이 됩니다' })]),
+      el('div.row', {}, [
+        groupInput,
+        el('button.btn.btn-primary.btn-sm', {
+          text: '추가',
+          onclick: function () {
+            var v = groupInput.value.trim();
+            if (!v) return;
+            MW.store.update(function (st) {
+              st.todoGroups.push({ id: U.uid('g'), name: v, color: MW.todo.COLORS[st.todoGroups.length % MW.todo.COLORS.length] });
+            });
+            groupInput.value = '';
+          }
+        })
+      ]),
+      el('div', { style: { marginTop: '10px' } }, MW.store.state.todoGroups.map(function (g) {
+        return el('div.row', { style: { padding: '5px 0' } }, [
+          el('input', {
+            type: 'color', value: g.color,
+            style: { width: '34px', height: '28px', background: 'none', border: 'none', cursor: 'pointer' },
+            onchange: function () {
+              var v = this.value;
+              MW.store.update(function (st) {
+                var x = st.todoGroups.find(function (y) { return y.id === g.id; });
+                if (x) x.color = v;
+              });
+            }
+          }),
+          el('input.field', {
+            value: g.name, style: { flex: '1' },
+            onchange: function () {
+              var v = this.value.trim() || '이름 없음';
+              MW.store.update(function (st) {
+                var x = st.todoGroups.find(function (y) { return y.id === g.id; });
+                if (x) x.name = v;
+              });
+            }
+          }),
+          el('button.btn.btn-ghost.btn-icon.btn-sm', {
+            text: '✕', title: '삭제',
+            onclick: function () {
+              MW.store.update(function (st) {
+                st.todoGroups = st.todoGroups.filter(function (y) { return y.id !== g.id; });
+              });
+            }
+          })
+        ]);
+      }))
+    ]));
+  }
+
+  /* ------------------------------------------------------------ 일반 */
+
+  /** 외부 캘린더(iCal) 카드 — 시간 관련 설정이므로 “시간 · 해빗” 탭에서 씁니다 */
+  function icalCard() {
+    var s = MW.store.state.settings;
     var icalUrl = el('input.field', { value: s.icalUrl || '', placeholder: 'https://calendar.google.com/.../basic.ics' });
     var file = el('input', { type: 'file', accept: '.ics,text/calendar', style: { display: 'none' } });
     file.addEventListener('change', function () {
@@ -384,14 +435,14 @@ window.MW = window.MW || {};
       this.value = '';
     });
 
-    host.appendChild(el('div.card', {}, [
+    return el('div.card', {}, [
       el('h3', { text: '외부 캘린더 (iCal 읽기 전용)' }),
       el('div.small.dim', {
         text: '구글 캘린더의 iCal 주소는 브라우저에서 직접 불러오면 CORS 정책에 막히는 경우가 많습니다. ' +
               '막히면 캘린더 설정에서 .ics 파일을 내려받아 아래 “파일 가져오기”를 쓰세요.',
         style: { marginBottom: '10px' }
       }),
-      el('div.row', {}, [
+      el('div.row-wrap', {}, [
         icalUrl,
         el('button.btn.btn-sm', {
           text: '주소로 가져오기',
@@ -411,6 +462,43 @@ window.MW = window.MW || {};
         el('button.btn.btn-sm', { text: '.ics 파일 가져오기', onclick: function () { file.click(); } }),
         file
       ])
+    ]);
+  }
+
+  function renderGeneral(host) {
+    var s = MW.store.state.settings;
+
+    host.appendChild(el('div.card', {}, [
+      el('h3', { text: '알림 · 소리' }),
+      el('div.row-wrap', {}, [
+        el('label.row.small.muted', { style: { gap: '6px', cursor: 'pointer' } }, [
+          el('input', {
+            type: 'checkbox', checked: s.notify,
+            onchange: function () {
+              var v = this.checked;
+              MW.store.update(function (st) { st.settings.notify = v; });
+              if (v) MW.shell.requestNotify();
+            }
+          }), '데스크톱 알림 사용'
+        ]),
+        el('label.row.small.muted', { style: { gap: '6px', cursor: 'pointer' } }, [
+          el('input', {
+            type: 'checkbox', checked: s.sound,
+            onchange: function () {
+              var v = this.checked;
+              MW.store.update(function (st) { st.settings.sound = v; });
+            }
+          }), '알람 소리 사용'
+        ]),
+        el('button.btn.btn-sm', {
+          text: '🔔 브라우저 알림 권한 요청',
+          onclick: function () { MW.shell.requestNotify(); }
+        })
+      ]),
+      el('div.small.dim', {
+        text: '뽀모도로와 해빗 알람은 이 탭이 열려 있을 때만 울립니다. 놓친 해빗 알람은 다음에 열 때 모아서 보여줍니다.',
+        style: { marginTop: '8px' }
+      })
     ]));
 
     host.appendChild(el('div.card', {}, [
@@ -432,6 +520,13 @@ window.MW = window.MW || {};
           }
         })
       ])
+    ]));
+
+    host.appendChild(el('div.callout.warn', {}, [
+      el('strong', { text: '컴퓨터 시작 시 자동 실행 · 트레이 백그라운드 실행 — 준비 중. ' }),
+      '브라우저 안에서는 웹앱이 스스로 켜지거나 트레이에 남을 수 없습니다. ' +
+      '데스크톱 래퍼(Electron·Tauri)로 감싸는 단계에서 두 항목을 제공할 예정입니다. ' +
+      '그 전까지는 브라우저에서 이 페이지를 앱으로 설치해(주소창 설치 아이콘) 별도 창으로 쓰면 비슷하게 쓸 수 있습니다.'
     ]));
   }
 
@@ -474,9 +569,9 @@ window.MW = window.MW || {};
   /* ------------------------------------------------------------ 렌더 */
 
   var TABS = [
+    { id: 'time', label: '시간 · 해빗', fn: renderTime },
     { id: 'music', label: '음악', fn: renderMusic },
     { id: 'categories', label: '장부 카테고리', fn: renderCategories },
-    { id: 'groups', label: '해빗 · 그룹', fn: renderGroups },
     { id: 'general', label: '일반 · 데이터', fn: renderGeneral }
   ];
 

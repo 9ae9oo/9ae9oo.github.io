@@ -92,7 +92,21 @@ window.MW = window.MW || {};
 
   function addDays(d, n) { var x = new Date(d.getTime()); x.setDate(x.getDate() + n); return x; }
   function addMonths(d, n) { var x = new Date(d.getFullYear(), d.getMonth() + n, 1); return x; }
-  function startOfWeek(d) { return addDays(d, -d.getDay()); }          // 일요일 시작
+  /** 한 주의 시작일. 시작 요일은 설정(settings.weekStart, 0=일 … 6=토)을 따릅니다. */
+  function weekStart() {
+    var s = MW.store && MW.store.state && MW.store.state.settings;
+    var v = s ? +s.weekStart : 1;
+    return isNaN(v) ? 1 : clamp(v, 0, 6);
+  }
+  function startOfWeek(d) {
+    var offset = (d.getDay() - weekStart() + 7) % 7;
+    return addDays(d, -offset);
+  }
+  /** 그 주에 표시할 요일 이름을 시작 요일 기준으로 회전시켜 반환 */
+  function weekdayNames() {
+    var w = weekStart();
+    return WEEKDAYS.slice(w).concat(WEEKDAYS.slice(0, w));
+  }
   function isSameDay(a, b) { return a && b && ymd(a) === ymd(b); }
   function isToday(d) { return ymd(d) === ymd(new Date()); }
 
@@ -185,7 +199,8 @@ window.MW = window.MW || {};
     WEEKDAYS: WEEKDAYS,
     $: $, $$: $$, el: el, append: append, clear: clear, on: on, escapeHtml: escapeHtml,
     pad2: pad2, ymd: ymd, ym: ym, parseYmd: parseYmd, addDays: addDays, addMonths: addMonths,
-    startOfWeek: startOfWeek, isSameDay: isSameDay, isToday: isToday, monthGrid: monthGrid,
+    startOfWeek: startOfWeek, weekStart: weekStart, weekdayNames: weekdayNames,
+    isSameDay: isSameDay, isToday: isToday, monthGrid: monthGrid,
     daysBetween: daysBetween, fmtDate: fmtDate, fmtLongDate: fmtLongDate,
     fmtMin: fmtMin, parseMin: parseMin, fmtClock: fmtClock,
     won: won, num: num, parseNum: parseNum,

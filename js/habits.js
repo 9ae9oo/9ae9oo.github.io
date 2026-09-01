@@ -1,7 +1,12 @@
 /* ==========================================================================
-   MW.habits — 해빗 트래커 (독립 위젯이 아니라 캘린더 월/주/일 뷰에 내장)
-   · 체크 방식은 단순 체크(했다/안했다)만, 매일 반복.
-   · habitLog['YYYY-MM-DD'] = [완료한 해빗 id...]
+   MW.habits — 해빗 트래커 (알람 + 횟수)
+   · 해빗마다 알람 시각을 여러 개 등록합니다. 알람 개수가 곧 하루 목표 횟수입니다.
+     (물 6잔 = 알람 6개. 최대 12개)
+   · 알람이 울리면 [체크] 또는 [패스] 를 고르고, 체크한 만큼 그날 횟수가 쌓입니다.
+   · 알람을 하나도 등록하지 않으면 하루 1회 단순 체크형으로 동작합니다.
+
+   저장 형태: habitLog['YYYY-MM-DD'][habitId] = { done: ['15:00'], pass: ['18:00'] }
+             알람 없는 해빗의 체크는 '-' 한 칸으로 기록합니다.
    ========================================================================== */
 window.MW = window.MW || {};
 
@@ -9,28 +14,104 @@ window.MW = window.MW || {};
   'use strict';
   var U = MW.util, el = U.el;
 
+  var MAX_TIMES = 12;
+  var SIMPLE = '-';           // 알람 없는 해빗의 슬롯 키
+
+  /* ------------------------------------------------------------ 조회 */
+
   function all() {
     return MW.store.state.habits.filter(function (h) { return !h.archived; });
   }
 
-  function logOf(day) {
-    var l = MW.store.state.habitLog[day];
-    return Array.isArray(l) ? l : [];
+  function timesOf(h) { return Array.isArray(h.times) ? h.times : []; }
+
+  /** 하루 목표 횟수 = 알람 개수 (알람이 없으면 1회) */
+  function targetOf(h) { return Math.max(1, timesOf(h).length); }
+
+  /** 그 해빗이 그날 쓰는 슬롯 목록 */
+  function slotsOf(h) {
+    var t = timesOf(h);
+    return t.length ? t.slice() : [SIMPLE];
   }
 
-  function isDone(habitId, day) { return logOf(day).indexOf(habitId) >= 0; }
+  function entry(habitId, day) {
+    var log = MW.store.state.habitLog[day];
+    var e = log && log[habitId];
+    return {
+      done: (e && Array.isArray(e.done)) ? e.done : [],
+      pass: (e && Array.isArray(e.pass)) ? e.pass : []
+    };
+  }
 
-  function toggle(habitId, day) {
+  function countOf(habitId, day) { return entry(habitId, day).done.length; }
+
+  function isDone(habitId, day) {
+    var h = MW.store.state.habits.find(function (x) { return x.id === habitId; });
+    if (!h) return false;
+    return countOf(habitId, day) >= targetOf(h);
+  }
+
+  /** 그 슬롯의 상태: 'done' | 'pass' | null */
+  function slotState(habitId, day, slot) {
+    var e = entry(habitId, day);
+    if (e.done.indexOf(slot) >= 0) return 'done';
+    if (e.pass.indexOf(slot) >= 0) return 'pass';
+    return null;
+  }
+
+  /* ------------------------------------------------------------ 기록 */
+
+  function writeEntry(s, habitId, day, fn) {
+    if (!s.habitLog[day]) s.habitLog[day] = {};
+    var e = s.habitLog[day][habitId];
+    if (!e || !Array.isArray(e.done)) e = { done: [], pass: [] };
+    fn(e);
+    if (e.done.length || e.pass.length) s.habitLog[day][habitId] = e;
+    else delete s.habitLog[day][habitId];
+    if (!Object.keys(s.habitLog[day]).length) delete s.habitLog[day];
+  }
+
+  /** 슬롯 하나를 done / pass / 해제(null) 로 설정 */
+  function setSlot(habitId, day, slot, state) {
     MW.store.update(function (s) {
-      var list = Array.isArray(s.habitLog[day]) ? s.habitLog[day] : [];
-      var i = list.indexOf(habitId);
-      if (i >= 0) list.splice(i, 1); else list.push(habitId);
-      if (list.length) s.habitLog[day] = list;
-      else delete s.habitLog[day];
+      writeEntry(s, habitId, day, function (e) {
+        e.done = e.done.filter(function (x) { return x !== slot; });
+        e.pass = e.pass.filter(function (x) { return x !== slot; });
+        if (state === 'done') e.done.push(slot);
+        else if (state === 'pass') e.pass.push(slot);
+      });
     });
   }
 
-  /** 기준일부터 거꾸로 세는 연속 달성일. 오늘 아직 안 했으면 어제까지를 셉니다. */
+  /** 칸 클릭: 비어 있는 슬롯을 앞에서부터 하나 채웁니다. 다 찼으면 그날을 비웁니다. */
+  function bump(habitId, day) {
+    var h = MW.store.state.habits.find(function (x) { return x.id === habitId; });
+    if (!h) return;
+    var slots = slotsOf(h);
+    var e = entry(habitId, day);
+    if (e.done.length >= slots.length) { clearDay(habitId, day); return; }
+    var next = slots.filter(function (sl) { return e.done.indexOf(sl) < 0; })[0];
+    setSlot(habitId, day, next === undefined ? SIMPLE : next, 'done');
+  }
+
+  function clearDay(habitId, day) {
+    MW.store.update(function (s) {
+      if (s.habitLog[day]) {
+        delete s.habitLog[day][habitId];
+        if (!Object.keys(s.habitLog[day]).length) delete s.habitLog[day];
+      }
+    });
+  }
+
+  /** 단순 체크형(알람 없음) 토글 — 기존 체크박스 UI 용 */
+  function toggle(habitId, day) {
+    var h = MW.store.state.habits.find(function (x) { return x.id === habitId; });
+    if (!h) return;
+    if (timesOf(h).length) { bump(habitId, day); return; }
+    setSlot(habitId, day, SIMPLE, slotState(habitId, day, SIMPLE) === 'done' ? null : 'done');
+  }
+
+  /** 기준일부터 거꾸로 세는 연속 달성일. 오늘 아직 못 채웠으면 어제까지를 셉니다. */
   function streak(habitId, day) {
     var d = U.parseYmd(day) || new Date();
     var n = 0;
@@ -38,6 +119,8 @@ window.MW = window.MW || {};
     while (isDone(habitId, U.ymd(d))) { n += 1; d = U.addDays(d, -1); }
     return n;
   }
+
+  /* ------------------------------------------------------------ 관리 */
 
   function add(name, color) {
     name = String(name || '').trim();
@@ -47,76 +130,81 @@ window.MW = window.MW || {};
       s.habits.push({
         id: id, name: name,
         color: color || MW.todo.COLORS[s.habits.length % MW.todo.COLORS.length],
+        times: [],
         createdAt: U.ymd(new Date()), archived: false
       });
     });
     return id;
   }
 
+  function patch(id, fn) {
+    MW.store.update(function (s) {
+      var h = s.habits.find(function (x) { return x.id === id; });
+      if (h) fn(h);
+    });
+  }
+
+  function addTime(id, hhmm) {
+    var min = U.parseMin(hhmm);
+    if (min === null || isNaN(min)) { U.toast('시각을 입력해 주세요.', 'warn'); return false; }
+    var value = U.fmtMin(min);
+    var h = MW.store.state.habits.find(function (x) { return x.id === id; });
+    if (!h) return false;
+    if (timesOf(h).length >= MAX_TIMES) {
+      U.toast('알람은 해빗당 최대 ' + MAX_TIMES + '개까지입니다.', 'warn');
+      return false;
+    }
+    if (timesOf(h).indexOf(value) >= 0) { U.toast('이미 등록된 시각입니다.', 'warn'); return false; }
+    patch(id, function (x) {
+      x.times = timesOf(x).concat([value]).sort();
+    });
+    return true;
+  }
+
+  function removeTime(id, hhmm) {
+    patch(id, function (x) {
+      x.times = timesOf(x).filter(function (t) { return t !== hhmm; });
+    });
+  }
+
   function remove(id) {
     MW.store.update(function (s) {
       s.habits = s.habits.filter(function (h) { return h.id !== id; });
       Object.keys(s.habitLog).forEach(function (d) {
-        s.habitLog[d] = s.habitLog[d].filter(function (x) { return x !== id; });
-        if (!s.habitLog[d].length) delete s.habitLog[d];
+        delete s.habitLog[d][id];
+        if (!Object.keys(s.habitLog[d]).length) delete s.habitLog[d];
       });
     });
   }
 
-  /** 월간 칸에 찍는 ●○ 점. 아직 오지 않은 날은 점을 찍지 않아 화면이 조용하도록 합니다. */
-  function dots(day) {
-    var list = all();
-    if (!list.length) return null;
-    var doneAny = logOf(day).length > 0;
-    if (!doneAny && day > U.ymd(new Date())) return null;
-    var wrap = el('div.hb-dots');
-    list.slice(0, 6).forEach(function (h) {
-      var on = isDone(h.id, day);
-      wrap.appendChild(el('span.hb-dot' + (on ? '.on' : ''), {
-        title: h.name + (on ? ' — 완료' : ''),
-        style: on ? { background: h.color } : {}
-      }));
-    });
-    return wrap;
-  }
+  /* ------------------------------------------------------------ 알람 */
 
-  /** 주간 컬럼의 체크박스 줄 */
-  function weekRow(day) {
-    var list = all();
-    if (!list.length) return null;
-    return el('div.hb-week', {}, list.map(function (h) {
-      var on = isDone(h.id, day);
-      return el('button.hb-chip' + (on ? '.on' : ''), {
-        title: h.name,
-        style: on ? { background: h.color, borderColor: h.color, color: '#0f1117' } : {},
-        text: h.name.slice(0, 4),
-        onclick: function () { toggle(h.id, day); }
+  /**
+   * 지금 울려야 하는 알람과 놓친 알람을 모읍니다.
+   * 오늘 날짜의 슬롯 중 시각이 지났고 아직 done/pass 가 아닌 것들.
+   */
+  function pendingAlarms(now) {
+    now = now || new Date();
+    var day = U.ymd(now);
+    var nowMin = now.getHours() * 60 + now.getMinutes();
+    var out = [];
+    all().forEach(function (h) {
+      timesOf(h).forEach(function (t) {
+        var min = U.parseMin(t);
+        if (min === null || min > nowMin) return;
+        if (slotState(h.id, day, t)) return;
+        out.push({ habit: h, time: t, min: min, day: day, late: nowMin - min > 2 });
       });
-    }));
-  }
-
-  /** 일간 뷰: 전체 목록 + 연속 달성일 */
-  function dayList(day) {
-    var list = all();
-    if (!list.length) {
-      return el('div.empty', { text: '해빗이 없습니다. 설정 → 해빗에서 추가해 주세요.' });
-    }
-    return el('div.hb-list', {}, list.map(function (h) {
-      var on = isDone(h.id, day);
-      var s = streak(h.id, day);
-      return el('div.hb-item' + (on ? '.on' : ''), {}, [
-        el('input.chk', {
-          type: 'checkbox', checked: on,
-          onchange: function () { toggle(h.id, day); }
-        }),
-        el('span.hb-name', { text: h.name }),
-        el('span.hb-streak', { text: s > 0 ? '🔥 ' + s + '일' : '—' })
-      ]);
-    }));
+    });
+    return out.sort(function (a, b) { return a.min - b.min; });
   }
 
   MW.habits = {
-    all: all, isDone: isDone, toggle: toggle, streak: streak,
-    add: add, remove: remove, dots: dots, weekRow: weekRow, dayList: dayList
+    MAX_TIMES: MAX_TIMES, SIMPLE: SIMPLE,
+    all: all, timesOf: timesOf, targetOf: targetOf, slotsOf: slotsOf,
+    entry: entry, countOf: countOf, isDone: isDone, slotState: slotState,
+    setSlot: setSlot, bump: bump, clearDay: clearDay, toggle: toggle, streak: streak,
+    add: add, patch: patch, addTime: addTime, removeTime: removeTime, remove: remove,
+    pendingAlarms: pendingAlarms
   };
 })();

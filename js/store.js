@@ -9,8 +9,10 @@ window.MW = window.MW || {};
   'use strict';
   var U = MW.util;
 
-  var KEY = 'mw.v1';
-  var VERSION = 1;
+  var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
+  var VERSION = 2;
+
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
 
   function catsOf(names) {
     return names.map(function (n) { return { id: 'c-' + n, name: n }; });
@@ -21,12 +23,15 @@ window.MW = window.MW || {};
       version: VERSION,
       settings: {
         wakeHour: 7,          // 일간 뷰 타임라인 시작 시각
+        weekStart: 1,         // 한 주의 시작 요일 (0=일 … 6=토)
         notify: true,         // 브라우저 알림 사용
         sound: true,          // 알람 소리 사용
-        icalUrl: ''
+        icalUrl: '',
+        sidebarCollapsed: false,
+        habitPanelOpen: true  // 캘린더 상단 해빗 트래커 펼침 여부
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4 },  // legacy 파이썬 앱과 동일한 기본값
-      goals: [],
+      motto: { text: '', date: '' },   // 오늘의 마음가짐 (홈에서만 표시, 체크 없음)
       playlists: [],
       player: { playlistId: null, index: 0, mode: 'seq' },
       todoGroups: [
@@ -36,8 +41,8 @@ window.MW = window.MW || {};
       ],
       todos: [],
       memos: [],
-      habits: [],
-      habitLog: {},
+      habits: [],           // {id, name, color, times:['15:00',…] — 개수 = 하루 목표 횟수}
+      habitLog: {},         // 'YYYY-MM-DD' → { habitId: { done:['15:00'], pass:['18:00'] } }
       events: [],
       ledger: {
         types: [
@@ -83,10 +88,48 @@ window.MW = window.MW || {};
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
-    ['goals', 'playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events'].forEach(function (k) {
+    ['playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events'].forEach(function (k) {
       if (!Array.isArray(out[k])) out[k] = base[k];
     });
     if (!out.habitLog || typeof out.habitLog !== 'object') out.habitLog = {};
+
+    /* v1 → v2 -------------------------------------------------------------
+       · goals[] (여러 개 + 완료 체크) → motto 한 줄
+       · habitLog[day] = [habitId,…] (했다/안했다) → { habitId: {done, pass} } (횟수)
+       · habits[].times 신설 (알람 시각 목록 = 하루 목표 횟수)                */
+    if (!out.motto || typeof out.motto !== 'object') out.motto = { text: '', date: '' };
+    if (Array.isArray(data.goals) && !out.motto.text) {
+      var today = new Date();
+      var ymd = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
+      var carry = data.goals.filter(function (g) { return g && g.date === ymd && !g.done; })[0]
+        || data.goals.filter(function (g) { return g && g.date === ymd; })[0];
+      if (carry) out.motto = { text: String(carry.text || ''), date: ymd };
+    }
+    delete out.goals;
+
+    out.habits = out.habits.map(function (h) {
+      if (!h || typeof h !== 'object') return h;
+      if (!Array.isArray(h.times)) h.times = [];
+      return h;
+    });
+
+    Object.keys(out.habitLog).forEach(function (day) {
+      var v = out.habitLog[day];
+      if (Array.isArray(v)) {
+        var obj = {};
+        v.forEach(function (id) { obj[id] = { done: ['-'], pass: [] }; });
+        out.habitLog[day] = obj;
+      } else if (v && typeof v === 'object') {
+        Object.keys(v).forEach(function (id) {
+          var e = v[id];
+          if (!e || typeof e !== 'object') { v[id] = { done: ['-'], pass: [] }; return; }
+          if (!Array.isArray(e.done)) e.done = [];
+          if (!Array.isArray(e.pass)) e.pass = [];
+        });
+      } else {
+        delete out.habitLog[day];
+      }
+    });
     if (!Array.isArray(out.ledger.types) || !out.ledger.types.length) out.ledger.types = base.ledger.types;
     if (!Array.isArray(out.ledger.tx)) out.ledger.tx = [];
     if (!Array.isArray(out.ledger.assistants)) out.ledger.assistants = [];
