@@ -1,0 +1,270 @@
+/* ==========================================================================
+   캘린더 — 월 / 주 / 일 뷰 + 해빗 트래커
+   ========================================================================== */
+
+.cal-toolbar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 14px; flex-wrap: wrap;
+  padding-right: 4px;
+}
+.cal-toolbar .cal-views { margin-left: 8px; margin-right: 4px; }
+.cal-title {
+  font-size: 17px; font-weight: 700; letter-spacing: -0.02em;
+  min-width: 168px; text-align: center;
+}
+.cal-views { display: flex; gap: 2px; background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 2px; }
+.cal-views button { font-size: 12.5px; padding: 5px 12px; border-radius: 6px; color: var(--text-muted); }
+.cal-views button.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+.cal-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+
+/* ------------------------------------------------------------------- 월간 */
+.cal-grid {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+  background: var(--surface-1);
+}
+.cal-dow { display: grid; grid-template-columns: repeat(7, 1fr); background: var(--surface-0); }
+.cal-dow div {
+  padding: 7px 0; text-align: center; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); letter-spacing: 0.05em;
+  border-bottom: 1px solid var(--border);
+}
+/* 주말 색은 위치가 아니라 요일로 정합니다 (주 시작 요일이 바뀌어도 맞도록) */
+.cal-dow div.sun { color: var(--coral); }
+.cal-dow div.sat { color: var(--accent); }
+
+.cal-weeks { display: grid; grid-template-rows: repeat(6, minmax(84px, auto)); }
+.cal-week { display: grid; grid-template-columns: repeat(7, 1fr); }
+.cal-cell {
+  border-right: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 5px 6px 6px;
+  min-height: 84px;
+  cursor: pointer;
+  display: flex; flex-direction: column; gap: 3px;
+  background: var(--surface-1);
+  transition: background 0.12s;
+}
+.cal-cell:nth-child(7n) { border-right: none; }
+.cal-week:last-child .cal-cell { border-bottom: none; }
+.cal-cell:hover { background: var(--surface-2); }
+.cal-cell.out { background: var(--surface-0); }
+.cal-cell.out .cal-num { color: var(--text-dim); opacity: 0.55; }
+.cal-cell.selected { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+.cal-num { font-size: 12px; font-weight: 600; color: var(--text-muted); display: flex; align-items: center; gap: 4px; }
+.cal-cell.today .cal-num .n {
+  background: var(--accent); color: #0f1117; border-radius: 50%;
+  width: 19px; height: 19px; display: inline-flex; align-items: center; justify-content: center; font-size: 11px;
+}
+.cal-cell.sun .cal-num { color: var(--coral); }
+.cal-cell.sat .cal-num { color: var(--accent); }
+
+.cal-pill {
+  font-size: 11px; line-height: 1.35; padding: 2px 6px; border-radius: 4px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  background: var(--surface-2); border-left: 3px solid var(--accent);
+}
+.cal-pill.todo { opacity: 0.92; }
+.cal-pill.done { text-decoration: line-through; opacity: 0.5; }
+.cal-more { font-size: 10px; color: var(--text-dim); }
+
+
+/* --------------------------------------------------------------- 상세 패널 */
+.cal-side {
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface-1);
+  padding: 14px;
+  position: sticky; top: 0;
+}
+.cal-side h3 { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.cal-side .sub { font-size: 12px; color: var(--text-dim); margin-bottom: 12px; }
+.cal-side section + section { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.cal-side h4 {
+  font-size: 11px; font-weight: 600; color: var(--text-dim);
+  letter-spacing: 0.06em; text-transform: uppercase; margin-bottom: 7px;
+}
+
+.ev-row {
+  display: flex; gap: 8px; align-items: flex-start;
+  padding: 6px 7px; border-radius: var(--radius-sm); background: var(--surface-0);
+  margin-bottom: 4px; cursor: pointer;
+}
+.ev-row:hover { background: var(--surface-2); }
+.ev-bar { width: 3px; align-self: stretch; border-radius: 2px; flex-shrink: 0; background: var(--accent); }
+.ev-main { flex: 1; min-width: 0; }
+.ev-time { font-size: 11px; color: var(--text-dim); }
+.ev-title { font-size: 13px; line-height: 1.4; word-break: break-word; }
+.ev-rep { font-size: 10px; color: var(--purple); }
+
+/* ------------------------------------------------------------------- 주간 */
+.week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.week-col {
+  border: 1px solid var(--border); border-radius: var(--radius-sm);
+  background: var(--surface-1); padding: 8px; min-height: 190px;
+  display: flex; flex-direction: column;
+}
+.week-col.today { border-color: var(--accent); }
+.week-col-head {
+  display: flex; align-items: baseline; gap: 5px;
+  margin-bottom: 7px; cursor: pointer; border-radius: 5px; padding: 2px 4px;
+}
+.week-col-head:hover { background: var(--surface-2); }
+.week-col-head .d { font-size: 15px; font-weight: 700; }
+.week-col-head .w { font-size: 11px; color: var(--text-dim); }
+.week-col-head .w.sun { color: var(--coral); }
+.week-col-head .w.sat { color: var(--accent); }
+
+
+/* ------------------------------------------------------------------- 일간 */
+.day-layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; gap: 14px; align-items: start; }
+.day-layout > .timeline { min-width: 0; }
+
+.day-top { display: flex; flex-direction: column; gap: 10px; margin-bottom: 12px; }
+
+.timeline {
+  position: relative; border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-1); overflow: hidden; user-select: none;
+}
+.tl-row { display: grid; grid-template-columns: 54px 1fr; height: 44px; border-bottom: 1px solid var(--border); }
+.tl-row:last-child { border-bottom: none; }
+.tl-hour { font-size: 11px; color: var(--text-dim); padding: 3px 8px; text-align: right; border-right: 1px solid var(--border); }
+.tl-slot { position: relative; cursor: crosshair; }
+.tl-slot:hover { background: var(--surface-2); }
+.tl-half { position: absolute; left: 0; right: 0; top: 50%; border-top: 1px dashed var(--border); opacity: 0.45; }
+
+.tl-events { position: absolute; left: 54px; right: 6px; top: 0; bottom: 0; pointer-events: none; }
+.tl-ev {
+  position: absolute; left: 4px; right: 4px;
+  border-radius: 6px; padding: 3px 7px; font-size: 11.5px; line-height: 1.3;
+  background: var(--accent-dim); border-left: 3px solid var(--accent);
+  overflow: hidden; pointer-events: auto; cursor: pointer;
+}
+.tl-ev .t { font-weight: 600; }
+.tl-ev .h { font-size: 10px; color: var(--text-muted); }
+.tl-sel {
+  position: absolute; left: 4px; right: 4px; border-radius: 6px;
+  background: var(--accent-dim); border: 1px dashed var(--accent); pointer-events: none;
+}
+
+.hb-list { display: flex; flex-direction: column; gap: 3px; }
+.hb-item { display: flex; align-items: center; gap: 8px; padding: 6px 7px; border-radius: 6px; background: var(--surface-0); }
+.hb-item .hb-name { flex: 1; font-size: 13px; }
+.hb-item.on .hb-name { color: var(--text-muted); }
+.hb-streak { font-size: 11px; color: var(--amber); font-weight: 600; }
+
+@media (max-width: 1000px) {
+  .cal-layout, .day-layout { grid-template-columns: minmax(0, 1fr); }
+  .cal-side { position: static; }
+  .week-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cal-cell { min-height: 62px; padding: 4px; }
+  .cal-pill { font-size: 10px; padding: 1px 4px; }
+}
+@media (max-width: 560px) {
+  .week-grid { grid-template-columns: minmax(0, 1fr); }
+  .cal-weeks { grid-template-rows: repeat(6, minmax(62px, auto)); }
+}
+
+/* ==========================================================================
+   해빗 트래커 — 날짜 × 해빗 그리드
+   ========================================================================== */
+.hb-panel {
+  border: 1px solid var(--border); border-radius: var(--radius);
+  background: var(--surface-1); margin-bottom: 16px; overflow: hidden;
+}
+.hb-panel-head {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; padding: 11px 14px; text-align: left;
+  color: var(--text); font-size: 13.5px;
+}
+.hb-panel-head:hover { background: var(--surface-2); }
+.hb-caret { font-size: 10px; color: var(--text-dim); width: 12px; }
+.hb-panel-sub { font-size: 12px; color: var(--text-dim); margin-left: auto; }
+.hb-panel-body { padding: 4px 14px 14px; }
+.hb-panel-hint { font-size: 11px; color: var(--text-dim); margin-top: 8px; }
+
+.hg-scroll { overflow-x: auto; padding-bottom: 2px; }
+.hg { display: flex; flex-direction: column; gap: 3px; min-width: min-content; }
+
+.hg-row { display: grid; grid-template-columns: 132px repeat(var(--hg-cols), minmax(22px, 1fr)); gap: 3px; }
+.hg.wide .hg-row {
+  grid-template-columns: 132px repeat(var(--hg-cols), minmax(44px, 104px));
+  justify-content: start;
+}
+.hg.wide .hg-cell { height: 30px; font-size: 12px; }
+
+.hg-label {
+  display: flex; align-items: center; gap: 6px; min-width: 0;
+  font-size: 12px; color: var(--text-muted); padding-right: 6px;
+}
+.hg-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.hg-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hg-target { color: var(--text-dim); font-size: 11px; flex-shrink: 0; }
+
+.hg-cell-head {
+  display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+  font-size: 10px; color: var(--text-dim); line-height: 1.25; padding-bottom: 3px;
+}
+.hg-cell-head.today { color: var(--accent); font-weight: 700; }
+.hg-cell-head .w { font-size: 9px; opacity: 0.75; }
+
+.hg-cell {
+  height: 26px; border-radius: 5px;
+  background: var(--surface-0); border: 1px solid var(--border);
+  color: #0f1117; font-size: 11px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+  transition: transform 0.08s;
+}
+.hg-cell:hover { transform: scale(1.08); border-color: var(--border-accent); }
+.hg-cell.future { opacity: 0.4; }
+.hg-cell.full { box-shadow: 0 0 0 2px var(--text) inset; }
+
+/* --------------------------------------------------------------- 알람 카드 */
+.alarm-card {
+  position: fixed; right: 16px; bottom: 16px; width: 320px; max-width: calc(100vw - 32px);
+  background: var(--surface-1); border: 1px solid var(--amber);
+  border-radius: var(--radius); box-shadow: var(--shadow);
+  display: none; flex-direction: column; z-index: 450;
+  max-height: 60vh; overflow: auto;
+}
+/* 모바일에서는 하단 탭바 위로 띄웁니다 */
+@media (max-width: 900px) {
+  .alarm-card {
+    left: 12px; right: 12px; width: auto;
+    bottom: calc(var(--tabbar-h) + 12px);
+    max-height: 45vh;
+  }
+}
+.alarm-card.open { display: flex; }
+.alarm-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px; background: var(--amber-dim); color: var(--amber);
+  font-size: 13px;
+}
+.alarm-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 12px; border-top: 1px solid var(--border);
+}
+.alarm-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.alarm-main { flex: 1; min-width: 0; }
+.alarm-name { font-size: 13px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.alarm-time { font-size: 11px; color: var(--text-dim); }
+.alarm-foot { padding: 8px 12px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; }
+
+/* --------------------------------------------------------- 주간 뷰 카드 */
+.week-card {
+  background: var(--surface-0); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 7px 8px;
+}
+.week-card.allday { border-style: dashed; }
+.week-card + .week-card { margin-top: 6px; }
+.week-stack { display: flex; flex-direction: column; gap: 3px; }
+.week-none { font-size: 11px; color: var(--text-dim); }
+.week-divider {
+  font-size: 10px; color: var(--text-dim); letter-spacing: 0.05em;
+  margin: 7px 0 4px; padding-top: 5px; border-top: 1px dashed var(--border);
+}
+.day-side { align-self: start; }

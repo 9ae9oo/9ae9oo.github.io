@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="description" content="개인 창작자용 워크스페이스 — 작업 관리, 일정, 정산과 세무 참고자료를 한 탭에서.">
+<meta name="color-scheme" content="dark light">
+<title>Creator Workspace</title>
+<link rel="stylesheet" href="./css/tokens.css">
+<link rel="stylesheet" href="./css/shell.css">
+<link rel="stylesheet" href="./css/widgets.css">
+<link rel="stylesheet" href="./css/calendar.css">
+<link rel="stylesheet" href="./css/ledger.css">
+<link rel="stylesheet" href="./css/work.css">
+</head>
+<body data-route="home">
+
+<div id="app">
+
+  <!-- 상단 고정 네비게이션 — 페이지 이동 · 플로팅 위젯 · 음악 -->
+  <header id="topbar">
+    <nav class="topnav desktop-only">
+      <button class="topnav-item" data-nav="home"><span class="ico">🏠</span><span class="lbl">홈</span></button>
+      <button class="topnav-item" data-nav="work"><span class="ico">🎬</span><span class="lbl">작업</span></button>
+      <button class="topnav-item" data-nav="calendar"><span class="ico">📅</span><span class="lbl">캘린더</span></button>
+      <button class="topnav-item" data-nav="ledger"><span class="ico">💰</span><span class="lbl">정산</span></button>
+      <button class="topnav-item" data-nav="settings"><span class="ico">⚙️</span><span class="lbl">설정</span></button>
+    </nav>
+
+    <span class="spacer"></span>
+
+    <!-- 플로팅 위젯 — 어느 페이지에서든 바로 띄웁니다 -->
+    <div class="top-widgets">
+      <button class="btn btn-icon top-pomo" data-float="pomodoro" title="뽀모도로">
+        <span class="tp-time">25:00</span>
+      </button>
+      <button class="btn btn-icon mb-widget" data-float="memo" title="메모장" aria-label="메모장">📝</button>
+      <button class="btn btn-icon mb-widget" data-float="todo" title="할 일" aria-label="할 일">✅</button>
+    </div>
+
+    <div class="mb-sep"></div>
+
+    <!-- 음악 (music.js 가 내용을 채웁니다) -->
+    <div id="musicbar"></div>
+  </header>
+
+  <div id="body">
+    <main id="main">
+
+      <section class="page active" data-page="home">
+        <div class="page-head">
+          <h1>홈</h1>
+          <p>오늘 하루를 한눈에. 타이머·메모·할 일은 위쪽 버튼으로 언제든 띄웁니다.</p>
+        </div>
+        <div id="page-home-body"></div>
+      </section>
+
+      <section class="page" data-page="work">
+        <div class="page-head">
+          <h1>작업</h1>
+          <p>작품 → 회차 → 컷 단위로 공정을 체크합니다.</p>
+        </div>
+        <div id="page-work-body"></div>
+      </section>
+
+      <section class="page" data-page="calendar">
+        <div class="page-head">
+          <h1>캘린더</h1>
+          <p>월 · 주 · 일 뷰. 날짜를 붙인 할 일도 함께 표시됩니다.</p>
+        </div>
+        <div id="page-calendar-body"></div>
+      </section>
+
+      <section class="page" data-page="ledger">
+        <div class="page-head">
+          <h1>정산</h1>
+          <p>가계부 · 어시스턴트 · 세무 참고자료. 같은 금액을 두 번 입력하지 않습니다.</p>
+        </div>
+        <div id="page-ledger-body"></div>
+      </section>
+
+      <section class="page" data-page="settings">
+        <div class="page-head">
+          <h1>설정</h1>
+          <p>재생목록, 장부 카테고리, 해빗과 그룹처럼 가끔 손대는 관리는 모두 여기에서.</p>
+        </div>
+        <div id="page-settings-body"></div>
+      </section>
+
+    </main>
+  </div>
+
+  <!-- 하단 탭바 (모바일 전용) -->
+  <nav id="tabbar" class="mobile-only">
+    <button class="tabbar-item" data-nav="home"><span class="ico">🏠</span>홈</button>
+    <button class="tabbar-item" data-nav="work"><span class="ico">🎬</span>작업</button>
+    <button class="tabbar-item" data-nav="calendar"><span class="ico">📅</span>캘린더</button>
+    <button class="tabbar-item" data-nav="ledger"><span class="ico">💰</span>정산</button>
+    <button class="tabbar-item" data-nav="settings"><span class="ico">⚙️</span>설정</button>
+  </nav>
+
+</div>
+
+<div id="toast-wrap"></div>
+
+<!-- 번들러 없이 순서대로 로드합니다 (file:// 로 열어도 동작하도록 ES module 을 쓰지 않습니다) -->
+<script src="./js/util.js"></script>
+<script src="./js/store.js"></script>
+<script src="./js/shell.js"></script>
+<script src="./js/markdown.js"></script>
+<script src="./js/pomodoro.js"></script>
+<script src="./js/motto.js"></script>
+<script src="./js/music.js"></script>
+<script src="./js/todo.js"></script>
+<script src="./js/memo.js"></script>
+<script src="./js/habits.js"></script>
+<script src="./js/habitgrid.js"></script>
+<script src="./js/calendar.js"></script>
+<script src="./js/work.js"></script>
+<script src="./js/ledger.js"></script>
+<script src="./js/assistants.js"></script>
+<script src="./js/tax.js"></script>
+<script src="./js/settings.js"></script>
+<script src="./js/app.js"></script>
+
+</body>
+</html>
