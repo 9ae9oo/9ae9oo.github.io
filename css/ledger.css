@@ -87,16 +87,91 @@ table.tx tr.month-sum:hover td { background: var(--surface-2); }
 .callout.warn { border-left-color: var(--amber); }
 .callout strong { color: var(--text); }
 
-.asst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+/* ------------------------------------------------------------- 서브 탭 */
+.subtabs { display: flex; gap: 4px; margin-bottom: 14px; flex-wrap: wrap; }
+.subtab {
+  background: none; border: 1px solid transparent; border-radius: 999px;
+  padding: 5px 13px; font-size: 12.5px; font-weight: 600; color: var(--text-dim); cursor: pointer;
+}
+.subtab:hover { color: var(--text); background: var(--surface-2); }
+.subtab.active { color: var(--accent); border-color: var(--accent); background: var(--accent-dim); }
+
+/* ---------------------------------------------------------- 세그먼트 선택 */
+.seg { display: inline-flex; border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; }
+.seg button {
+  background: var(--surface-1); border: none; color: var(--text-muted);
+  padding: 7px 14px; font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.seg button + button { border-left: 1px solid var(--border); }
+.seg button:hover { color: var(--text); }
+.seg button.active { background: var(--accent); color: #fff; }
+
+/* --------------------------------------------------------------- 배지 */
+.chip-sm, .chip-warn, .chip-ok, .chip-ref {
+  display: inline-block; margin-left: 6px; padding: 1px 7px; border-radius: 999px;
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;
+}
+.chip-sm { background: var(--accent-dim); color: var(--accent); }
+.chip-warn { background: var(--amber-dim); color: var(--amber); margin-left: 0; }
+.chip-ok { background: var(--green-dim); color: var(--green); margin-left: 0; }
+.chip-ref { background: var(--surface-3); color: var(--text-dim); }
+table.tx tr.linked td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
+
+/* ------------------------------------------------------- 어시스턴트 카드 */
+.asst-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
 .asst-card { background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px; }
 .asst-card .n { font-size: 14px; font-weight: 600; }
-.asst-card .r { font-size: 12px; color: var(--accent); margin-bottom: 6px; }
-.asst-card .m { font-size: 12px; color: var(--text-muted); white-space: pre-wrap; line-height: 1.6; }
+.asst-card .r { font-size: 12px; color: var(--accent); margin-bottom: 8px; }
+.asst-card .m {
+  font-size: 12px; color: var(--text-muted); white-space: pre-wrap; line-height: 1.6;
+  margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--border);
+}
+.asst-meta { display: grid; gap: 3px; font-size: 12px; }
+.asst-meta > div { display: flex; justify-content: space-between; gap: 10px; }
+.asst-meta .k { color: var(--text-dim); }
+.asst-meta .v { color: var(--text); font-variant-numeric: tabular-nums; text-align: right; }
+.asst-sum {
+  margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border);
+  font-size: 11.5px; color: var(--text-dim); font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------ 지급 계산 */
+.pay-calc {
+  background: var(--surface-2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 11px 13px; margin: 4px 0 2px;
+}
+.pay-calc-row {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px;
+  font-size: 13px; font-variant-numeric: tabular-nums; margin-bottom: 5px;
+}
+.pay-calc-row .op { color: var(--text-dim); }
+.pay-calc-row .net { color: var(--green); }
+.note-warn {
+  margin-top: 6px; font-size: 11.5px; color: var(--amber); line-height: 1.6;
+}
+
+/* --------------------------------------------------------------- 세무 */
+.tax-warn { position: sticky; top: 0; z-index: 3; }
+.flow { display: grid; gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 10px; }
+.flow-row {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  background: var(--surface-1); padding: 9px 13px; font-size: 13px;
+}
+.flow-row .k { color: var(--text-muted); }
+.flow-row .v { font-weight: 600; font-variant-numeric: tabular-nums; }
+.flow-row .v.minus { color: var(--coral); }
+.flow-row.sum { background: var(--surface-2); }
+.flow-row.total { background: var(--surface-2); }
+.flow-row.total .k { color: var(--text); font-weight: 600; }
+.flow-row.total .v { color: var(--accent); font-size: 15px; }
 
 @media (max-width: 900px) {
   .stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .carry-box { grid-template-columns: minmax(0, 1fr); }
   .tx-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tax-warn { position: static; }
+  .seg { width: 100%; }
+  .seg button { flex: 1; }
 }
 @media (max-width: 480px) {
   .stat-grid { grid-template-columns: minmax(0, 1fr); }

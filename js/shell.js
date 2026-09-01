@@ -227,7 +227,7 @@ window.MW = window.MW || {};
   function confirmDialog(message, onYes, okText) {
     modal({
       title: '확인',
-      body: [el('p', { text: message, style: { color: 'var(--text-muted)', lineHeight: '1.7' } })],
+      body: [el('p', { text: message, style: { color: 'var(--text-muted)', lineHeight: '1.7', whiteSpace: 'pre-line' } })],
       okText: okText || '삭제',
       onOk: onYes
     });

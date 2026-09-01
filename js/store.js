@@ -10,7 +10,7 @@ window.MW = window.MW || {};
   var U = MW.util;
 
   var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
-  var VERSION = 2;
+  var VERSION = 3;
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
@@ -44,6 +44,11 @@ window.MW = window.MW || {};
       habits: [],           // {id, name, color, times:['15:00',…] — 개수 = 하루 목표 횟수}
       habitLog: {},         // 'YYYY-MM-DD' → { habitId: { done:['15:00'], pass:['18:00'] } }
       events: [],
+      /* 작업 관리 — 작품 → 회차 → 컷 → 공정
+         {id, name, archived, episodes:[
+           {id, number, title, cutCount, processes:[
+             {id, name, order, collapsed, completedCuts:[1,2,3]} ]} ]} */
+      works: [],
       ledger: {
         types: [
           { id: 't-income', name: '수입', kind: 'income', categories: catsOf(['MG/RS', '주식', '예금/기타']) },
@@ -57,8 +62,16 @@ window.MW = window.MW || {};
         tx: [],
         budgets: {},
         carry: {},
+        /* 어시스턴트 — 개인정보 최소화: 계좌·은행·주민번호는 필드 자체를 두지 않습니다
+           {id, name, workPart, payBasis:'gross'|'net', defaultPay, taxRate,
+            extraRule, memo, archived} */
         assistants: [],
-        vat: {}          // 'YYYY-반기' -> 직접 입력한 세액
+        /* 지급 내역 — 기본정보와 분리해서, 단가가 바뀌어도 과거 기록은 그대로 남습니다
+           payBasis·taxRate 는 입력 시점 값을 복사해 고정합니다
+           {id, year, assistantId, workDesc, basePay, extraPay, extraCuts,
+            payBasis, taxRate, paidAt, reportedAt, memo, txId} */
+        payments: [],
+        vat: {}          // 'YYYY-1기' -> { amount, memo } 실제 신고/납부 세액 직접 입력
       }
     };
   }
@@ -88,7 +101,7 @@ window.MW = window.MW || {};
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
-    ['playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events'].forEach(function (k) {
+    ['playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events', 'works'].forEach(function (k) {
       if (!Array.isArray(out[k])) out[k] = base[k];
     });
     if (!out.habitLog || typeof out.habitLog !== 'object') out.habitLog = {};
@@ -133,6 +146,45 @@ window.MW = window.MW || {};
     if (!Array.isArray(out.ledger.types) || !out.ledger.types.length) out.ledger.types = base.ledger.types;
     if (!Array.isArray(out.ledger.tx)) out.ledger.tx = [];
     if (!Array.isArray(out.ledger.assistants)) out.ledger.assistants = [];
+    if (!Array.isArray(out.ledger.payments)) out.ledger.payments = [];
+
+    /* v2 → v3 -------------------------------------------------------------
+       · 어시스턴트 role → workPart 로 이름 변경, 지급 기준 필드 신설
+       · 거래에 부가세 구분(vatType)·증빙(evidence) 필드 추가
+       · 작업 관리(works) 신설                                             */
+    out.ledger.assistants = out.ledger.assistants.map(function (a) {
+      if (!a || typeof a !== 'object') return a;
+      if (a.workPart === undefined) a.workPart = a.role || '';
+      delete a.role;
+      if (a.payBasis !== 'net') a.payBasis = 'gross';
+      if (typeof a.defaultPay !== 'number') a.defaultPay = 0;
+      if (typeof a.taxRate !== 'number') a.taxRate = 3.3;
+      if (a.extraRule === undefined) a.extraRule = '';
+      if (a.memo === undefined) a.memo = '';
+      if (a.archived === undefined) a.archived = false;
+      return a;
+    });
+    out.works = out.works.map(function (w) {
+      if (!w || typeof w !== 'object') return w;
+      if (!Array.isArray(w.episodes)) w.episodes = [];
+      w.episodes.forEach(function (ep) {
+        if (!ep || typeof ep !== 'object') return;
+        if (!Array.isArray(ep.processes)) ep.processes = [];
+        ep.processes.forEach(function (p, i) {
+          if (!p || typeof p !== 'object') return;
+          if (!Array.isArray(p.completedCuts)) p.completedCuts = [];
+          if (typeof p.order !== 'number') p.order = i;
+        });
+      });
+      return w;
+    });
+    out.ledger.tx = out.ledger.tx.map(function (t) {
+      if (!t || typeof t !== 'object') return t;
+      if (t.vatType === undefined) t.vatType = 'none';   // taxable | exempt | none
+      if (t.evidence === undefined) t.evidence = '';
+      if (t.paymentId === undefined) t.paymentId = null;
+      return t;
+    });
     ['budgets', 'carry', 'vat'].forEach(function (k) {
       if (!out.ledger[k] || typeof out.ledger[k] !== 'object') out.ledger[k] = {};
     });
