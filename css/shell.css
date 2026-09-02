@@ -391,13 +391,12 @@
 
 .side-panel {
   position: fixed;
-  top: 14px;
-  right: calc(var(--sidebar-w) + 28px);   /* 우측 레일 왼쪽에 뜨는 패널 */
-  bottom: 14px;
+  top: 0;
+  right: calc(var(--sidebar-w) + 28px);   /* 우측 레일 왼쪽, 전체 높이 (이전과 동일) */
+  bottom: 0;
   width: var(--side-panel-w);
   background: var(--surface-1);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius);
+  border-left: 1px solid var(--border-accent);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
@@ -484,27 +483,56 @@
     gap: 8px;
     padding: 8px;
   }
-  #sidebar, #toolrail {
+  /* 상단 = 메인 메뉴, 하단 = 도구. 서로 덮지 않도록 흐름에 둠 */
+  #sidebar {
     flex: 0 0 auto;
-    flex-direction: row;
-    justify-content: space-around;
+    order: 0;
   }
   #sidebar .sidebar-nav { flex-direction: row; }
-  .sidebar-item, .tool-item { flex: 1; }
+  .sidebar-item { flex: 1; }
 
-  #content { flex: 1; }
+  #content { flex: 1; order: 1; min-height: 0; }
   #topbar { gap: 6px; padding: 0 8px; }
   #main { align-items: stretch; -webkit-overflow-scrolling: touch; }
+  /* #main 하단 패딩 = 떠 있는 도구줄 + 입력창 높이만큼 */
+  #content #main { padding-bottom: 118px; }
   .page { padding: 16px 12px 24px; }
 
-  /* 모바일: 플로팅 창 전체화면 */
+  /* 도구줄: 하단에 떠 있음, 입력창 바로 위 */
+  #toolrail {
+    position: fixed;
+    left: 10px; right: 10px;
+    bottom: calc(62px + env(safe-area-inset-bottom));
+    flex-direction: row;
+    justify-content: space-around;
+    padding: 4px;
+    z-index: 280;
+  }
+  .tool-item { flex: 1; min-height: 34px; }
+
+  /* 입력창: 화면 최하단에 고정, 도구보다 위 레이어 */
+  #quickbar {
+    position: fixed;
+    left: 10px; right: 10px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    transform: none;
+    width: auto;
+    z-index: 300;
+  }
+
+  /* 뽀모도로 플로팅 창: 화면을 덮지 않고 도구줄 위에 작게 */
   .float.open {
-    inset: 8px !important;
+    top: auto !important;
+    left: 10px !important;
+    right: 10px !important;
+    bottom: calc(112px + env(safe-area-inset-bottom)) !important;
     width: auto !important;
     height: auto !important;
+    max-height: 46vh;
     border-radius: var(--radius);
-    z-index: 400;
+    z-index: 250;
   }
+  .float-body { overflow-y: auto; }
   .float-head { cursor: default; }
   .float-resize { display: none; }
 
