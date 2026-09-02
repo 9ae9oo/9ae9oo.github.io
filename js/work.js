@@ -275,6 +275,9 @@ window.MW = window.MW || {};
   function processNode(work, ep, pr, index, total) {
     var done = {};
     pr.completedCuts.forEach(function (n) { done[n] = true; });
+    var doneCount = 0;
+    for (var k = 1; k <= ep.cutCount; k++) if (done[k]) doneCount++;
+    var remain = ep.cutCount - doneCount;
 
     var head = el('div.proc-head', {}, [
       reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
@@ -284,6 +287,9 @@ window.MW = window.MW || {};
         el('span.caret', { text: pr.collapsed ? '▸' : '▾' }),
         el('span.proc-name', { text: pr.name })
       ]),
+      el('span.proc-remain' + (remain <= 0 ? '.done' : ''), {
+        text: remain <= 0 ? '완료' : '남은 ' + remain + '컷'
+      }),
       el('span.spacer'),
       reorder ? el('div.proc-tools', {}, [
         el('button.btn.btn-ghost.btn-icon.btn-sm', {
@@ -372,6 +378,53 @@ window.MW = window.MW || {};
     return node;
   }
 
+  /** "전체 N컷" — ✎ 를 누르면 그 자리에서 숫자 입력으로 바뀌는 인라인 편집기 */
+  function cutCountControl(work, ep) {
+    var wrap = el('span.ep-cuts');
+
+    function showLabel() {
+      U.clear(wrap);
+      wrap.appendChild(el('span', { text: '전체 ' + ep.cutCount + '컷' }));
+      wrap.appendChild(el('button.ep-cuts-edit', {
+        type: 'button', text: '✎', title: '전체 컷 수 수정', onclick: showInput
+      }));
+    }
+
+    function showInput() {
+      U.clear(wrap);
+      var inp = el('input.ep-cuts-input', { type: 'number', min: '1', max: '999', value: ep.cutCount });
+      var doneOnce = false;
+      function commit() {
+        if (doneOnce) return;
+        doneOnce = true;
+        var v = U.clamp(parseInt(inp.value, 10) || ep.cutCount, 1, 999);
+        if (v === ep.cutCount) { showLabel(); return; }
+        MW.store.update(function (s) {
+          var e = findEp(s, work.id, ep.id);
+          if (!e) return;
+          e.cutCount = v;
+          // 컷 수를 줄이면 사라진 컷의 체크는 지웁니다
+          e.processes.forEach(function (pr) {
+            pr.completedCuts = pr.completedCuts.filter(function (n) { return n <= v; });
+          });
+        });
+      }
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
+      });
+      inp.addEventListener('blur', commit);
+      wrap.appendChild(el('span', { text: '전체 ' }));
+      wrap.appendChild(inp);
+      wrap.appendChild(el('span', { text: ' 컷' }));
+      inp.focus();
+      inp.select();
+    }
+
+    showLabel();
+    return wrap;
+  }
+
   /* ------------------------------------------------------------ 렌더 */
 
   function render() {
@@ -404,12 +457,7 @@ window.MW = window.MW || {};
       el('button.btn.btn-ghost.btn-icon.btn-sm', {
         text: '✎', title: '작품 이름 수정 · 삭제', onclick: function () { workDialog(work); }
       }),
-      el('button.btn.btn-sm', { text: '＋ 작품', onclick: function () { workDialog(null); } }),
-      el('span.spacer'),
-      ep ? el('button.btn.btn-sm' + (reorder ? '.active' : ''), {
-        text: reorder ? '순서 변경 끝내기' : '순서 변경',
-        onclick: function () { reorder = !reorder; render(); }
-      }) : null
+      el('button.btn.btn-sm', { text: '＋ 작품', onclick: function () { workDialog(null); } })
     ]));
 
     // 회차 칩
@@ -438,10 +486,14 @@ window.MW = window.MW || {};
         ep.number + '화',
         ep.title ? el('span.muted', { text: ' · ' + ep.title }) : null
       ]),
-      el('span.ep-cuts', { text: '전체 ' + ep.cutCount + '컷' }),
+      cutCountControl(work, ep),
       el('span.spacer'),
-      el('button.btn.btn-ghost.btn-sm', {
-        text: '회차 설정', title: '회차 번호 · 컷 수 · 삭제',
+      el('button.btn.btn-sm' + (reorder ? '.active' : ''), {
+        text: reorder ? '순서 변경 끝내기' : '순서 변경',
+        onclick: function () { reorder = !reorder; render(); }
+      }),
+      el('button.btn.btn-ghost.btn-icon.btn-sm', {
+        text: '⚙', title: '회차 정보 (번호 · 부제 · 삭제)',
         onclick: function () { episodeDialog(work, ep); }
       })
     ]));
