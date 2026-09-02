@@ -170,7 +170,7 @@ window.MW = window.MW || {};
     var sx = 0, sy = 0, ox = 0, oy = 0, active = false;
     function down(e) {
       if (isMobile()) return;                       // 모바일은 전체화면 시트
-      if (e.target.closest('button')) return;
+      if (e.target.closest('button, input, select, label, a')) return;   // 헤더 안 컨트롤은 드래그 아님
       var p = point(e);
       active = true; sx = p.x; sy = p.y;
       ox = node.offsetLeft; oy = node.offsetTop;

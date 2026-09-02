@@ -159,38 +159,15 @@
   font-size: 12px; font-weight: 600; color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
-#pomodoro-trigger[aria-expanded="true"] { background: var(--accent-dim); color: var(--accent); }
 #pomodoro-trigger.running { color: var(--accent); }
 #pomodoro-trigger.running .tp-time { color: var(--accent); }
 
-/* 뽀모도로 드롭다운 패널 — JS(positionPanel)가 트리거 옆으로 위치를 잡습니다. 아래는 폴백값. */
-#pomodoro-panel {
-  position: fixed;
-  top: auto;
-  bottom: 8px;
-  left: calc(var(--sidebar-w) + 8px);
-  width: 300px;
-  max-width: calc(100vw - 16px);
-  background: var(--surface-1);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  z-index: 520;
-  overflow: hidden;
-}
-.pomo-panel-head {
-  display: flex; align-items: center; gap: 8px;
-  padding: 8px 8px 8px 12px;
-  background: var(--surface-2);
-  border-bottom: 1px solid var(--border);
-}
-.pomo-panel-title { flex: 1; font-size: 13px; font-weight: 600; }
-.pomo-pin {
+/* 뽀모도로 플로팅 창 헤더의 "자동 열기" 토글 */
+.float-pin {
   display: flex; align-items: center; gap: 4px;
   font-size: 11px; color: var(--text-muted); cursor: pointer; white-space: nowrap;
 }
-.pomo-pin input { cursor: pointer; }
-.pomo-panel-body { padding: 12px; }
+.float-pin input { cursor: pointer; }
 
 /* 상단바 = 인라인 미니 플레이어 (재생 버튼 + 곡 제목). yt-host 는 숨김. */
 #musicbar { flex: 1; min-width: 0; display: flex; align-items: center; }
@@ -277,6 +254,9 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
+  /* 넓은 콘텐츠(홈 해빗 그리드 등)가 있어도 사이드바 옆 남은 폭보다
+     넓어지지 않도록 — 안쪽 스크롤 컨테이너가 넘침을 처리합니다. */
+  min-width: 0;
 }
 
 #topbar {
@@ -307,6 +287,9 @@
   padding: 20px 24px 60px;
   max-width: 1100px;
   width: 100%;
+  /* 넓은 자식(예: 홈 해빗 그리드)이 있어도 뷰포트보다 커지지 않도록 —
+     안쪽 overflow-x:auto 컨테이너가 스크롤을 담당합니다. */
+  min-width: 0;
 }
 .page.active { display: block; }
 .page-head { margin-bottom: 18px; }
@@ -700,6 +683,9 @@
 }
 
 /* --------------------------------------------------------------- 홈 */
+#page-home-body { min-width: 0; }
+#page-home-body > .card { min-width: 0; }
+
 .motto {
   display: flex; align-items: center; gap: 12px;
   background: var(--surface-1); border: 1px solid var(--border);

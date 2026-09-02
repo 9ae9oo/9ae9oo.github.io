@@ -102,7 +102,8 @@ window.MW = window.MW || {};
   function svgRing() {
     var ns = 'http://www.w3.org/2000/svg';
     var svg = document.createElementNS(ns, 'svg');
-    svg.setAttribute('width', '168'); svg.setAttribute('height', '168'); svg.setAttribute('viewBox', '0 0 168 168');
+    // 크기는 .pomo-ring 컨테이너(--pomo-scale)가 결정하고, viewBox 로 좌표를 맞춥니다.
+    svg.setAttribute('width', '100%'); svg.setAttribute('height', '100%'); svg.setAttribute('viewBox', '0 0 168 168');
     var track = document.createElementNS(ns, 'circle');
     track.setAttribute('class', 'track'); track.setAttribute('cx', '84'); track.setAttribute('cy', '84'); track.setAttribute('r', R);
     var bar = document.createElementNS(ns, 'circle');
@@ -165,86 +166,52 @@ window.MW = window.MW || {};
     render();
   }
 
-  /* ---------------------------------------------------- 상단바 드롭다운 패널 */
+  /* ---------------------------------------------------- 플로팅 창 */
 
-  var trigger = null, panel = null, panelOpen = false;
+  var float = null;
 
   function pinned() { return !!(MW.store.state.settings && MW.store.state.settings.pomoPinned); }
   function setPinned(v) { MW.store.update(function (s) { s.settings.pomoPinned = !!v; }); }
 
-  function positionPanel() {
-    if (!trigger || !panel) return;
-    var r = trigger.getBoundingClientRect();
-    var w = panel.offsetWidth || 300;
-    var h = panel.offsetHeight || 380;
-    // 트리거는 왼쪽 사이드바 하단에 있으므로 패널은 트리거 오른쪽에, 세로는 화면 안에 맞춤
-    var left = U.clamp(r.right + 8, 8, Math.max(8, window.innerWidth - w - 8));
-    var top = U.clamp(r.top, 8, Math.max(8, window.innerHeight - h - 8));
-    panel.style.left = left + 'px';
-    panel.style.top = top + 'px';
-    panel.style.bottom = 'auto';   // CSS 폴백(bottom:8px)이 top 과 겹쳐 늘어나지 않게
+  /** 창 너비에 맞춰 링·글자·버튼이 함께 커지도록 --pomo-scale 갱신 (넘치면 float-body 가 스크롤) */
+  function syncScale() {
+    if (!float) return;
+    var w = float.node.offsetWidth || 360;
+    var s = U.clamp((w - 24) / 280, 0.8, 2.6);
+    float.node.style.setProperty('--pomo-scale', Math.round(s * 100) / 100);
   }
-
-  function openPanel() {
-    if (!panel) return;
-    U.clear(panel);
-    panel.appendChild(el('div.pomo-panel-head', {}, [
-      el('span.pomo-panel-title', { text: '🍅 뽀모도로' }),
-      el('label.pomo-pin', { title: '켜두면 패널이 계속 열려 있습니다' }, [
-        el('input', {
-          type: 'checkbox', checked: pinned(),
-          onchange: function () { setPinned(this.checked); }
-        }),
-        el('span', { text: '고정하기' })
-      ]),
-      el('button.btn.btn-ghost.btn-icon.btn-sm', {
-        text: '✕', 'aria-label': '닫기', onclick: closePanel
-      })
-    ]));
-    var bodyEl = el('div.pomo-panel-body');
-    panel.appendChild(bodyEl);
-    mount(bodyEl);
-
-    panel.hidden = false;
-    panelOpen = true;
-    positionPanel();
-    if (trigger) trigger.setAttribute('aria-expanded', 'true');
-  }
-
-  function closePanel() {
-    if (!panel) return;
-    panel.hidden = true;
-    panelOpen = false;
-    if (trigger) trigger.setAttribute('aria-expanded', 'false');
-  }
-
-  function togglePanel() { panelOpen ? closePanel() : openPanel(); }
 
   function init() {
-    trigger = document.getElementById('pomodoro-trigger');
-    panel = document.getElementById('pomodoro-panel');
+    float = MW.shell.registerFloat('pomodoro', {
+      title: '🍅 뽀모도로',
+      rect: { x: Math.max(72, window.innerWidth - 440), y: 96, w: 360, h: 480 },
+      headExtra: (function () {
+        return el('label.float-pin', { title: '앱을 열 때 자동으로 띄웁니다' }, [
+          el('input', {
+            type: 'checkbox', checked: pinned(),
+            onchange: function () { setPinned(this.checked); }
+          }),
+          el('span', { text: '자동' })
+        ]);
+      })(),
+      onOpen: function (api) { mount(api.body); syncScale(); }
+    });
 
-    if (trigger && panel) {
-      trigger.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(); });
-      document.addEventListener('click', function (e) {
-        if (!panelOpen || pinned()) return;
-        if (panel.contains(e.target) || trigger.contains(e.target)) return;
-        closePanel();
-      });
-      document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape' && panelOpen && !pinned()) closePanel();
-      });
-      window.addEventListener('resize', function () { if (panelOpen) positionPanel(); });
-      if (pinned()) openPanel();
+    if (window.ResizeObserver) {
+      new ResizeObserver(syncScale).observe(float.node);
+    } else {
+      window.addEventListener('resize', syncScale);
     }
+
     renderMini();
+    if (pinned()) float.open();
   }
 
   MW.pomodoro = {
     init: init,
     mount: mount,
     renderMini: renderMini,
-    open: openPanel,
+    open: function () { if (float) float.open(); },
     /** 설정 페이지에서 시간 값이 바뀌었을 때 다시 그리기 위해 */
     refresh: function () { if (ui.time) { if (!running) remaining = total(); render(); } },
     state: function () { return { session: session, count: count, remaining: remaining, running: running }; }

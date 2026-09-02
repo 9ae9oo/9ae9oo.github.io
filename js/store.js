@@ -29,7 +29,7 @@ window.MW = window.MW || {};
         icalUrl: '',
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
-        pomoPinned: false,    // 상단바 뽀모도로 패널을 계속 열어둘지
+        pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
         homeOrder: ['calendar', 'inbox', 'habits', 'money'],  // 홈 대시보드 카드 순서 (설정 → 테마에서 변경)
         homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
         theme: { mode: 'dark', accent: '#6b8afd' }  // mode: 'dark' | 'light'
@@ -113,6 +113,7 @@ window.MW = window.MW || {};
     out.settings = Object.assign({}, base.settings, data.settings || {});
     if (!Array.isArray(out.settings.homeOrder)) out.settings.homeOrder = base.settings.homeOrder.slice();
     if (typeof out.settings.homeImage !== 'string') out.settings.homeImage = '';
+    delete out.settings.pomoScale;   // 구버전 필드 — 이제 창 크기(settings.floats.pomodoro)로 대체
     // theme 은 중첩 객체라 얕은 병합으로는 accent 가 없는 절반짜리 값이 그대로 남을 수 있어 따로 채웁니다
     if (!out.settings.theme || typeof out.settings.theme !== 'object') out.settings.theme = Object.assign({}, base.settings.theme);
     else out.settings.theme = Object.assign({}, base.settings.theme, out.settings.theme);

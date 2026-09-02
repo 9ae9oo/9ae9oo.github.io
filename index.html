@@ -46,9 +46,9 @@
         <span class="label">설정</span>
       </button>
     </nav>
-    <!-- 뽀모도로 — 사이드바 하단. 누르면 오른쪽으로 패널이 열림 -->
+    <!-- 뽀모도로 — 사이드바 하단. 누르면 플로팅 창을 켜고 끔 -->
     <div class="sidebar-footer">
-      <button id="pomodoro-trigger" class="sidebar-item pomo-item" title="뽀모도로" aria-haspopup="true" aria-expanded="false">
+      <button id="pomodoro-trigger" class="sidebar-item pomo-item" data-float="pomodoro" title="뽀모도로" aria-label="뽀모도로">
         <span class="icon">🍅</span>
         <span class="label">뽀모도로</span>
         <span class="tp-time">25:00</span>
@@ -62,9 +62,6 @@
       <!-- 음악 플레이어 (music.js 가 곡 제목 + 재생 버튼을 채웁니다) -->
       <div id="musicbar"></div>
     </header>
-
-    <!-- 뽀모도로 패널 (사이드바 뽀모도로 버튼 옆으로 펼쳐짐) -->
-    <div id="pomodoro-panel" hidden></div>
 
     <main id="main">
 
