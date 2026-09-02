@@ -172,7 +172,8 @@
 .top-pomo.running { color: var(--accent); border-color: var(--accent); }
 .top-pomo.active { box-shadow: inset 0 0 0 1px var(--accent); }
 
-#musicbar { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
+/* 배경음악은 하단 팝업 전용이라 상단바에는 숨김 플레이어(yt-host)만 둡니다 */
+#musicbar { flex: 0 0 auto; }
 
 .mb-controls { display: flex; align-items: center; gap: 2px; }
 .mb-controls .btn-icon { color: var(--text-muted); border-radius: 50%; }
@@ -329,6 +330,18 @@
   background: var(--accent-dim);
 }
 
+/* 음악 재생 중 — 하단 탭 아이콘 강조 */
+#tabbar .tabbar-item.running {
+  color: var(--accent);
+}
+#tabbar .tabbar-item.running .icon {
+  animation: tabbar-pulse 1.6s ease-in-out infinite;
+}
+@keyframes tabbar-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.55; }
+}
+
 #tabbar .tabbar-item .icon {
   font-size: 20px;
   line-height: 1;
@@ -362,7 +375,7 @@
 }
 
 .music-popup.open {
-  max-height: 350px;
+  max-height: 420px;
 }
 
 .music-popup-header {

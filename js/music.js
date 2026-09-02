@@ -220,7 +220,7 @@ window.MW = window.MW || {};
     document.removeEventListener('click', outside);
   }
 
-  /* ------------------------------------------------------------ 상단바 */
+  /* ------------------------------------------------------------ 하단 팝업 표시 */
 
   function renderBar() {
     if (!ui.title) return;
@@ -234,45 +234,42 @@ window.MW = window.MW || {};
     ui.mode.textContent = st().player.mode === 'shuffle' ? '🔀' : '🔁';
     ui.mode.title = st().player.mode === 'shuffle' ? '셔플 재생 (클릭 시 순차)' : '순차 재생 (클릭 시 셔플)';
     ui.mode.classList.toggle('on', st().player.mode === 'shuffle');
+    syncTabIcon();
+  }
+
+  /** 하단 탭바 음악 아이콘 — 재생 중이면 강조 표시 */
+  function syncTabIcon() {
+    var tabBtn = document.getElementById('music-popup-trigger-bottom');
+    if (tabBtn) tabBtn.classList.toggle('running', playing);
   }
 
   function mount(bar) {
+    // 상단바에는 화면에 보이는 컨트롤을 두지 않습니다 (배경음악은 하단 팝업 전용).
+    // YouTube 플레이어는 어차피 숨김(iframe) 이라 어디에 있어도 상관없어 그대로 둡니다.
+    bar.appendChild(el('div', { id: 'yt-host' }));
+
     ui.title = el('div.mb-now-title');
     ui.sub = el('div.mb-now-sub');
-    ui.play = el('button.btn.btn-icon.mb-play', { title: '재생/일시정지', onclick: togglePlay });
+    ui.play = el('button.btn.btn-icon.mb-play', {
+      title: '재생/일시정지', onclick: togglePlay,
+      style: { width: '50px', height: '50px', fontSize: '24px' }
+    });
     ui.mode = el('button.btn.btn-icon.mb-mode', {
+      title: '재생 모드 변경',
       onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
     });
 
-    // 브랜드 헤더는 두지 않습니다 (상단은 네비게이션과 조작에만 씁니다)
-    bar.appendChild(el('div.mb-controls', {}, [
-      el('button.btn.btn-icon', { text: '◀', title: '이전 곡', onclick: prevTrack }),
-      ui.play,
-      el('button.btn.btn-icon', { text: '▶', title: '다음 곡', onclick: function () { nextTrack(false); } })
-    ]));
-    bar.appendChild(el('div.mb-now', {}, [ui.title, ui.sub]));
-    bar.appendChild(ui.mode);
-    bar.appendChild(el('button.btn.btn-icon', {
-      text: '☰', title: '재생목록', dataset: { pop: 'music' },
-      onclick: function () { popover ? closePopover() : openPopover(); }
-    }));
-
-    bar.appendChild(el('div', { id: 'yt-host' }));
-
-    /* 하단 음악 팝업 콘텐츠 마운트 */
+    /* 하단 음악 팝업 콘텐츠 마운트 — 재생 컨트롤은 여기 하나만 존재합니다 */
     var playerContent = document.getElementById('music-player-content');
     if (playerContent) {
-      playerContent.appendChild(el('div.mb-controls', {}, [
+      playerContent.appendChild(el('div.mb-controls', { style: { justifyContent: 'center' } }, [
         el('button.btn.btn-icon', { text: '◀', title: '이전 곡', onclick: prevTrack }),
-        el('button.btn.btn-icon.mb-play', { title: '재생/일시정지', onclick: togglePlay, style: { width: '50px', height: '50px', fontSize: '24px' } }),
+        ui.play,
         el('button.btn.btn-icon', { text: '▶', title: '다음 곡', onclick: function () { nextTrack(false); } })
       ]));
       playerContent.appendChild(el('div.mb-now', { style: { padding: '12px 0', textAlign: 'center' } }, [ui.title, ui.sub]));
-      playerContent.appendChild(el('div.mb-controls', {}, [
-        el('button.btn.btn-icon.mb-mode', {
-          title: '재생 모드 변경',
-          onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
-        }),
+      playerContent.appendChild(el('div.mb-controls', { style: { justifyContent: 'center' } }, [
+        ui.mode,
         el('button.btn.btn-icon', {
           text: '☰', title: '재생목록', dataset: { pop: 'music' },
           onclick: function () { popover ? closePopover() : openPopover(); }
