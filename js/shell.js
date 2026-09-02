@@ -380,6 +380,9 @@ window.MW = window.MW || {};
       if (collapsed) toggleSidebar();
     } catch (e) {}
 
+    /* 빠른 입력 초기화 */
+    if (MW.quickAdd) MW.quickAdd.init();
+
     apply(parseHash());
   }
 

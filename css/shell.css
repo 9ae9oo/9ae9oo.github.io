@@ -120,6 +120,34 @@
   z-index: 60;
 }
 
+/* 빠른 입력 필드 */
+.quick-add-wrap {
+  display: none;
+  flex: 0 0 250px;
+}
+
+.quick-add-input {
+  width: 100%;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.quick-add-input::placeholder {
+  color: var(--text-dim);
+}
+
+.quick-add-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px var(--accent-dim);
+}
+
 /* 상단 네비게이션 — 페이지 이동 */
 .topnav { display: flex; align-items: center; gap: 2px; }
 .topnav-item {
@@ -564,6 +592,11 @@
   }
 
   #music-popup-trigger-bottom {
+    display: flex;
+  }
+
+  /* 데스크톱: 빠른 입력 필드 표시 */
+  .quick-add-wrap {
     display: flex;
   }
 

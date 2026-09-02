@@ -49,8 +49,13 @@
   </aside>
 
   <div id="body">
-    <!-- 상단 고정 네비게이션 — 음악 플레이어 -->
+    <!-- 상단 고정 네비게이션 — 빠른 입력 + 음악 플레이어 -->
     <header id="topbar">
+      <!-- 빠른 일정 입력 (데스크톱 전용) -->
+      <div class="quick-add-wrap">
+        <input type="text" id="quick-add-input" class="quick-add-input" placeholder="내일 오후 3시 회의 / 할일" autocomplete="off">
+      </div>
+
       <!-- 음악 (music.js 가 내용을 채웁니다) -->
       <div id="musicbar"></div>
 
@@ -144,6 +149,7 @@
 <script src="./js/util.js"></script>
 <script src="./js/store.js"></script>
 <script src="./js/shell.js"></script>
+<script src="./js/quick-add.js"></script>
 <script src="./js/markdown.js"></script>
 <script src="./js/pomodoro.js"></script>
 <script src="./js/motto.js"></script>
