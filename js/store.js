@@ -10,7 +10,7 @@ window.MW = window.MW || {};
   var U = MW.util;
 
   var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
-  var VERSION = 4;
+  var VERSION = 5;
 
   function catsOf(names) {
     return names.map(function (n) { return { id: 'c-' + n, name: n }; });
@@ -47,12 +47,6 @@ window.MW = window.MW || {};
         { id: 'g-work', name: '업무', color: '#6b8afd' },
         { id: 'g-personal', name: '개인', color: '#4ade80' },
         { id: 'g-etc', name: '기타', color: '#8b90a5' }
-      ],
-      /* 메모 태그 — 메모장 전용. 일정 카테고리와 완전히 분리되어 독립적으로 관리됩니다. */
-      memoTags: [
-        { id: 'mt-idea', name: '아이디어', color: '#fbbf24' },
-        { id: 'mt-ref', name: '자료', color: '#6b8afd' },
-        { id: 'mt-etc', name: '기타', color: '#8b90a5' }
       ],
       todos: [],
       memos: [],
@@ -133,9 +127,10 @@ window.MW = window.MW || {};
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
-    ['playlists', 'todoGroups', 'memoTags', 'todos', 'memos', 'habits', 'events', 'works'].forEach(function (k) {
+    ['playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events', 'works'].forEach(function (k) {
       if (!Array.isArray(out[k])) out[k] = base[k];
     });
+    delete out.memoTags;   // v5: 메모 분류는 본문 #해시태그로 대체됨
     if (!out.habitLog || typeof out.habitLog !== 'object') out.habitLog = {};
 
     /* v1 → v2 -------------------------------------------------------------
@@ -214,23 +209,42 @@ window.MW = window.MW || {};
       if (!out.ledger[k] || typeof out.ledger[k] !== 'object') out.ledger[k] = {};
     });
 
-    /* v3 → v4 -------------------------------------------------------------
-       · 투두·메모가 공유하던 todoGroups 를 분리:
-         - todoGroups  = 일정 카테고리 (투두 + 캘린더)
-         - memoTags    = 메모 태그 (메모장 전용)
-       · 기존 데이터에 memoTags 가 없으면 todoGroups 를 그대로 복제해
-         메모에 이미 붙어 있던 분류(groupId)가 깨지지 않게 합니다.               */
-    if (!Array.isArray(data.memoTags)) {
-      out.memoTags = out.todoGroups.map(function (g) {
-        return { id: g.id, name: g.name, color: g.color };
-      });
-    }
-    if (!out.memoTags.length) out.memoTags = base.memoTags;
-
     // 일정에도 카테고리(선택)를 붙일 수 있게 필드를 추가합니다. 색은 그대로 두고 분류만 기록합니다.
     out.events = out.events.map(function (ev) {
       if (ev && typeof ev === 'object' && ev.categoryId === undefined) ev.categoryId = null;
       return ev;
+    });
+
+    /* v4 → v5 -----------------------------------------------------------------
+       메모: 제목·카테고리·색 제거 → 본문(정제 HTML) + 작성일 + 잠금 + 북마크.
+       분류는 본문 #해시태그로. 기존 memoTags·groupId·color 는 버립니다.       */
+    var fromV = parseInt(data.version, 10) || 0;
+    out.memos = out.memos.map(function (m) {
+      if (!m || typeof m !== 'object') return { id: 'memo-' + Math.random().toString(36).slice(2), body: '', createdAt: Date.now(), updatedAt: Date.now(), locked: false, bookmarked: false };
+      var body = typeof m.body === 'string' ? m.body : '';
+      if (fromV < 5) {
+        // 구버전 본문은 평문(마크다운 기호 포함). 이스케이프 후 최소 서식만 HTML 로 1회 변환.
+        body = body
+          .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+          .replace(/\*\*([^*\n]+)\*\*/g, '<b>$1</b>')
+          .replace(/(^|[^*])\*([^*\n]+)\*/g, '$1<i>$2</i>')
+          .replace(/~~([^~\n]+)~~/g, '<s>$1</s>')
+          .replace(/__([^_\n]+)__/g, '<u>$1</u>')
+          .replace(/\r?\n/g, '<br>');
+        if (m.title && String(m.title).trim() && String(m.title).trim() !== '새 메모') {
+          var t = String(m.title).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+          body = '<b>' + t + '</b>' + (body ? '<br>' + body : '');
+        }
+      }
+      var ts = Date.now();
+      return {
+        id: m.id || ('memo-' + Math.random().toString(36).slice(2)),
+        body: body,
+        createdAt: typeof m.createdAt === 'number' ? m.createdAt : ts,
+        updatedAt: typeof m.updatedAt === 'number' ? m.updatedAt : ts,
+        locked: m.locked === true,
+        bookmarked: m.bookmarked === true
+      };
     });
 
     return out;

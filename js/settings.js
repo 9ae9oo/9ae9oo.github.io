@@ -373,13 +373,6 @@ window.MW = window.MW || {};
       hint: '— 투두와 캘린더가 함께 쓰는 분류입니다. 카테고리 색이 캘린더 표시색의 기본값이 됩니다',
       placeholder: '새 카테고리 이름'
     }));
-
-    host.appendChild(listEditorCard({
-      key: 'memoTags', idPrefix: 'mt', palette: MW.memo.COLORS,
-      title: '메모 태그',
-      hint: '— 메모장 전용입니다. 일정 카테고리와 분리되어 따로 관리됩니다',
-      placeholder: '새 태그 이름'
-    }));
   }
 
   /**

@@ -1,9 +1,9 @@
 /* ==========================================================================
-   MW.memo — 포스트잇 메모 (오른쪽 도킹 패널 / 모바일 하단 시트)
-   · 패널 헤더 = 태그 필터. 그 아래 고정 입력줄(높이 조절 가능)에서 새 메모 추가.
-   · 카드 색 = 그 메모의 태그 색 (memoTags[].color). 태그를 바꾸면 색도 바뀝니다.
-   · 카드 본문을 누르면 마크다운 원문 편집 → 포커스가 빠지면 다시 서식 표시. (툴바 없음)
-     **굵게**  *기울임*  - 목록  - [ ] 할일  > 인용  `코드`
+   MW.memo — 메모 (오른쪽 도킹 패널 / 모바일 하단 시트) · 트위터식
+   · 제목 없음. 상단 작성 박스 → 타임라인. 헤더에 검색·해시태그 필터.
+   · 서식은 마크다운이 아니라 실제 서식: contentEditable + Ctrl/⌘+B·I·U 단축키
+     + 작은 서식 바(굵게·기울임·취소선·밑줄·형광펜·체크박스). 저장은 정제된 HTML.
+   · 분류 = 본문의 #해시태그 (칩·형광펜은 테마 포인트 컬러). 잠금·북마크.
    ========================================================================== */
 window.MW = window.MW || {};
 
@@ -11,209 +11,419 @@ window.MW = window.MW || {};
   'use strict';
   var U = MW.util, el = U.el;
 
-  /* 태그 색 편집기(설정 → 메모 태그)에서 고르는 팔레트 */
-  var COLORS = ['#fbbf24', '#6b8afd', '#4ade80', '#fb7185', '#a78bfa', '#2dd4bf'];
-  var float = null;
-  var tabsHost = null;
-  var composeHost = null;
-  var filterGroup = 'all';
+  var float = null, headHost = null, composeHost = null, tagBarHost = null;
+  var filterTag = '';          // '' 전체 · '#태그' · '__none__' 미분류
+  var search = '';
+  var bookmarkOnly = false;
+  var editingId = null;        // 인라인 편집 중인 메모 id (한 번에 하나)
 
-  /** 메모의 분류 = 태그. 일정 카테고리(todoGroups)와 분리된 memoTags 만 씁니다. */
-  function groups() { return MW.store.state.memoTags; }
+  /* ------------------------------------------------------------ HTML 정제 */
 
-  function tagColor(groupId) {
-    var g = groups().find(function (x) { return x.id === groupId; });
-    return (g && g.color) || COLORS[0];
+  // 저장·표시에 허용하는 인라인 태그만 남기고 나머지는 글자만 살립니다.
+  var KEEP = { B: 'b', I: 'i', U: 'u', S: 's', MARK: 'mark', STRONG: 'b', EM: 'i', DEL: 's', STRIKE: 's' };
+  var BLOCK = /^(DIV|P|LI|H[1-6]|BLOCKQUOTE|PRE|TR)$/;
+
+  function sanitize(html) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = String(html == null ? '' : html);
+    var out = [];
+    (function walk(node) {
+      var kids = node.childNodes;
+      for (var i = 0; i < kids.length; i++) {
+        var n = kids[i];
+        if (n.nodeType === 3) { out.push(U.escapeHtml(n.nodeValue)); continue; }
+        if (n.nodeType !== 1) continue;
+        var tag = n.nodeName;
+        if (tag === 'BR') { out.push('<br>'); continue; }
+        var keep = KEEP[tag];
+        if (keep) { out.push('<' + keep + '>'); walk(n); out.push('</' + keep + '>'); continue; }
+        var block = BLOCK.test(tag);
+        if (block && out.length && !/(<br>)$/.test(out[out.length - 1])) out.push('<br>');
+        walk(n);
+        if (block) out.push('<br>');
+      }
+    })(tmp);
+    return out.join('')
+      .replace(/^(?:<br>)+/, '')
+      .replace(/(?:<br>)+$/, '')
+      .replace(/(<br>){3,}/g, '<br><br>');
   }
 
-  function patch(id, fn) {
+  /** 검색·태그 추출용 — 태그 벗긴 순수 텍스트 */
+  function plain(html) {
+    var d = document.createElement('div');
+    d.innerHTML = String(html || '');
+    return d.textContent || '';
+  }
+
+  var TAG_RE = /#[^\s#<>]+/g;
+  function tagsOf(body) { return plain(body).match(TAG_RE) || []; }
+
+  /** 표시용 — 텍스트 노드의 #해시태그와 ☐/☑ 를 클릭 가능한 조각으로 바꿉니다 */
+  function decorate(body) {
+    var tmp = document.createElement('div');
+    tmp.innerHTML = String(body || '');
+    var walker = document.createTreeWalker(tmp, NodeFilter.SHOW_TEXT, null);
+    var texts = [], t;
+    while ((t = walker.nextNode())) texts.push(t);
+    texts.forEach(function (tn) {
+      if (!/[#☐☑]/.test(tn.nodeValue)) return;
+      var s = tn.nodeValue, frag = document.createDocumentFragment();
+      var re = /#[^\s#<>]+|[☐☑]/g, last = 0, m;
+      while ((m = re.exec(s))) {
+        if (m.index > last) frag.appendChild(document.createTextNode(s.slice(last, m.index)));
+        var span = document.createElement('span');
+        if (m[0].charAt(0) === '#') { span.className = 'mtag'; span.textContent = m[0]; }
+        else { span.className = 'mck'; span.setAttribute('role', 'button'); span.textContent = m[0]; }
+        frag.appendChild(span);
+        last = m.index + m[0].length;
+      }
+      if (last < s.length) frag.appendChild(document.createTextNode(s.slice(last)));
+      tn.parentNode.replaceChild(frag, tn);
+    });
+    return tmp.innerHTML;
+  }
+
+  /* ------------------------------------------------------------ 스토어 도우미 */
+
+  function memos() { return MW.store.state.memos; }
+
+  function patchMemo(id, fn) {
+    MW.store.update(function (s) {
+      var m = s.memos.find(function (x) { return x.id === id; });
+      if (m) { fn(m); m.updatedAt = Date.now(); }
+    });
+  }
+
+  /** 저장만 하고 리렌더는 안 함 — 편집 중 매 입력마다 카드가 새로 그려지지 않도록 */
+  function touchMemo(id, fn) {
     MW.store.touch(function (s) {
       var m = s.memos.find(function (x) { return x.id === id; });
-      if (m) fn(m);
+      if (m) { fn(m); m.updatedAt = Date.now(); }
     });
   }
 
-  function autoGrow(ta, min, max) {
-    ta.style.height = 'auto';
-    ta.style.height = U.clamp(ta.scrollHeight, min || 48, max || 9999) + 'px';
+  function addMemo(body) {
+    var now = Date.now();
+    MW.store.update(function (s) {
+      s.memos.unshift({ id: U.uid('memo'), body: body, createdAt: now, updatedAt: now, locked: false, bookmarked: false });
+    });
   }
 
-  function show(node, on) { node.classList.toggle('hidden', !on); }
+  function relDate(ts) {
+    if (!ts) return '';
+    var d = Date.now() - ts, MIN = 60000, H = 3600000, DAY = 86400000;
+    if (d < MIN) return '방금';
+    if (d < H) return Math.floor(d / MIN) + '분 전';
+    if (d < DAY) return Math.floor(d / H) + '시간 전';
+    if (d < DAY * 7) return Math.floor(d / DAY) + '일 전';
+    var x = new Date(ts);
+    return (x.getMonth() + 1) + '월 ' + x.getDate() + '일';
+  }
 
-  /* ---------------------------------------------------------------- 카드 */
+  /* ------------------------------------------------------------ 에디터 (공용) */
 
-  function card(m) {
-    var color = tagColor(m.groupId);
-
-    var view = el('div.memo-view.md', {
-      onclick: function (e) {
-        if (e.target.closest('a')) return;   // 링크는 그대로 열리게
-        toEdit();
+  function markAncestor(node) {
+    while (node) {
+      if (node.nodeType === 1) {
+        if (node.nodeName === 'MARK') return node;
+        if (node.classList && node.classList.contains('memo-editor')) return null;
       }
-    });
-    function renderView() {
-      view.innerHTML = (m.body || '').trim()
-        ? MW.markdown.render(m.body)          // render() 내부에서 이스케이프 처리됨
-        : '<span class="memo-empty">빈 메모 — 눌러서 입력</span>';
+      node = node.parentNode;
     }
-    renderView();
-
-    var ta = el('textarea.memo-input', {
-      placeholder: '**굵게**  *기울임*  - 목록  - [ ] 할일  > 인용',
-      oninput: function () {
-        var v = this.value;
-        autoGrow(this, 48);
-        patch(m.id, function (x) { x.body = v; });
-      },
-      onblur: function () {
-        renderView();
-        show(view, true);
-        show(ta, false);
-      }
-    });
-    show(ta, false);
-
-    function toEdit() {
-      ta.value = m.body || '';
-      show(view, false);
-      show(ta, true);
-      ta.focus();
-      var end = ta.value.length;
-      ta.setSelectionRange(end, end);
-      autoGrow(ta, 48);
-    }
-
-    var title = el('input.m-title', {
-      value: m.title, maxlength: '60', placeholder: '제목 (선택)',
-      oninput: function () { var v = this.value; patch(m.id, function (x) { x.title = v; }); }
-    });
-
-    var del = el('button.memo-del', {
-      type: 'button', title: '삭제', 'aria-label': '메모 삭제', text: '✕',
-      onclick: function () {
-        MW.shell.confirm('"' + (m.title || (m.body || '메모').slice(0, 20)) + '" 을(를) 삭제할까요?', function () {
-          MW.store.update(function (s) {
-            s.memos = s.memos.filter(function (y) { return y.id !== m.id; });
-          });
-        });
-      }
-    });
-
-    var tag = el('select.memo-tag', {
-      title: '태그 (색)',
-      onchange: function () {
-        var v = this.value;
-        MW.store.update(function (s) {
-          var x = s.memos.find(function (y) { return y.id === m.id; });
-          if (x) x.groupId = v;
-        });
-      }
-    }, groups().map(function (g) {
-      return el('option', { value: g.id, text: g.name, selected: g.id === m.groupId });
-    }));
-
-    return el('div.memo-card', {
-      dataset: { memo: m.id },
-      style: { background: U.rgbaOf(color, 0.16), borderColor: U.rgbaOf(color, 0.42) }
-    }, [
-      el('div.memo-head', {}, [title, del]),
-      el('div.memo-body', {}, [view, ta]),
-      el('div.memo-foot', {}, [tag])
-    ]);
+    return null;
   }
 
-  /* ---------------------------------------------------- 헤더의 태그 필터 */
+  function wrapSelectionMark() {
+    var sel = window.getSelection();
+    if (!sel.rangeCount || sel.isCollapsed) return;
+    var existing = markAncestor(sel.anchorNode);
+    if (existing) {   // 이미 형광펜 안이면 해제
+      var parent = existing.parentNode;
+      while (existing.firstChild) parent.insertBefore(existing.firstChild, existing);
+      parent.removeChild(existing);
+      return;
+    }
+    var range = sel.getRangeAt(0), mk = document.createElement('mark');
+    try { range.surroundContents(mk); }
+    catch (e) { mk.appendChild(range.extractContents()); range.insertNode(mk); }
+    sel.removeAllRanges();
+  }
 
-  function renderTabs() {
-    if (!tabsHost) return;
-    U.clear(tabsHost);
-    function tab(id, label) {
-      return el('button.todo-tab' + (filterGroup === id ? '.active' : ''), {
-        type: 'button', text: label,
-        onclick: function () { filterGroup = id; render(); }
+  function insertCheckbox(ed) {
+    ed.focus();
+    document.execCommand('insertText', false, '☐ ');
+  }
+
+  /**
+   * makeEditor(html, { onChange(html), onCommit(), onCancel(), placeholder })
+   * 상단 작성 박스와 카드 인라인 편집이 같은 컴포넌트를 씁니다.
+   */
+  function makeEditor(html, o) {
+    var ed = el('div.memo-editor', {
+      contenteditable: 'true', role: 'textbox', 'aria-multiline': 'true',
+      'data-ph': o.placeholder || ''
+    });
+    ed.innerHTML = html || '';
+
+    function flush() {
+      if (ed.innerHTML === '<br>') ed.innerHTML = '';
+      o.onChange(sanitize(ed.innerHTML));
+    }
+    ed.addEventListener('input', flush);
+    ed.addEventListener('blur', function () {
+      flush();
+      if (o.onBlur) setTimeout(o.onBlur, 0);
+    });
+    ed.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') { e.preventDefault(); if (o.onCancel) o.onCancel(); return; }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); if (o.onCommit) o.onCommit(); }
+    });
+
+    function cmdBtn(label, run, title, cls) {
+      return el('button.memo-fmt-btn' + (cls || ''), {
+        type: 'button', title: title, text: label,
+        onmousedown: function (e) { e.preventDefault(); ed.focus(); run(); flush(); }
       });
     }
-    tabsHost.appendChild(tab('all', '전체'));
-    groups().forEach(function (g) { tabsHost.appendChild(tab(g.id, g.name)); });
+    var bar = el('div.memo-fmt', {}, [
+      cmdBtn('B', function () { document.execCommand('bold'); }, '굵게 (Ctrl+B)', '.b'),
+      cmdBtn('I', function () { document.execCommand('italic'); }, '기울임 (Ctrl+I)', '.i'),
+      cmdBtn('S', function () { document.execCommand('strikeThrough'); }, '취소선', '.s'),
+      cmdBtn('U', function () { document.execCommand('underline'); }, '밑줄 (Ctrl+U)', '.u'),
+      cmdBtn('🖊', wrapSelectionMark, '형광펜'),
+      cmdBtn('☐', function () { insertCheckbox(ed); }, '체크박스')
+    ]);
+
+    return {
+      wrap: el('div.memo-ed-wrap', {}, [ed, bar]),
+      ed: ed,
+      bar: bar,
+      focusEnd: function () {
+        ed.focus();
+        try {
+          var r = document.createRange(); r.selectNodeContents(ed); r.collapse(false);
+          var sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+        } catch (e) { /* 무시 */ }
+      }
+    };
   }
 
-  /* ------------------------------------------- 상단 고정 입력줄 (높이 조절) */
+  /* ------------------------------------------------------------ 카드 */
+
+  function card(m) {
+    var node = el('div.memo-card', { dataset: { memo: m.id } });
+    function openEdit() { if (editingId !== m.id) { editingId = m.id; render(); } }
+    function closeEdit() { if (editingId === m.id) { editingId = null; render(); } }
+
+    var fav = el('button.memo-fav' + (m.bookmarked ? '.on' : ''), {
+      type: 'button', title: m.bookmarked ? '북마크 해제' : '북마크', 'aria-label': '북마크',
+      text: m.bookmarked ? '♥' : '♡',
+      onclick: function () { patchMemo(m.id, function (x) { x.bookmarked = !x.bookmarked; }); }
+    });
+    var lock = el('button.memo-lock' + (m.locked ? '.on' : ''), {
+      type: 'button', title: m.locked ? '잠금 해제' : '삭제 잠금', 'aria-label': '잠금',
+      text: m.locked ? '🔒' : '🔓',
+      onclick: function () { patchMemo(m.id, function (x) { x.locked = !x.locked; }); }
+    });
+    var edit = el('button.memo-edit', {
+      type: 'button', title: '편집', 'aria-label': '편집', text: '✎',
+      onclick: function () { openEdit(); }
+    });
+    var del = el('button.memo-del', {
+      type: 'button', title: m.locked ? '잠금을 해제해야 삭제할 수 있습니다' : '삭제',
+      'aria-label': '삭제', text: '🗑', disabled: m.locked,
+      onclick: function () {
+        if (m.locked) return;
+        MW.shell.confirm('이 메모를 삭제할까요?\n' + plain(m.body).slice(0, 40), function () {
+          MW.store.update(function (s) { s.memos = s.memos.filter(function (y) { return y.id !== m.id; }); });
+        });
+      }
+    });
+
+    node.appendChild(el('div.memo-card-top', {}, [
+      fav, el('span.memo-date', { text: relDate(m.createdAt) }),
+      el('span.spacer'), lock, edit, del
+    ]));
+
+    var bodyWrap = el('div.memo-card-body');
+    node.appendChild(bodyWrap);
+
+    if (editingId === m.id) {
+      var e = makeEditor(m.body, {
+        placeholder: '메모…',
+        onChange: function (h) { touchMemo(m.id, function (x) { x.body = h; }); },
+        onCommit: closeEdit,
+        onCancel: closeEdit,
+        onBlur: closeEdit
+      });
+      bodyWrap.appendChild(e.wrap);
+      setTimeout(e.focusEnd, 0);
+    } else {
+      var view = el('div.memo-view', {
+        onclick: function (ev) {
+          var ck = ev.target.closest('.mck');
+          if (ck) {
+            ev.stopPropagation();
+            var cks = Array.prototype.slice.call(view.querySelectorAll('.mck'));
+            toggleCheck(m, cks.indexOf(ck));
+            return;
+          }
+          var tg = ev.target.closest('.mtag');
+          if (tg) { ev.stopPropagation(); setFilterTag(tg.textContent); return; }
+          if (ev.target.closest('a')) return;
+          openEdit();
+        }
+      });
+      view.innerHTML = plain(m.body).trim() ? decorate(m.body) : '<span class="memo-empty">빈 메모 — 눌러서 입력</span>';
+      bodyWrap.appendChild(view);
+
+      // 길면 접기
+      requestAnimationFrame(function () {
+        if (view.scrollHeight > view.clientHeight + 4) {
+          var more = el('button.memo-more', {
+            type: 'button', text: '더보기',
+            onclick: function () {
+              var open = node.classList.toggle('expanded');
+              more.textContent = open ? '접기' : '더보기';
+            }
+          });
+          bodyWrap.appendChild(more);
+        }
+      });
+    }
+    return node;
+  }
+
+  function toggleCheck(m, idx) {
+    if (idx < 0) return;
+    var n = -1;
+    var next = String(m.body || '').replace(/[☐☑]/g, function (ch) {
+      n++;
+      if (n !== idx) return ch;
+      return ch === '☑' ? '☐' : '☑';
+    });
+    patchMemo(m.id, function (x) { x.body = next; });
+  }
+
+  /* ------------------------------------------------------------ 헤더 · 작성 · 필터 */
+
+  function setFilterTag(tag) {
+    filterTag = (filterTag === tag) ? '' : tag;
+    render();
+  }
+
+  function renderHeader() {
+    if (!headHost) return;
+    U.clear(headHost);
+    var searchInput = el('input.memo-search', {
+      type: 'search', placeholder: '검색 — 내용·#태그', value: search,
+      oninput: function () { search = this.value; renderList(); }
+    });
+    var bm = el('button.memo-bm' + (bookmarkOnly ? '.on' : ''), {
+      type: 'button', title: '북마크만 보기', 'aria-label': '북마크만',
+      text: bookmarkOnly ? '♥' : '♡',
+      onclick: function () { bookmarkOnly = !bookmarkOnly; render(); }
+    });
+    headHost.appendChild(searchInput);
+    headHost.appendChild(bm);
+  }
+
+  function renderTagBar() {
+    if (!tagBarHost) return;
+    U.clear(tagBarHost);
+    var count = {};
+    memos().forEach(function (m) { tagsOf(m.body).forEach(function (tg) { count[tg] = (count[tg] || 0) + 1; }); });
+    var tags = Object.keys(count).sort(function (a, b) { return count[b] - count[a] || a.localeCompare(b); });
+    var hasUntagged = memos().some(function (m) { return !tagsOf(m.body).length; });
+
+    function chip(val, label, on) {
+      return el('button.memo-tagchip' + (on ? '.active' : ''), {
+        type: 'button', text: label,
+        onclick: function () { filterTag = (filterTag === val) ? '' : val; render(); }
+      });
+    }
+    tagBarHost.appendChild(chip('', '전체', filterTag === ''));
+    tags.forEach(function (tg) { tagBarHost.appendChild(chip(tg, tg, filterTag === tg)); });
+    if (hasUntagged) tagBarHost.appendChild(chip('__none__', '미분류', filterTag === '__none__'));
+  }
 
   function renderCompose() {
     if (!composeHost) return;
-    var prev = composeHost.querySelector('.memo-compose-input');
-    var draft = prev ? prev.value : '';
-    var savedH = prev ? prev.style.height : '';   // 사용자가 드래그로 조절한 높이 유지
+    var prevDraft = composeHost._draft || '';
     U.clear(composeHost);
+    var draft = prevDraft;
 
-    var input = el('textarea.memo-compose-input', {
-      rows: '3', placeholder: '메모 입력…  (Enter 저장 · Shift+Enter 줄바꿈 · 우하단 모서리로 높이 조절)', value: draft,
-      // 내용이 넘칠 때만 늘리고, 줄이지는 않음 → 드래그로 키운 높이를 되돌리지 않습니다
-      oninput: function () { if (this.scrollHeight > this.clientHeight) this.style.height = this.scrollHeight + 'px'; },
-      onkeydown: function (e) {
-        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submit(); }
-      }
+    var e = makeEditor(prevDraft, {
+      placeholder: '무엇을 메모할까요?  #태그 로 분류',
+      onChange: function (h) { draft = h; composeHost._draft = h; },
+      onCommit: submit
     });
-    if (savedH) input.style.height = savedH;
-
     function submit() {
-      var text = input.value.trim();
-      if (!text) return;
-      var gs = groups();
-      var gid = filterGroup !== 'all' ? filterGroup : (gs[0] ? gs[0].id : null);
-      MW.store.update(function (s) {
-        s.memos.unshift({ id: U.uid('memo'), title: '', body: text, groupId: gid, color: '' });
-      });
-      input.value = '';
-      input.focus();
-      setTimeout(function () { if (float) float.body.scrollTop = 0; }, 60);
+      if (!plain(draft).trim()) return;
+      addMemo(draft);
+      composeHost._draft = '';
+      render();
     }
-
-    composeHost.appendChild(input);
-    composeHost.appendChild(el('button.btn.btn-primary.btn-sm.memo-compose-add', {
-      type: 'button', text: '＋', 'aria-label': '메모 추가', onclick: submit
-    }));
+    var record = el('button.btn.btn-primary.btn-sm.memo-record', { type: 'button', text: '기록', onclick: submit });
+    e.bar.appendChild(record);   // 서식 바 줄 오른쪽 끝에 [기록]
+    composeHost.appendChild(e.wrap);
   }
 
-  /* ---------------------------------------------------------------- 리스트 */
+  /* ------------------------------------------------------------ 리스트 · 렌더 */
 
-  function render() {
+  function filtered() {
+    var q = search.trim().toLowerCase();
+    return memos().filter(function (m) {
+      if (bookmarkOnly && !m.bookmarked) return false;
+      var tags = tagsOf(m.body);
+      if (filterTag === '__none__' && tags.length) return false;
+      if (filterTag && filterTag !== '__none__' && tags.indexOf(filterTag) < 0) return false;
+      if (q && plain(m.body).toLowerCase().indexOf(q) < 0) return false;
+      return true;
+    }).slice().sort(function (a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+  }
+
+  function renderList() {
     if (!float) return;
-    renderTabs();
-    renderCompose();
     U.clear(float.body);
-
-    var list = MW.store.state.memos.filter(function (m) {
-      return filterGroup === 'all' || m.groupId === filterGroup;
-    });
-
+    var list = filtered();
     if (!list.length) {
-      float.body.appendChild(el('div.empty', { text: '메모가 없습니다.\n위 입력줄에 적어 포스트잇을 붙여보세요.' }));
+      float.body.appendChild(el('div.empty', {
+        text: memos().length ? '조건에 맞는 메모가 없습니다.' : '메모가 없습니다.\n위에 적어 첫 메모를 남겨보세요.'
+      }));
       return;
     }
     list.forEach(function (m) { float.body.appendChild(card(m)); });
   }
 
+  function render() {
+    if (!float) return;
+    renderHeader();
+    renderTagBar();
+    renderCompose();
+    renderList();
+  }
+
   MW.memo = {
     init: function () {
-      // 데스크톱: 오른쪽 도킹 패널 / 모바일: 아래에서 올라오는 시트 (shell.registerPanel 이 처리)
+      try { document.execCommand('styleWithCSS', false, false); } catch (e) { /* 태그 기반 서식 강제 */ }
       float = MW.shell.registerPanel('memo', { title: '', onOpen: render });
 
-      // 헤더의 "메모장" 제목을 지우고 그 자리에 태그 필터를 넣습니다 (공간 절약)
       var head = float.head || float.node.querySelector('.side-panel-head');
       var h3 = head && head.querySelector('h3');
       if (h3) h3.remove();
-      tabsHost = el('div.memo-tabs');
-      if (head) head.insertBefore(tabsHost, head.firstChild);
+      headHost = el('div.memo-headbar');
+      if (head) head.insertBefore(headHost, head.firstChild);
 
-      // 입력줄은 스크롤 영역 밖(헤더 바로 아래)에 두어 항상 위에 고정합니다
+      // 작성 박스 + 태그 바 = 스크롤 영역 밖(헤더 아래) 고정
       composeHost = el('div.memo-compose');
+      tagBarHost = el('div.memo-tagbar');
       float.node.insertBefore(composeHost, float.body);
+      float.node.insertBefore(tagBarHost, float.body);
 
-      renderTabs();
-      renderCompose();
+      render();
     },
-    render: function () { if (float && float.isOpen()) render(); },
-    COLORS: COLORS
+    render: function () { if (float && float.isOpen()) render(); }
   };
 })();

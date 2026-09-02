@@ -1,7 +1,8 @@
 # Creator Workspace — 개편 계획 v3
 
 > 작성 2026-09-03 · 프로토 2(`390a1d5`) 이후 방향.
-> 아직 **구현 전**. `▶` 표시는 시작 전에 확정할 결정 사항.
+>
+> **진행 상황**: #5 · #2 · #4 · #1 구현·배포 완료. 남은 것은 아래 "부록"의 정리 작업.
 
 ## 한눈에
 
@@ -144,6 +145,7 @@
 ---
 
 ## 부록 — 아직 열려 있는 정리 작업 (이전 계획의 웨이브 2)
-- migrate 버전 게이팅, `settings.floats` 타입 가드, 대시보드 상수 중복 제거, `notified` 맵 정리,
+- `js/markdown.js` — 메모 개편 후 사용처 없음. `<script>` 태그와 파일 제거.
+- `settings.floats` 타입 가드, 대시보드 상수 중복 제거, `notified` 맵 정리,
   죽은 `#sidebar-toggle-btn`/`toggleSidebar`/`.collapsed` 경로 제거.
 - 죽은 CSS: `.cal-pill.todo/.done`, `.hb-list*`, `.wt-note`; `pomodoro.js [data-pomo-time]` no-op; 과다 export.
