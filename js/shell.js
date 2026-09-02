@@ -39,7 +39,8 @@ window.MW = window.MW || {};
   /* ---------------------------------------------------------- 플로팅 창 */
 
   var floats = {};
-  var zTop = 100;
+  var panels = {};   // registerPanel 로 만든 것만 (한 번에 하나만 열림)
+  var zTop = 600;    // 플로팅 창(뽀모도로 등)은 도구 패널(z 500)보다 위
 
   function registerFloat(id, opts) {
     opts = opts || {};
@@ -131,16 +132,26 @@ window.MW = window.MW || {};
     ]);
     node.appendChild(head);
     node.appendChild(body);
+    // 패널은 화면 오른쪽에 고정. #panelhost 는 폭만 차지하는 스페이서라 메인이 그만큼 줄어듭니다.
     document.body.appendChild(node);
     document.body.appendChild(handle);
+
+    function syncHost() {
+      // 열린 패널이 하나라도 있으면 body 에 표시 (CSS 가 #panelhost 폭을 늘림)
+      var anyOpen = Object.keys(panels).some(function (k) { return panels[k].isOpen(); });
+      document.body.classList.toggle('anypanel-open', anyOpen);
+    }
 
     var api = {
       id: id, node: node, body: body, head: head,
       isOpen: function () { return node.classList.contains('open'); },
       open: function () {
+        // 한 번에 하나만 — 다른 도구 패널은 닫음
+        Object.keys(panels).forEach(function (k) { if (k !== id) panels[k].close(); });
         node.classList.add('open');
         handle.classList.add('open');
         document.body.classList.add('panel-' + id + '-open');
+        syncHost();
         syncButtons();
         if (opts.onOpen) opts.onOpen(api);
       },
@@ -148,11 +159,13 @@ window.MW = window.MW || {};
         node.classList.remove('open');
         handle.classList.remove('open');
         document.body.classList.remove('panel-' + id + '-open');
+        syncHost();
         syncButtons();
       },
       toggle: function () { api.isOpen() ? api.close() : api.open(); }
     };
     floats[id] = api;
+    panels[id] = api;
     return api;
   }
 

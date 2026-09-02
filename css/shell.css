@@ -9,7 +9,7 @@
   flex-direction: row;
   align-items: center;   /* 좌·우 레일은 세로 가운데의 작은 메뉴 */
   justify-content: center;
-  padding: 14px;
+  padding: 14px 0 14px 14px;   /* 오른쪽은 0 — 도구 패널이 화면 끝까지 붙도록 */
   height: 100vh;
   height: 100dvh;
 }
@@ -71,38 +71,36 @@
 /* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
 .pomo-item { flex-direction: column; gap: 2px; }
 
-/* --------------------------------------------------- 우측 레일 (컨텐츠 오른쪽 가장자리 가운데의 작은 탭) */
+/* ------ 우측 레일 (컨텐츠 오른쪽 가장자리 세로 가운데의 작은 탭들. flex 흐름 안, 컨텐츠와 함께 이동) */
 #toolrail {
-  flex: 0 0 var(--sidebar-w);
+  flex: 0 0 auto;
   align-self: center;
-  margin-left: -1px;                       /* 컨텐츠 오른쪽 테두리와 겹쳐 하나처럼 */
-  background: var(--surface-0);
-  border: 1px solid var(--border);
-  border-left: none;
-  border-radius: 0 var(--radius) var(--radius) 0;
-  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.06);
+  margin-left: -1px;                 /* 컨텐츠 오른쪽 테두리에 살짝 겹침 */
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 22px;
-  padding: 16px 4px;
-  z-index: 51;
+  align-items: flex-start;
+  gap: 8px;
+  z-index: 60;
 }
 .tool-item {
   writing-mode: vertical-rl;
   text-orientation: upright;
-  letter-spacing: 3px;
-  font-size: 12.5px;
+  letter-spacing: 2px;
+  font-size: 12px;
   font-weight: 600;
-  padding: 12px 5px;
-  border-radius: var(--radius-sm);
+  padding: 12px 6px;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-left: none;
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  box-shadow: 4px 2px 12px rgba(0, 0, 0, 0.07);
   color: var(--text-muted);
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
 .tool-item:hover { background: var(--surface-2); color: var(--text); }
-.tool-item.active { background: var(--accent-dim); color: var(--accent); }
+.tool-item.active { background: var(--accent-dim); color: var(--accent); border-color: var(--accent); }
+#pomodoro-trigger.tool-item { position: relative; z-index: 2; }   /* 뽀모도로가 메모장·BGM 위 레이어 */
 .tool-item .tp-time {
   writing-mode: horizontal-tb;
   display: none;
@@ -112,6 +110,15 @@
 }
 #pomodoro-trigger.running { color: var(--accent); }
 #pomodoro-trigger.running .tp-time { display: block; }
+
+/* -------- 도구 패널 스페이서 — 폭만 차지. 열리면 여기에 폭이 생겨 메인(#content)이 줄어듦 */
+#panelhost {
+  flex: 0 0 0px;
+  align-self: stretch;
+  overflow: hidden;
+  transition: flex-basis 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
 
 /* --------------------------------------------------------------- 상단 음악바 */
 #topbar {
@@ -239,6 +246,11 @@
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
+  transition: max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* 패널이 열리면 최대폭을 줄여 항상 눈에 띄게 축소되도록 */
+body.anypanel-open #content {
+  max-width: calc(var(--content-max, 1100px) - var(--side-panel-w));
 }
 
 #main {
@@ -397,22 +409,22 @@
    기본값 = 데스크톱: 오른쪽에 붙는 세로 패널. 손잡이 버튼은 왼쪽 가장자리 가운데. */
 :root { --side-panel-w: min(380px, 86vw); }
 
-/* 데스크톱: 화면 오른쪽 모서리에서 슬라이드해 나오는 드로어 (기존 메모장 방식) */
+/* 데스크톱: 화면 오른쪽에 고정, 위·아래·오른쪽 여백 없음. #panelhost 스페이서와 함께 슬라이드. */
 .side-panel {
   position: fixed;
-  top: 14px;
-  right: 14px;
-  bottom: 14px;
+  top: 0;
+  right: 0;
+  bottom: 0;
   width: var(--side-panel-w);
   background: var(--surface-1);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
+  border-left: 1px solid var(--border-accent);
+  border-radius: var(--radius) 0 0 var(--radius);
+  box-shadow: -6px 0 24px rgba(0, 0, 0, 0.08);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 500;
-  transform: translateX(calc(100% + 20px));
+  transform: translateX(100%);
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .side-panel.open { transform: none; }
@@ -501,7 +513,9 @@
   #sidebar .sidebar-nav { flex-direction: row; }
   .sidebar-item { flex: 1; }
 
-  #content { flex: 1; order: 1; min-height: 0; }
+  #content { flex: 1; order: 1; min-width: 0; min-height: 0; max-width: none; }
+  body.anypanel-open #content { max-width: none; }
+  #panelhost { flex-basis: 0 !important; overflow: visible; }
   #topbar { gap: 6px; padding: 0 8px; }
   #main { align-items: stretch; -webkit-overflow-scrolling: touch; }
   /* #main 하단 패딩 = 떠 있는 도구줄 + 입력창 높이만큼 */
@@ -511,12 +525,20 @@
   /* 도구줄: 하단에 떠 있음, 입력창 바로 위 (가로 텍스트) */
   #toolrail {
     position: fixed;
+    top: auto;
+    align-self: auto;
+    margin-left: 0;
     left: 10px; right: 10px;
     bottom: calc(62px + env(safe-area-inset-bottom));
+    transform: none;
     flex-direction: row;
     justify-content: space-around;
     gap: 4px;
     padding: 4px;
+    background: var(--surface-0);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
     z-index: 280;
   }
   .tool-item {
@@ -526,6 +548,9 @@
     text-align: center;
     padding: 8px 4px;
     min-height: 34px;
+    border: none;
+    box-shadow: none;
+    border-radius: var(--radius-sm);
   }
   .tool-item .tp-time { margin-top: 2px; }
 
@@ -555,6 +580,7 @@
   }
   .float.open { max-height: 46vh; z-index: 250; }
   .side-panel {
+    display: flex !important;   /* 모바일은 opacity 로 여닫음 */
     max-height: 62vh;
     transform: translateY(20px);
     opacity: 0;
@@ -571,12 +597,6 @@
   .popover { right: 8px; left: 8px; width: auto; }
 }
 
-@media (min-width: 641px) {
-
-  /* 플로팅 창: registerFloat 이 지정한 left/top/width/height 인라인 값을 그대로 사용.
-     모바일 전체화면 규칙은 max-width:900px 미디어쿼리 안에만 있으므로 여기서 되돌릴 필요가 없습니다.
-     (inset:auto !important 를 주면 인라인 left/top 이 무시돼 창이 화면 밖으로 밀려납니다.) */
-}
 
 /* --------------------------------------------- 설정: 대시보드 카드 순서 편집 */
 .home-order-list { display: flex; flex-direction: column; gap: 6px; }
