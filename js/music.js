@@ -1,6 +1,6 @@
 /* ==========================================================================
-   MW.music — 상단 고정바 음악 플레이어 (YouTube)
-   · 화면 최상단에 항상 고정. 페이지를 옮겨도 재생이 끊기지 않습니다.
+   MW.music — BGM 플레이어 (YouTube) · 우측 레일의 BGM 패널
+   · 패널을 닫아도 숨김 iframe 은 DOM 에 남아 재생이 끊기지 않습니다.
    · 재생목록 최대 5개 / 순차·셔플 / 곡 추가·삭제는 설정 페이지에서만.
    · 제목 조회는 3단 폴백: oEmbed → 재생 시 IFrame API의 영상 정보 → 수동 입력.
    ========================================================================== */
@@ -18,7 +18,7 @@ window.MW = window.MW || {};
   var playing = false;
   var errorStreak = 0;         // 연속 재생 실패 수 — 무한 스킵 방지
   var ui = {};
-  var popover = null;
+  var panel = null;
 
   /* ------------------------------------------------------------ 데이터 */
 
@@ -183,58 +183,9 @@ window.MW = window.MW || {};
     errorStreak = 0;
     MW.store.update(function (s) { s.player.playlistId = id; s.player.index = 0; });
     playTrack(0, false);
-    closePopover();
   }
 
-  /* ------------------------------------------------------------ 팝오버 */
-
-  function openPopover() {
-    closePopover();
-    var pl = currentPlaylist();
-    popover = el('div.popover', {}, [
-      el('h4', { text: '재생목록 (' + playlists().length + '/' + MAX_PLAYLISTS + ')' }),
-      playlists().length
-        ? el('div', {}, playlists().map(function (p) {
-            return el('div.pl-item' + (pl && p.id === pl.id ? '.active' : ''), {
-              onclick: function () { selectPlaylist(p.id); }
-            }, [
-              el('span', { text: p.name, style: { flex: '1' } }),
-              el('span.small.dim', { text: p.tracks.length + '곡' })
-            ]);
-          }))
-        : el('div.empty', { text: '재생목록이 없습니다.' }),
-      el('h4', { text: pl ? '곡 목록 — ' + pl.name : '곡 목록' }),
-      pl && pl.tracks.length
-        ? el('div', {}, pl.tracks.map(function (t, i) {
-            return el('div.track-item' + (i === st().player.index ? '.active' : ''), {
-              onclick: function () { playTrack(i, true); closePopover(); }
-            }, [
-              el('span.t-idx', { text: String(i + 1) }),
-              el('span.t-title', { text: t.title || t.videoId })
-            ]);
-          }))
-        : el('div.empty', { text: '곡이 없습니다.' }),
-      el('div', { style: { padding: '8px' } }, [
-        el('button.btn.btn-sm', {
-          text: '⚙ 설정에서 곡 관리', style: { width: '100%' },
-          onclick: function () { closePopover(); MW.shell.go('settings'); MW.settings.openTab('music'); }
-        })
-      ])
-    ]);
-    document.getElementById('musicbar').appendChild(popover);
-    setTimeout(function () { document.addEventListener('click', outside); }, 0);
-  }
-
-  function outside(e) {
-    if (popover && !popover.contains(e.target) && !e.target.closest('[data-pop="music"]')) closePopover();
-  }
-
-  function closePopover() {
-    if (popover) { popover.remove(); popover = null; }
-    document.removeEventListener('click', outside);
-  }
-
-  /* ------------------------------------------------------ 상단바 인라인 표시 */
+  /* ---------------------------------------------------- BGM 패널 표시 */
 
   function renderBar() {
     var pl = currentPlaylist();
@@ -247,40 +198,84 @@ window.MW = window.MW || {};
       ui.mode.title = st().player.mode === 'shuffle' ? '셔플 재생 (클릭 시 순차)' : '순차 재생 (클릭 시 셔플)';
       ui.mode.classList.toggle('on', st().player.mode === 'shuffle');
     }
-    if (ui.barTitle) {
-      ui.barTitle.textContent = t ? ('[ ' + titleText + ' ]') : titleText;
-      ui.barTitle.title = apiFailed
-        ? 'YouTube 플레이어를 불러올 수 없는 환경입니다'
-        : (pl ? pl.name + ' · ' + (pl.tracks.length ? (U.clamp(st().player.index || 0, 0, pl.tracks.length - 1) + 1) + '/' + pl.tracks.length : '0곡') : '설정에서 재생목록을 만들어 주세요');
+    if (ui.nowTitle) {
+      ui.nowTitle.textContent = titleText;
+      ui.nowTitle.title = apiFailed ? 'YouTube 플레이어를 불러올 수 없는 환경입니다' : titleText;
     }
+    if (ui.nowSub) {
+      ui.nowSub.textContent = pl
+        ? pl.name + ' · ' + (pl.tracks.length ? (U.clamp(st().player.index || 0, 0, pl.tracks.length - 1) + 1) + '/' + pl.tracks.length : '0곡')
+        : '설정에서 재생목록을 만들어 주세요';
+    }
+    renderList();
   }
 
-  function mount(bar) {
-    // 숨김 YouTube iframe 는 어디에 있어도 무방합니다.
-    bar.appendChild(el('div', { id: 'yt-host' }));
+  function renderList() {
+    if (!ui.list) return;
+    U.clear(ui.list);
+    var pl = currentPlaylist();
+
+    ui.list.appendChild(el('h4', { text: '재생목록 (' + playlists().length + '/' + MAX_PLAYLISTS + ')' }));
+    ui.list.appendChild(playlists().length
+      ? el('div', {}, playlists().map(function (p) {
+          return el('div.pl-item' + (pl && p.id === pl.id ? '.active' : ''), {
+            onclick: function () { selectPlaylist(p.id); }
+          }, [
+            el('span', { text: p.name, style: { flex: '1' } }),
+            el('span.small.dim', { text: p.tracks.length + '곡' })
+          ]);
+        }))
+      : el('div.empty', { text: '재생목록이 없습니다.' }));
+
+    ui.list.appendChild(el('h4', { text: pl ? '곡 목록 — ' + pl.name : '곡 목록' }));
+    ui.list.appendChild(pl && pl.tracks.length
+      ? el('div', {}, pl.tracks.map(function (t, i) {
+          return el('div.track-item' + (i === st().player.index ? '.active' : ''), {
+            onclick: function () { playTrack(i, true); }
+          }, [
+            el('span.t-idx', { text: String(i + 1) }),
+            el('span.t-title', { text: t.title || t.videoId })
+          ]);
+        }))
+      : el('div.empty', { text: '곡이 없습니다.' }));
+
+    ui.list.appendChild(el('button.btn.btn-sm', {
+      text: '⚙ 설정에서 곡 관리', style: { width: '100%', marginTop: '8px' },
+      onclick: function () { MW.shell.go('settings'); MW.settings.openTab('music'); }
+    }));
+  }
+
+  function mount(host) {
+    // 숨김 YouTube iframe — 패널을 닫아도 DOM 에 남아 재생 유지
+    host.appendChild(el('div', { id: 'yt-host' }));
 
     ui.play = el('button.mbar-btn.mbar-play', { title: '재생/일시정지', onclick: togglePlay });
     ui.mode = el('button.mbar-btn', {
       title: '재생 모드',
       onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
     });
-    ui.barTitle = el('button.mbar-title', {
-      title: '재생목록 열기', dataset: { pop: 'music' },
-      onclick: function () { popover ? closePopover() : openPopover(); }
-    });
+    ui.nowTitle = el('div.mus-now-title');
+    ui.nowSub = el('div.mus-now-sub.small.dim');
+    ui.list = el('div.mus-list');
 
-    bar.appendChild(el('div.mbar', {}, [
+    host.appendChild(el('div.mus-now', {}, [ui.nowTitle, ui.nowSub]));
+    host.appendChild(el('div.mbar', {}, [
       el('button.mbar-btn', { text: '◀', title: '이전 곡', onclick: prevTrack }),
       ui.play,
       el('button.mbar-btn', { text: '▶', title: '다음 곡', onclick: function () { nextTrack(false); } }),
-      ui.mode,
-      ui.barTitle
+      ui.mode
     ]));
+    host.appendChild(ui.list);
 
     renderBar();
     loadApi();
     // 새로고침 후에도 마지막 곡을 물려받되 자동 재생은 하지 않음
     if (currentTrack()) setTimeout(function () { playTrack(st().player.index || 0, false); }, 1200);
+  }
+
+  function init() {
+    panel = MW.shell.registerPanel('music', { title: '🎵 BGM', onOpen: renderBar });
+    mount(panel.body);
   }
 
   /* --------------------------------------------- 설정 페이지에서 쓰는 API */
@@ -322,7 +317,7 @@ window.MW = window.MW || {};
   }
 
   MW.music = {
-    mount: mount,
+    init: init,
     render: renderBar,
     addPlaylist: addPlaylist,
     addTrack: addTrack,

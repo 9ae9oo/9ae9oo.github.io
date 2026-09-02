@@ -120,20 +120,6 @@
 }
 body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
 
-/* --------------------------------------------------------------- 상단 음악바 */
-#topbar {
-  flex: 0 0 auto;
-  height: var(--topbar-h);
-  background: var(--surface-0);
-  border-bottom: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0 14px;
-  position: relative;
-  z-index: 60;
-}
-
 /* 빠른 일정 입력 — #content 하단 가운데에 떠 있음 (바 배경 없음) */
 #quickbar {
   position: absolute;
@@ -173,14 +159,18 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
 }
 .float-pin input { cursor: pointer; }
 
-/* 상단바 = 인라인 미니 플레이어 (재생 버튼 + 곡 제목). yt-host 는 숨김. */
-#musicbar { flex: 1; min-width: 0; display: flex; align-items: center; }
+/* BGM 패널 — 지금 재생 중 + 트랜스포트 + 목록 */
+.mus-now { padding: 4px 4px 10px; }
+.mus-now-title {
+  font-size: 13.5px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mus-now-sub { margin-top: 2px; }
 
-/* 상단바 인라인 플레이어: [◀] [▶/❚❚] [▶] [🔁/🔀] [ 곡 제목 → 팝오버 ] */
-.mbar { display: flex; align-items: center; gap: 4px; min-width: 0; width: 100%; }
+.mbar { display: flex; align-items: center; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
 .mbar-btn {
   flex: 0 0 auto;
-  width: 30px; height: 30px;
+  width: 32px; height: 32px;
   display: inline-flex; align-items: center; justify-content: center;
   color: var(--text-muted); border-radius: 50%;
   font-size: 12px; cursor: pointer;
@@ -190,38 +180,14 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
 .mbar-btn.on { color: var(--accent); }
 .mbar-play {
   background: var(--accent); color: var(--on-accent);
-  width: 32px; height: 32px; font-size: 13px;
+  width: 36px; height: 36px; font-size: 14px;
 }
 .mbar-play:hover { background: var(--accent-hover); color: var(--on-accent); }
-.mbar-title {
-  flex: 1; min-width: 0; margin-left: 4px;
-  text-align: left;
-  font-size: 13px; font-weight: 500; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  padding: 6px 8px; border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.mbar-title:hover { background: var(--surface-2); }
+
+.mus-list { margin-top: 10px; }
+.mus-list h4 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 4px 4px; }
 
 #yt-host { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -9999px; top: 0; }
-
-/* 재생목록 팝오버 */
-.popover {
-  position: absolute;
-  top: calc(var(--topbar-h) - 4px);
-  right: 12px;
-  width: 300px;
-  max-width: calc(100vw - 24px);
-  background: var(--surface-1);
-  border: 1px solid var(--border-accent);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  padding: 8px;
-  z-index: 80;
-  max-height: 60vh;
-  overflow: auto;
-}
-.popover h4 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; padding: 6px 8px; }
 
 .pl-item, .track-item {
   display: flex; align-items: center; gap: 8px;
@@ -516,7 +482,6 @@ body.anypanel-open #content {
   #content { flex: 1; order: 1; min-width: 0; min-height: 0; max-width: none; }
   body.anypanel-open #content { max-width: none; }
   #panelhost { flex-basis: 0 !important; overflow: visible; }
-  #topbar { gap: 6px; padding: 0 8px; }
   #main { align-items: stretch; -webkit-overflow-scrolling: touch; }
   /* #main 하단 패딩 = 떠 있는 도구줄 + 입력창 높이만큼 */
   #content #main { padding-bottom: 118px; }
@@ -594,7 +559,6 @@ body.anypanel-open #content {
   .float-head { cursor: default; }
   .float-resize { display: none; }
 
-  .popover { right: 8px; left: 8px; width: auto; }
 }
 
 

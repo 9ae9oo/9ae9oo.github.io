@@ -193,7 +193,7 @@ window.MW = window.MW || {};
     MW.shell.applyMotion();
     MW.store.on(function () { MW.shell.applyTheme(); MW.shell.applyMotion(); });   // 색·동작 변경은 렌더 지연 없이 바로 반영
 
-    MW.music.mount($('#musicbar'));
+    MW.music.init();
     MW.pomodoro.init();
     MW.memo.init();
     MW.work.mount($('#page-work-body'));
