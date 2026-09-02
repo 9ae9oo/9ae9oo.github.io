@@ -2,21 +2,22 @@
    App Shell — 왼쪽사이드 / 상단바 / 메인 / 하단탭 / 플로팅창
    ========================================================================== */
 
-/* 시안 A — 좌측 레일 · 가운데 컨텐츠(최대폭) · 우측 레일이 여백(테마 배경)에 떠 있음 */
+/* 시안 A — 좌측 레일은 여백(테마 배경)에 떠 있고, 우측 레일은 컨텐츠 오른쪽에 붙음.
+   도구 패널은 우측 레일의 오른쪽(여백)으로 펼쳐짐. */
 #app {
   display: flex;
   flex-direction: row;
   align-items: stretch;
   justify-content: center;
-  gap: 18px;
   padding: 14px;
   height: 100vh;
   height: 100dvh;
 }
 
-/* --------------------------------------------------------------- 좌측 레일 (아이콘, 항상 표시) */
+/* --------------------------------------------------------------- 좌측 레일 (여백에 떠 있음) */
 #sidebar {
   flex: 0 0 var(--sidebar-w);
+  margin-right: 18px;   /* 컨텐츠와 사이 여백 (우측 레일과 달리 떨어져 있음) */
   background: var(--surface-0);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -69,12 +70,14 @@
 /* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
 .pomo-item { flex-direction: column; gap: 2px; }
 
-/* --------------------------------------------------------------- 우측 레일 (도구, 세로 텍스트) */
+/* --------------------------------------------------- 우측 레일 (컨텐츠에 붙음, 세로 텍스트) */
 #toolrail {
+  position: relative;   /* .side-panel 이 left:100% 로 이 레일의 오른쪽에 붙음 */
   flex: 0 0 var(--sidebar-w);
   background: var(--surface-0);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-left: none;                       /* 컨텐츠 오른쪽 테두리를 공유 */
+  border-radius: 0 var(--radius) var(--radius) 0;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
@@ -82,7 +85,7 @@
   justify-content: center;   /* 가운데 버튼 느낌 */
   gap: 26px;
   padding: 12px 4px;
-  z-index: 50;
+  z-index: 51;
 }
 .tool-item {
   writing-mode: vertical-rl;
@@ -230,7 +233,7 @@
   position: relative;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius);
+  border-radius: var(--radius) 0 0 var(--radius);   /* 오른쪽은 우측 레일이 이어받음 */
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -391,23 +394,28 @@
    기본값 = 데스크톱: 오른쪽에 붙는 세로 패널. 손잡이 버튼은 왼쪽 가장자리 가운데. */
 :root { --side-panel-w: min(380px, 86vw); }
 
+/* 데스크톱: 우측 레일(#toolrail)의 자식. 레일 오른쪽 여백으로 펼쳐짐 */
 .side-panel {
-  position: fixed;
-  top: 0;
-  right: calc(var(--sidebar-w) + 28px);   /* 우측 레일 왼쪽, 전체 높이 (이전과 동일) */
-  bottom: 0;
+  position: absolute;
+  left: 100%;
+  top: -1px;
+  bottom: -1px;
   width: var(--side-panel-w);
+  max-width: 42vw;
   background: var(--surface-1);
-  border-left: 1px solid var(--border-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: 0 var(--radius) var(--radius) 0;
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 500;
-  transform: translateX(calc(100% + var(--sidebar-w) + 28px));
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  transform: translateX(-10px);
+  pointer-events: none;
+  transition: opacity 0.2s, transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.side-panel.open { transform: none; }
+.side-panel.open { opacity: 1; transform: none; pointer-events: auto; }
 
 .side-panel-head {
   flex: 0 0 auto;
@@ -540,6 +548,7 @@
     right: 10px !important;
     bottom: calc(112px + env(safe-area-inset-bottom)) !important;
     width: auto !important;
+    max-width: none !important;
     height: auto !important;
     border: 1px solid var(--border-accent);
     border-radius: var(--radius);
