@@ -259,6 +259,27 @@ window.MW = window.MW || {};
 
     bar.appendChild(el('div', { id: 'yt-host' }));
 
+    /* 하단 음악 팝업 콘텐츠 마운트 */
+    var playerContent = document.getElementById('music-player-content');
+    if (playerContent) {
+      playerContent.appendChild(el('div.mb-controls', {}, [
+        el('button.btn.btn-icon', { text: '◀', title: '이전 곡', onclick: prevTrack }),
+        el('button.btn.btn-icon.mb-play', { title: '재생/일시정지', onclick: togglePlay, style: { width: '50px', height: '50px', fontSize: '24px' } }),
+        el('button.btn.btn-icon', { text: '▶', title: '다음 곡', onclick: function () { nextTrack(false); } })
+      ]));
+      playerContent.appendChild(el('div.mb-now', { style: { padding: '12px 0', textAlign: 'center' } }, [ui.title, ui.sub]));
+      playerContent.appendChild(el('div.mb-controls', {}, [
+        el('button.btn.btn-icon.mb-mode', {
+          title: '재생 모드 변경',
+          onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
+        }),
+        el('button.btn.btn-icon', {
+          text: '☰', title: '재생목록', dataset: { pop: 'music' },
+          onclick: function () { popover ? closePopover() : openPopover(); }
+        })
+      ]));
+    }
+
     renderBar();
     loadApi();
     // 새로고침 후에도 마지막 곡을 물려받되 자동 재생은 하지 않음

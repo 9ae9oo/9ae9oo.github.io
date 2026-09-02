@@ -285,15 +285,101 @@ window.MW = window.MW || {};
     root.style.setProperty('--accent-hover', U.lighten(accent, 0.18));
   }
 
+  /* ---------------------------------------------------------- 사이드바 토글 */
+
+  var sidebarCollapsed = false;
+
+  function toggleSidebar() {
+    var sidebar = $('#sidebar');
+    if (!sidebar) return;
+    sidebarCollapsed = !sidebarCollapsed;
+    sidebar.classList.toggle('collapsed');
+    try { localStorage.setItem('mw.sidebar.collapsed', sidebarCollapsed ? '1' : '0'); } catch (e) {}
+  }
+
+  function closeSidebarOnMobile() {
+    if (window.innerWidth <= 900) {
+      var sidebar = $('#sidebar');
+      if (sidebar && sidebar.classList.contains('open')) {
+        sidebar.classList.remove('open');
+      }
+    }
+  }
+
+  /* --------------------------------------------------- 음악 팝업 (하단) */
+
+  var musicPopupOpen = false;
+
+  function toggleMusicPopup() {
+    var popup = $('#music-popup');
+    if (!popup) return;
+    musicPopupOpen = !musicPopupOpen;
+    popup.classList.toggle('open');
+  }
+
+  function closeMusicPopup() {
+    var popup = $('#music-popup');
+    if (popup) {
+      popup.classList.remove('open');
+      musicPopupOpen = false;
+    }
+  }
+
   /* --------------------------------------------------------------- 초기화 */
 
   function init() {
     window.addEventListener('hashchange', function () { apply(parseHash()); });
-    U.on(document.body, 'click', '[data-nav]', function (e, t) { go(t.dataset.nav); });
+
+    /* 라우팅 */
+    U.on(document.body, 'click', '[data-nav]', function (e, t) {
+      go(t.dataset.nav);
+      closeSidebarOnMobile();
+    });
+
+    /* 플로팅 위젯 (하단 탭에서도 작동) */
     U.on(document.body, 'click', '[data-float]', function (e, t) {
       var f = floats[t.dataset.float];
       if (f) f.toggle();
     });
+
+    /* 사이드바 토글 */
+    var sidebarToggleBtn = $('#sidebar-toggle-btn');
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener('click', toggleSidebar);
+    }
+
+    /* 음악 팝업 토글 */
+    var musicPopupTrigger = $('#music-popup-trigger');
+    if (musicPopupTrigger) {
+      musicPopupTrigger.addEventListener('click', toggleMusicPopup);
+    }
+
+    var musicPopupTriggerBottom = $('#music-popup-trigger-bottom');
+    if (musicPopupTriggerBottom) {
+      musicPopupTriggerBottom.addEventListener('click', toggleMusicPopup);
+    }
+
+    var musicPopupClose = $('#music-popup-close');
+    if (musicPopupClose) {
+      musicPopupClose.addEventListener('click', closeMusicPopup);
+    }
+
+    /* 음악 팝업 배경 클릭으로 닫기 */
+    var musicPopup = $('#music-popup');
+    if (musicPopup) {
+      musicPopup.addEventListener('click', function (e) {
+        if (e.target === musicPopup) {
+          closeMusicPopup();
+        }
+      });
+    }
+
+    /* 사이드바 저장된 상태 복원 */
+    try {
+      var collapsed = localStorage.getItem('mw.sidebar.collapsed') === '1';
+      if (collapsed) toggleSidebar();
+    } catch (e) {}
+
     apply(parseHash());
   }
 

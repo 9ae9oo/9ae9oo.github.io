@@ -114,13 +114,24 @@ window.MW = window.MW || {};
 
   /** 상단바의 작은 남은시간 표시 — 플로팅을 닫아도 시간이 보이도록 */
   function renderMini() {
-    var mini = document.querySelector('.top-pomo .tp-time');
-    if (!mini) return;
     if (remaining === null) remaining = total();
-    mini.textContent = U.fmtClock(remaining);
-    var btn = mini.parentNode;
-    btn.classList.toggle('running', running);
-    btn.title = LABEL[session] + ' ' + U.fmtClock(remaining) + (running ? ' (진행 중)' : ' (멈춤)');
+    var time = U.fmtClock(remaining);
+    var title = LABEL[session] + ' ' + time + (running ? ' (진행 중)' : ' (멈춤)');
+
+    /* 상단 미니 표시 (선택사항) */
+    var mini = document.querySelector('.top-pomo .tp-time');
+    if (mini) {
+      mini.textContent = time;
+      var btn = mini.parentNode;
+      btn.classList.toggle('running', running);
+      btn.title = title;
+    }
+
+    /* 하단 탭 뽀모도로 시간 */
+    var tabTime = document.querySelector('#tabbar .pomo-time');
+    if (tabTime) {
+      tabTime.textContent = time;
+    }
   }
 
   function mount(container) {

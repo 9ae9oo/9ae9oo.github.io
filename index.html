@@ -17,34 +17,49 @@
 
 <div id="app">
 
-  <!-- 상단 고정 네비게이션 — 페이지 이동 · 플로팅 위젯 · 음악 -->
-  <header id="topbar">
-    <nav class="topnav desktop-only">
-      <button class="topnav-item" data-nav="home"><span class="ico">🏠</span><span class="lbl">홈</span></button>
-      <button class="topnav-item" data-nav="work"><span class="ico">🎬</span><span class="lbl">작업</span></button>
-      <button class="topnav-item" data-nav="calendar"><span class="ico">📅</span><span class="lbl">캘린더</span></button>
-      <button class="topnav-item" data-nav="ledger"><span class="ico">💰</span><span class="lbl">정산</span></button>
-      <button class="topnav-item" data-nav="settings"><span class="ico">⚙️</span><span class="lbl">설정</span></button>
-    </nav>
-
-    <span class="spacer"></span>
-
-    <!-- 플로팅 위젯 — 어느 페이지에서든 바로 띄웁니다 -->
-    <div class="top-widgets">
-      <button class="btn btn-icon top-pomo" data-float="pomodoro" title="뽀모도로">
-        <span class="tp-time">25:00</span>
+  <!-- 왼쪽 사이드바 (메인 페이지 네비게이션) -->
+  <aside id="sidebar" class="sidebar">
+    <div class="sidebar-header">
+      <button id="sidebar-toggle-btn" class="sidebar-toggle" aria-label="메뉴 열고 닫기">
+        <span class="toggle-icon">☰</span>
       </button>
-      <button class="btn btn-icon mb-widget" data-float="memo" title="메모장" aria-label="메모장">📝</button>
-      <button class="btn btn-icon mb-widget" data-float="todo" title="할 일" aria-label="할 일">✅</button>
     </div>
-
-    <div class="mb-sep"></div>
-
-    <!-- 음악 (music.js 가 내용을 채웁니다) -->
-    <div id="musicbar"></div>
-  </header>
+    <nav class="sidebar-nav">
+      <button class="sidebar-item" data-nav="home" title="홈">
+        <span class="icon">🏠</span>
+        <span class="label">홈</span>
+      </button>
+      <button class="sidebar-item" data-nav="work" title="작업">
+        <span class="icon">🎬</span>
+        <span class="label">작업</span>
+      </button>
+      <button class="sidebar-item" data-nav="calendar" title="캘린더">
+        <span class="icon">📅</span>
+        <span class="label">캘린더</span>
+      </button>
+      <button class="sidebar-item" data-nav="ledger" title="정산">
+        <span class="icon">💰</span>
+        <span class="label">정산</span>
+      </button>
+      <button class="sidebar-item" data-nav="settings" title="설정">
+        <span class="icon">⚙️</span>
+        <span class="label">설정</span>
+      </button>
+    </nav>
+  </aside>
 
   <div id="body">
+    <!-- 상단 고정 네비게이션 — 음악 플레이어 -->
+    <header id="topbar">
+      <!-- 음악 (music.js 가 내용을 채웁니다) -->
+      <div id="musicbar"></div>
+
+      <!-- 음악 플레이어 팝업 트리거 (모바일) -->
+      <button id="music-popup-trigger" class="btn btn-icon music-popup-btn" title="음악 플레이어" aria-label="음악 플레이어">
+        <span class="icon">🎵</span>
+      </button>
+    </header>
+
     <main id="main">
 
       <section class="page active" data-page="home">
@@ -88,16 +103,38 @@
       </section>
 
     </main>
-  </div>
 
-  <!-- 하단 탭바 (모바일 전용) -->
-  <nav id="tabbar" class="mobile-only">
-    <button class="tabbar-item" data-nav="home"><span class="ico">🏠</span>홈</button>
-    <button class="tabbar-item" data-nav="work"><span class="ico">🎬</span>작업</button>
-    <button class="tabbar-item" data-nav="calendar"><span class="ico">📅</span>캘린더</button>
-    <button class="tabbar-item" data-nav="ledger"><span class="ico">💰</span>정산</button>
-    <button class="tabbar-item" data-nav="settings"><span class="ico">⚙️</span>설정</button>
-  </nav>
+    <!-- 하단 탭바 — 항상 접근 가능한 위젯 -->
+    <nav id="tabbar" class="tabbar">
+      <button class="tabbar-item" data-float="todo" title="할 일">
+        <span class="icon">✅</span>
+        <span class="label">할일</span>
+      </button>
+      <button class="tabbar-item" data-float="memo" title="메모장">
+        <span class="icon">📝</span>
+        <span class="label">메모</span>
+      </button>
+      <button class="tabbar-item" data-float="pomodoro" title="뽀모도로">
+        <span class="icon">🍅</span>
+        <span class="label pomo-time">25:00</span>
+      </button>
+      <button class="tabbar-item" id="music-popup-trigger-bottom" title="음악 플레이어">
+        <span class="icon">🎵</span>
+        <span class="label">음악</span>
+      </button>
+    </nav>
+
+    <!-- 음악 플레이어 팝업 -->
+    <div id="music-popup" class="music-popup">
+      <div class="music-popup-header">
+        <h3>음악</h3>
+        <button id="music-popup-close" class="btn btn-icon" aria-label="닫기">✕</button>
+      </div>
+      <div class="music-popup-body">
+        <div id="music-player-content"></div>
+      </div>
+    </div>
+  </div>
 
 </div>
 
