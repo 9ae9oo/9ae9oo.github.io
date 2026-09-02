@@ -9,75 +9,164 @@ window.MW = window.MW || {};
 
   /* ------------------------------------------------------------ 홈 대시보드 */
 
+  // 홈 미니 달력의 현재 월/선택일 (리렌더 사이에 유지)
+  var homeCal = { cursor: new Date(), sel: U.ymd(new Date()) };
+
+  /** 그 날의 일정 + (날짜가 붙은) 할 일을 점 목록용으로 모읍니다 */
+  function itemsOn(day) {
+    var out = MW.calendar.eventsOn(day).map(function (ev) {
+      return { color: ev.color || '#6b8afd', title: ev.title, time: ev.allDay || ev.start === null ? '종일' : U.fmtMin(ev.start) };
+    });
+    MW.calendar.todosOn(day).filter(function (t) { return !t.done; }).forEach(function (t) {
+      out.push({ color: MW.todo.colorOf(t), title: t.title, time: '' });
+    });
+    return out;
+  }
+
+  /** 이미지 형식의 오늘 일정 카드 — 미니 월 달력 + 선택한 날의 목록 */
+  function eventCalendarCard() {
+    var cur = homeCal.cursor;
+    var y = cur.getFullYear(), m = cur.getMonth();
+    var todayYmd = U.ymd(new Date());
+
+    var head = el('div.mini-cal-head', {}, [
+      el('span.mini-cal-title', { text: y + '년 ' + (m + 1) + '월' }),
+      el('div.mini-cal-nav', {}, [
+        el('button', { text: '‹', title: '이전 달', onclick: function () { homeCal.cursor = new Date(y, m - 1, 1); renderHome(); } }),
+        el('button', { text: '오늘', onclick: function () { homeCal.cursor = new Date(); homeCal.sel = todayYmd; renderHome(); } }),
+        el('button', { text: '›', title: '다음 달', onclick: function () { homeCal.cursor = new Date(y, m + 1, 1); renderHome(); } })
+      ])
+    ]);
+
+    var dow = el('div.mini-cal-dow', {}, U.weekdayNames().map(function (w) {
+      return el('span' + (w === '일' ? '.sun' : w === '토' ? '.sat' : ''), { text: w });
+    }));
+
+    var grid = el('div.mini-cal-grid', {}, U.monthGrid(y, m).map(function (d) {
+      var dYmd = U.ymd(d);
+      var dots = itemsOn(dYmd).slice(0, 4);
+      var cls = '.mini-cal-day';
+      if (d.getMonth() !== m) cls += '.out';
+      if (dYmd === todayYmd) cls += '.today';
+      if (dYmd === homeCal.sel) cls += '.selected';
+      return el('button' + cls, {
+        onclick: function () { homeCal.sel = dYmd; renderHome(); }
+      }, [
+        el('span.n', { text: String(d.getDate()) }),
+        el('span.mini-cal-dots', {}, dots.map(function (it) {
+          return el('span.mini-cal-dot', { style: { background: it.color } });
+        }))
+      ]);
+    }));
+
+    // 선택한 날의 목록
+    var selItems = itemsOn(homeCal.sel);
+    var listRows = selItems.map(function (it) {
+      return el('div.today-row', { onclick: function () { MW.shell.go('calendar'); MW.calendar.goto(homeCal.sel); } }, [
+        el('span.today-dot', { style: { background: it.color } }),
+        it.time ? el('span.today-time', { text: it.time }) : null,
+        el('span.today-title', { text: it.title })
+      ]);
+    });
+
+    return el('div.card', {}, [
+      head,
+      dow,
+      grid,
+      el('h4.mini-cal-dayhead', { text: U.fmtLongDate(homeCal.sel) }),
+      listRows.length ? el('div.today-list', {}, listRows) : el('div.empty', { text: '일정이 없습니다.' })
+    ]);
+  }
+
+  /** #home-title 을 "오늘 날짜 · 현재 시각" 으로 갱신 (renderHome + 인터벌에서 호출) */
+  function homeClock() {
+    var titleEl = $('#home-title');
+    if (!titleEl) return;
+    var now = new Date();
+    titleEl.textContent = U.fmtLongDate(U.ymd(now)) + ' · ' + U.pad2(now.getHours()) + ':' + U.pad2(now.getMinutes());
+  }
+
+  /* -------- 대시보드 카드 순서 (설정 → 테마 탭에서 편집) -------- */
+
+  var HOME_SECTIONS = ['calendar', 'inbox', 'habits', 'money'];
+  var HOME_SECTION_LABELS = {
+    calendar: '오늘의 일정',
+    inbox: '인박스',
+    habits: '해빗 트래커',
+    money: '금전 요약'
+  };
+
+  function homeOrder() {
+    var saved = MW.store.state.settings.homeOrder || [];
+    var ordered = saved.filter(function (k) { return HOME_SECTIONS.indexOf(k) >= 0; });
+    HOME_SECTIONS.forEach(function (k) { if (ordered.indexOf(k) < 0) ordered.push(k); });
+    return ordered;
+  }
+
+  function moveHomeSection(key, delta) {
+    var order = homeOrder();
+    var i = order.indexOf(key);
+    var j = i + delta;
+    if (i < 0 || j < 0 || j >= order.length) return;
+    order.splice(i, 1);
+    order.splice(j, 0, key);
+    MW.store.update(function (s) { s.settings.homeOrder = order; });
+  }
+
+  function sectionNode(key) {
+    if (key === 'calendar') return eventCalendarCard();
+
+    if (key === 'inbox') {
+      var todoBox = el('div.todo-list');
+      MW.todo.renderList(todoBox, {
+        filter: function (t) { return !t.done && !t.date; },
+        draggable: false,
+        emptyText: '지금 할 일이 없습니다.'
+      });
+      return el('div.card', {}, [el('h3', { text: '인박스' }), todoBox]);
+    }
+
+    if (key === 'habits') {
+      return el('div.card', {}, [
+        el('h3', {}, [
+          '해빗 트래커 ',
+          el('span.muted', { text: U.ym(new Date()).replace('-', '년 ') + '월 · ' + MW.habitGrid.todaySummary() })
+        ]),
+        MW.habitGrid.monthGridNode(new Date())
+      ]);
+    }
+
+    if (key === 'money') {
+      var sum = MW.ledger.summary(U.ym(new Date()));
+      return el('div.card.home-money', {
+        onclick: function () { MW.shell.go('ledger'); },
+        title: '정산 장부로 이동'
+      }, [
+        el('span.label', { text: '이번 달 쓸 수 있는 돈' }),
+        el('span.value' + (sum.free < 0 ? '.minus' : ''), { text: U.won(sum.free) }),
+        el('span.small.dim', { text: '수입 ' + U.won(sum.income) + ' · 지출 ' + U.won(sum.expense) })
+      ]);
+    }
+    return null;
+  }
+
   function renderHome() {
     var host = $('#page-home-body');
     if (!host) return;
     U.clear(host);
 
-    var today = U.ymd(new Date());
-    var evs = MW.calendar.eventsOn(today);
-    var dayTodos = MW.calendar.todosOn(today).filter(function (t) { return !t.done; });
-    var sum = MW.ledger.summary(U.ym(new Date()));
+    homeClock();
 
-    // 홈 제목 = 오늘 날짜
-    var titleEl = $('#home-title');
-    if (titleEl) titleEl.textContent = U.fmtLongDate(today);
+    // 꾸밈 이미지 — 날짜(제목) 바로 아래. 설정에서 넣지 않으면 칸 자체가 없습니다
+    var img = MW.store.state.settings.homeImage;
+    if (img) {
+      host.appendChild(el('div.home-image', {}, [el('img', { src: img, alt: '' })]));
+    }
 
-    var goToday = function () { MW.shell.go('calendar'); MW.calendar.goto(today); };
-
-    // 1) 오늘 일정 — 오늘의 일정 + 날짜가 오늘인 할 일을 한 목록에 점으로 표시
-    var rows = [];
-    evs.forEach(function (ev) {
-      rows.push(el('div.today-row', { onclick: goToday }, [
-        el('span.today-dot', { style: { background: ev.color || '#6b8afd' } }),
-        el('span.today-time', { text: ev.allDay || ev.start === null ? '종일' : U.fmtMin(ev.start) }),
-        el('span.today-title', { text: ev.title })
-      ]));
+    homeOrder().forEach(function (key) {
+      var node = sectionNode(key);
+      if (node) host.appendChild(node);
     });
-    dayTodos.forEach(function (t) {
-      rows.push(el('div.today-row', { onclick: goToday }, [
-        el('span.today-dot', { style: { background: MW.todo.colorOf(t) } }),
-        el('span.today-title', { text: t.title })
-      ]));
-    });
-
-    var evCard = el('div.card', {}, [
-      el('h3', { text: '오늘 일정' }),
-      rows.length ? el('div.today-list', {}, rows) : el('div.empty', { text: '오늘 일정이 없습니다.' })
-    ]);
-
-    var todoBox = el('div.todo-list');
-    MW.todo.renderList(todoBox, {
-      filter: function (t) { return !t.done && !t.date; },
-      draggable: false,
-      emptyText: '지금 할 일이 없습니다.'
-    });
-
-    var todoCard = el('div.card', {}, [
-      el('h3', { text: '인박스' }),
-      todoBox
-    ]);
-
-    host.appendChild(el('div.home-cols', {}, [evCard, todoCard]));
-
-    // 3) 해빗 트래커 — 칸이 넓은 홈에서는 이번 달 전체를 봅니다
-    host.appendChild(el('div.card', {}, [
-      el('h3', {}, [
-        '해빗 트래커 ',
-        el('span.muted', { text: U.ym(new Date()).replace('-', '년 ') + '월 · ' + MW.habitGrid.todaySummary() })
-      ]),
-      MW.habitGrid.monthGridNode(new Date())
-    ]));
-
-    // 4) 장부 한 줄 요약
-    host.appendChild(el('div.card.home-money', {
-      onclick: function () { MW.shell.go('ledger'); },
-      title: '정산 장부로 이동'
-    }, [
-      el('span.label', { text: '이번 달 쓸 수 있는 돈' }),
-      el('span.value' + (sum.free < 0 ? '.minus' : ''), { text: U.won(sum.free) }),
-      el('span.small.dim', { text: '수입 ' + U.won(sum.income) + ' · 지출 ' + U.won(sum.expense) })
-    ]));
   }
 
   /* ------------------------------------------------------------ 리렌더 */
@@ -131,6 +220,9 @@ window.MW = window.MW || {};
     setInterval(tickAlarms, 30000);
     tickAlarms();
 
+    // 홈 제목의 현재 시각 갱신
+    setInterval(homeClock, 20000);
+
     // 자정을 넘기면 "오늘"이 바뀌므로 다시 그림
     var day = U.ymd(new Date());
     setInterval(function () {
@@ -144,7 +236,13 @@ window.MW = window.MW || {};
     window.addEventListener('resize', U.debounce(function () { MW.shell.syncFloatButtons(); }, 200));
   }
 
-  MW.app = { boot: boot, renderHome: renderHome, renderAll: renderAll };
+  MW.app = {
+    boot: boot, renderHome: renderHome, renderAll: renderAll,
+    // 설정 → 테마 탭의 "대시보드 카드 순서" 편집에서 사용
+    homeSectionLabels: HOME_SECTION_LABELS,
+    homeOrder: homeOrder,
+    moveHomeSection: moveHomeSection
+  };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();

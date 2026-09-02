@@ -4,31 +4,29 @@
 
 #app { display: flex; flex-direction: row; height: 100vh; height: 100dvh; }
 
-/* --------------------------------------------------------------- 왼쪽 사이드바 */
+/* --------------------------------------------------------------- 왼쪽 사이드바 (아이콘 레일, 항상 표시) */
 #sidebar {
-  flex: 0 0 240px;
+  flex: 0 0 var(--sidebar-w);
   background: var(--surface-0);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 50;
-  transition: flex 0.3s ease;
-}
-
-#sidebar.collapsed {
-  flex: 0 0 60px;
 }
 
 .sidebar-header {
   flex: 0 0 auto;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   padding: 10px;
   border-bottom: 1px solid var(--border);
-  height: 52px;
+  height: var(--topbar-h);
 }
+
+/* 접기 토글은 이제 필요 없습니다 (항상 아이콘 레일) */
+#sidebar-toggle-btn { display: none; }
 
 .sidebar-toggle {
   display: flex;
@@ -63,15 +61,12 @@
 .sidebar-item {
   display: flex;
   align-items: center;
-  gap: 13px;
-  padding: 12px 13px;
+  justify-content: center;
+  padding: 12px 8px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 15px;
-  font-weight: 500;
-  white-space: nowrap;
   cursor: pointer;
-  transition: all 0.2s;
+  transition: background 0.15s, color 0.15s;
 }
 
 .sidebar-item:hover {
@@ -82,29 +77,20 @@
 .sidebar-item.active {
   background: var(--accent-dim);
   color: var(--accent);
-  font-weight: 600;
 }
 
 .sidebar-item .icon {
-  flex: 0 0 24px;
-  font-size: 19px;
+  font-size: 20px;
+  line-height: 1;
   text-align: center;
 }
 
-.sidebar-item .label {
-  flex: 1;
-  min-width: 0;
-}
+/* 라벨은 항상 숨김 — 아이콘 레일. 이름은 hover 툴팁(title)으로 확인 */
+.sidebar-item .label { display: none; }
 
-#sidebar.collapsed .sidebar-item .label {
-  display: none;
-}
-
-#sidebar.collapsed .sidebar-item {
-  justify-content: center;
-  gap: 0;
-  padding: 10px;
-}
+/* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
+.pomo-item { flex-direction: column; gap: 2px; padding: 8px 4px; }
+.pomo-item .tp-time { margin: 0; font-size: 9.5px; }
 
 /* --------------------------------------------------------------- 상단 음악바 */
 #topbar {
@@ -161,28 +147,28 @@
 .topnav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
 .topnav-item .ico { font-size: 14px; }
 
-/* 상단바 뽀모도로 버튼 (음악 플레이어 가장 왼쪽) */
-#pomodoro-trigger {
+/* 사이드바 하단 영역 (뽀모도로) */
+.sidebar-footer {
   flex: 0 0 auto;
-  display: flex; align-items: center; gap: 5px;
-  height: 30px; padding: 0 10px;
-  border-radius: var(--radius-sm);
-  background: var(--surface-1); border: 1px solid var(--border);
-  color: var(--text-muted);
-  font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
-  cursor: pointer;
+  padding: 8px;
+  border-top: 1px solid var(--border);
 }
-#pomodoro-trigger:hover { background: var(--surface-2); color: var(--text); }
-#pomodoro-trigger[aria-expanded="true"] { box-shadow: inset 0 0 0 1px var(--accent); color: var(--text); }
-#pomodoro-trigger.running { color: var(--accent); border-color: var(--accent); }
-#pomodoro-trigger .tp-icon { font-size: 12px; }
+#pomodoro-trigger { width: 100%; }
+#pomodoro-trigger .tp-time {
+  margin-left: auto;
+  font-size: 12px; font-weight: 600; color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+#pomodoro-trigger[aria-expanded="true"] { background: var(--accent-dim); color: var(--accent); }
+#pomodoro-trigger.running { color: var(--accent); }
+#pomodoro-trigger.running .tp-time { color: var(--accent); }
 
-/* 뽀모도로 드롭다운 패널 — JS(positionPanel)가 트리거 아래로 위치를 잡습니다.
-   아래 값은 초기/폴백값. 데스크톱에선 왼쪽 사이드바(240px)를 가리지 않도록 오른쪽으로. */
+/* 뽀모도로 드롭다운 패널 — JS(positionPanel)가 트리거 옆으로 위치를 잡습니다. 아래는 폴백값. */
 #pomodoro-panel {
   position: fixed;
-  top: var(--topbar-h);
-  left: 8px;
+  top: auto;
+  bottom: 8px;
+  left: calc(var(--sidebar-w) + 8px);
   width: 300px;
   max-width: calc(100vw - 16px);
   background: var(--surface-1);
@@ -348,6 +334,63 @@
 .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
 .card h3 .muted { font-weight: 400; }
 
+/* --------------------------------------------------- 홈 미니 달력 */
+.mini-cal-head {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px;
+}
+.mini-cal-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
+.mini-cal-nav { display: flex; align-items: center; gap: 4px; }
+.mini-cal-nav button {
+  min-width: 26px; height: 26px; padding: 0 8px;
+  border-radius: 999px;
+  font-size: 12px; color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: var(--surface-1);
+  cursor: pointer;
+}
+.mini-cal-nav button:hover { background: var(--surface-2); color: var(--text); }
+
+.mini-cal-dow {
+  display: grid; grid-template-columns: repeat(7, 1fr);
+  margin-bottom: 4px;
+}
+.mini-cal-dow span {
+  text-align: center; font-size: 11px; font-weight: 600;
+  color: var(--text-dim); padding: 4px 0;
+}
+.mini-cal-dow .sun { color: var(--coral); }
+.mini-cal-dow .sat { color: var(--accent); }
+
+.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.mini-cal-day {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 5px 0 4px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  background: none; border: none;
+}
+.mini-cal-day:hover { background: var(--surface-2); }
+.mini-cal-day .n {
+  display: flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 50%;
+  font-size: 12.5px; color: var(--text); font-variant-numeric: tabular-nums;
+}
+.mini-cal-day.out .n { color: var(--text-dim); opacity: 0.6; }
+.mini-cal-day.selected { background: var(--accent-dim); }
+.mini-cal-day.today .n { background: var(--text); color: var(--surface-0); font-weight: 700; }
+
+.mini-cal-dots {
+  display: flex; gap: 2px; min-height: 5px; flex-wrap: wrap;
+  justify-content: center; max-width: 90%;
+}
+.mini-cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+
+.mini-cal-dayhead {
+  font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
+  margin: 16px 0 6px;
+}
+
 /* 오늘 일정 목록 — 캘린더 일간 목록과 같은 점 + 제목 스타일 */
 .today-list { display: flex; flex-direction: column; gap: 2px; }
 .today-row {
@@ -378,9 +421,6 @@
   align-items: center;
   gap: 8px;
 }
-
-/* 내비게이션 메뉴 버튼 (상단바 ☰) — 데스크톱은 왼쪽 사이드바가 있어 숨깁니다 */
-#nav-menu-trigger { display: none; }
 
 /* --------------------------------------------------------------- 음악 플레이어 팝업 */
 .music-popup {
@@ -562,51 +602,8 @@
 @media (max-width: 900px) {
   :root { --topbar-h: 52px; }
 
-  /* 모바일: 사이드바는 오버레이로 변경 */
-  #app {
-    flex-direction: column;
-  }
-
-  #sidebar {
-    position: fixed;
-    left: -240px;
-    top: 0;
-    bottom: 0;
-    height: 100%;
-    flex: 0 0 auto;
-    z-index: 1000;
-    transition: left 0.3s ease;
-  }
-
-  #sidebar.open {
-    left: 0;
-  }
-
-  .sidebar-overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.5);
-    display: none;
-    z-index: 999;
-  }
-
-  .sidebar-overlay.open {
-    display: block;
-  }
-
-  /* 모바일: 상단 음악바 간결히 + 오른쪽 ☰ 내비 버튼 */
-  #topbar {
-    gap: 8px;
-    padding: 0 8px;
-  }
-
-  #nav-menu-trigger {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex: 0 0 auto;
-  }
-
+  /* 사이드바(아이콘 레일)는 데스크톱과 동일 — base 규칙 그대로 사용 */
+  #topbar { gap: 8px; padding: 0 8px; }
   .mb-controls .btn-icon { width: 28px; height: 28px; }
   .mb-play { width: 32px; height: 32px; }
 
@@ -617,14 +614,18 @@
 
   #main {
     align-items: stretch;
-    overflow: visible;
+    /* body(overflow:hidden) 는 스크롤하지 않으므로, 데스크톱처럼 #main 이
+       스크롤 컨테이너가 되어야 페이지를 위아래로 움직일 수 있습니다. */
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    min-height: 0;
   }
 
-  /* 모바일에서는 본문이 body 스크롤이라, 하단 입력 바를 화면에 고정해
-     어느 페이지에서든 항상 보이게 합니다. */
+  /* 하단 입력 바는 화면에 고정. 왼쪽은 아이콘 레일 다음부터.
+     (.page 하단 패딩이 이 높이만큼 확보돼 있음) */
   #tabbar {
     position: fixed;
-    left: 0;
+    left: var(--sidebar-w);
     right: 0;
     bottom: 0;
   }
@@ -682,25 +683,6 @@
 }
 
 @media (min-width: 901px) {
-  /* 데스크톱: 사이드바 고정 */
-  #app {
-    flex-direction: row;
-  }
-
-  #sidebar {
-    position: relative;
-    left: auto;
-    flex: 0 0 240px;
-    height: auto;
-  }
-
-  .sidebar-overlay {
-    display: none !important;
-  }
-
-  /* 데스크톱: 뽀모도로 패널이 왼쪽 사이드바(240px)를 가리지 않도록 */
-  #pomodoro-panel { left: 252px; }
-
   /* 데스크톱: 메인과 상단바 세로 배치 */
   #body {
     flex-direction: column;
@@ -737,6 +719,35 @@
 .home-cols {
   display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 14px; align-items: start; margin-bottom: 14px;
+}
+
+/* --------------------------------------------- 설정: 대시보드 카드 순서 편집 */
+.home-order-list { display: flex; flex-direction: column; gap: 6px; }
+.home-order-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 10px;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.home-order-label { flex: 1; min-width: 0; font-size: 13.5px; }
+.home-order-btns { flex: 0 0 auto; display: flex; gap: 2px; }
+.home-order-btns button {
+  width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.home-order-btns button:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.home-order-btns button:disabled { color: var(--border); cursor: default; }
+
+/* --------------------------------------------------------- 홈 꾸밈 이미지 (날짜 아래) */
+.home-image { margin-bottom: 14px; border-radius: var(--radius); overflow: hidden; }
+.home-image img { display: block; width: 100%; height: auto; }
+.home-image-preview {
+  display: block; width: 100%; max-height: 220px; object-fit: cover;
+  border-radius: var(--radius-sm); border: 1px solid var(--border);
 }
 
 .home-money {

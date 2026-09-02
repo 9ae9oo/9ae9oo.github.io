@@ -17,10 +17,7 @@
 
 <div id="app">
 
-  <!-- 모바일 사이드바 드로어 배경 -->
-  <div class="sidebar-overlay"></div>
-
-  <!-- 왼쪽 사이드바 (메인 페이지 네비게이션) -->
+  <!-- 왼쪽 사이드바 (항상 표시. 데스크톱=라벨, 모바일=아이콘 레일) -->
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-header">
       <button id="sidebar-toggle-btn" class="sidebar-toggle" aria-label="메뉴 열고 닫기">
@@ -49,26 +46,24 @@
         <span class="label">설정</span>
       </button>
     </nav>
+    <!-- 뽀모도로 — 사이드바 하단. 누르면 오른쪽으로 패널이 열림 -->
+    <div class="sidebar-footer">
+      <button id="pomodoro-trigger" class="sidebar-item pomo-item" title="뽀모도로" aria-haspopup="true" aria-expanded="false">
+        <span class="icon">🍅</span>
+        <span class="label">뽀모도로</span>
+        <span class="tp-time">25:00</span>
+      </button>
+    </div>
   </aside>
 
   <div id="body">
-    <!-- 상단 고정 네비게이션 — 빠른 입력 + 음악 플레이어 -->
+    <!-- 상단 고정 바 — 음악 플레이어 -->
     <header id="topbar">
-      <!-- 내비게이션 메뉴 (홈 · 작업 · 캘린더 · 정산 · 설정) — 모바일 전용, 왼쪽 -->
-      <button id="nav-menu-trigger" class="btn btn-icon" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">
-        <span class="icon">☰</span>
-      </button>
-
-      <!-- 뽀모도로 — 음악 플레이어 가장 왼쪽. 누르면 아래 패널이 열림 -->
-      <button id="pomodoro-trigger" title="뽀모도로" aria-label="뽀모도로" aria-haspopup="true" aria-expanded="false">
-        <span class="tp-icon">🍅</span><span class="tp-time">25:00</span>
-      </button>
-
       <!-- 음악 플레이어 (music.js 가 곡 제목 + 재생 버튼을 채웁니다) -->
       <div id="musicbar"></div>
     </header>
 
-    <!-- 뽀모도로 패널 (상단바 뽀모도로 버튼 아래로 펼쳐짐) -->
+    <!-- 뽀모도로 패널 (사이드바 뽀모도로 버튼 옆으로 펼쳐짐) -->
     <div id="pomodoro-panel" hidden></div>
 
     <main id="main">

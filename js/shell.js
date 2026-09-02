@@ -346,19 +346,6 @@ window.MW = window.MW || {};
     try { localStorage.setItem('mw.sidebar.collapsed', sidebarCollapsed ? '1' : '0'); } catch (e) {}
   }
 
-  function setNavDrawer(open) {
-    var sidebar = $('#sidebar');
-    var overlay = $('.sidebar-overlay');
-    var trigger = $('#nav-menu-trigger');
-    if (sidebar) sidebar.classList.toggle('open', open);
-    if (overlay) overlay.classList.toggle('open', open);
-    if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-
-  function closeSidebarOnMobile() {
-    if (window.innerWidth <= 900) setNavDrawer(false);
-  }
-
   /* --------------------------------------------------- 음악 팝업 (하단) */
 
   var musicPopupOpen = false;
@@ -386,30 +373,12 @@ window.MW = window.MW || {};
     /* 라우팅 */
     U.on(document.body, 'click', '[data-nav]', function (e, t) {
       go(t.dataset.nav);
-      closeSidebarOnMobile();
     });
 
     /* 플로팅·도킹 위젯 (메모 버튼 등에서 작동) */
     U.on(document.body, 'click', '[data-float]', function (e, t) {
       var f = floats[t.dataset.float];
       if (f) f.toggle();
-    });
-
-    /* 모바일 내비게이션 메뉴 (상단바 오른쪽 ☰) — 사이드바 드로어를 여닫습니다 */
-    var navMenuTrigger = $('#nav-menu-trigger');
-    if (navMenuTrigger) {
-      navMenuTrigger.addEventListener('click', function (e) {
-        e.stopPropagation();
-        var sidebar = $('#sidebar');
-        setNavDrawer(!(sidebar && sidebar.classList.contains('open')));
-      });
-    }
-    var sidebarOverlay = $('.sidebar-overlay');
-    if (sidebarOverlay) {
-      sidebarOverlay.addEventListener('click', function () { setNavDrawer(false); });
-    }
-    document.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape') setNavDrawer(false);
     });
 
     /* 사이드바 토글 */

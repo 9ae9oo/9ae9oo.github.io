@@ -555,6 +555,100 @@ window.MW = window.MW || {};
     ]));
   }
 
+  /* ------------------------------------------------- 홈 대시보드 (테마 탭) */
+
+  var HOME_KEYS_FALLBACK = ['calendar', 'inbox', 'habits', 'money'];
+  var HOME_LABELS_FALLBACK = { calendar: '오늘의 일정', inbox: '인박스', habits: '해빗 트래커', money: '금전 요약' };
+
+  /** 홈 카드 순서 편집 — MW.app 의 헬퍼를 쓰되(부팅 후 존재) 없으면 폴백 */
+  function homeOrderCard() {
+    var app = MW.app || {};
+    var labels = app.homeSectionLabels || HOME_LABELS_FALLBACK;
+    var order = app.homeOrder ? app.homeOrder() : HOME_KEYS_FALLBACK.slice();
+    var move = app.moveHomeSection || function (key, delta) {
+      var i = order.indexOf(key), j = i + delta;
+      if (i < 0 || j < 0 || j >= order.length) return;
+      order.splice(i, 1); order.splice(j, 0, key);
+      MW.store.update(function (s) { s.settings.homeOrder = order.slice(); });
+    };
+
+    var rows = order.map(function (key, idx) {
+      return el('div.home-order-row', {}, [
+        el('span.home-order-label', { text: labels[key] || key }),
+        el('div.home-order-btns', {}, [
+          el('button', {
+            text: '▲', title: '위로', 'aria-label': '위로', disabled: idx === 0,
+            onclick: function () { move(key, -1); }
+          }),
+          el('button', {
+            text: '▼', title: '아래로', 'aria-label': '아래로', disabled: idx === order.length - 1,
+            onclick: function () { move(key, 1); }
+          })
+        ])
+      ]);
+    });
+
+    return el('div.card', {}, [
+      el('h3', { text: '대시보드 카드 순서' }),
+      el('div.small.dim', { text: '홈 화면에서 카드가 나타나는 순서입니다.', style: { marginBottom: '10px' } }),
+      el('div.home-order-list', {}, rows)
+    ]);
+  }
+
+  /* ------------------------------------------------------ 홈 꾸미기 이미지 */
+
+  /** 파일을 캔버스로 축소해서 data URL(JPEG) 로 변환 — LocalStorage 용량 보호 */
+  function shrinkImage(file, maxW, cb) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxW / img.width);
+        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        var cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        try { cb(cv.toDataURL('image/jpeg', 0.82)); }
+        catch (e) { cb(String(reader.result)); }   // 변환 실패 시 원본 사용
+      };
+      img.onerror = function () { U.toast('이미지를 불러오지 못했습니다.', 'err'); };
+      img.src = String(reader.result);
+    };
+    reader.onerror = function () { U.toast('파일을 읽지 못했습니다.', 'err'); };
+    reader.readAsDataURL(file);
+  }
+
+  function homeImageCard() {
+    var cur = MW.store.state.settings.homeImage || '';
+    var file = el('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
+    file.addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      shrinkImage(f, 1600, function (dataUrl) {
+        MW.store.update(function (s) { s.settings.homeImage = dataUrl; });
+        U.toast('홈 이미지를 넣었습니다.');
+      });
+    });
+
+    return el('div.card', {}, [
+      el('h3', { text: '홈 꾸미기 이미지' }),
+      el('div.small.dim', {
+        text: '홈 화면 날짜 아래에 표시됩니다. 넣지 않으면 그 자리는 나타나지 않습니다. (긴 그림은 자동으로 가로 1600px 로 줄여 저장)',
+        style: { marginBottom: '10px' }
+      }),
+      cur ? el('img.home-image-preview', { src: cur, alt: '' }) : el('div.empty', { text: '설정된 이미지가 없습니다.' }),
+      el('div.row-wrap', { style: { marginTop: '10px' } }, [
+        el('button.btn.btn-sm', { text: cur ? '이미지 바꾸기' : '이미지 선택', onclick: function () { file.click(); } }),
+        cur ? el('button.btn.btn-sm.btn-danger', {
+          text: '제거',
+          onclick: function () { MW.store.update(function (s) { s.settings.homeImage = ''; }); }
+        }) : null,
+        file
+      ])
+    ]);
+  }
+
   /* ------------------------------------------------------------ 테마 */
 
   var ACCENT_PRESETS = [
@@ -613,6 +707,9 @@ window.MW = window.MW || {};
         onclick: function () { setTheme(DEFAULT_THEME); }
       })
     ]));
+
+    host.appendChild(homeOrderCard());
+    host.appendChild(homeImageCard());
   }
 
   function exportJson() {

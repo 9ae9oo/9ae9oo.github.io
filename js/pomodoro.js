@@ -176,10 +176,13 @@ window.MW = window.MW || {};
     if (!trigger || !panel) return;
     var r = trigger.getBoundingClientRect();
     var w = panel.offsetWidth || 300;
-    // 트리거(상단바, 데스크톱에선 사이드바 오른쪽) 아래에 붙이되 화면 밖으로 나가지 않게 클램프
-    var left = U.clamp(r.left, 8, Math.max(8, window.innerWidth - w - 8));
+    var h = panel.offsetHeight || 380;
+    // 트리거는 왼쪽 사이드바 하단에 있으므로 패널은 트리거 오른쪽에, 세로는 화면 안에 맞춤
+    var left = U.clamp(r.right + 8, 8, Math.max(8, window.innerWidth - w - 8));
+    var top = U.clamp(r.top, 8, Math.max(8, window.innerHeight - h - 8));
     panel.style.left = left + 'px';
-    panel.style.top = ((r.bottom || 52) + 6) + 'px';
+    panel.style.top = top + 'px';
+    panel.style.bottom = 'auto';   // CSS 폴백(bottom:8px)이 top 과 겹쳐 늘어나지 않게
   }
 
   function openPanel() {
