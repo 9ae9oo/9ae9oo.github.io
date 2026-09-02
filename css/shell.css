@@ -2,51 +2,29 @@
    App Shell — 왼쪽사이드 / 상단바 / 메인 / 하단탭 / 플로팅창
    ========================================================================== */
 
-#app { display: flex; flex-direction: row; height: 100vh; height: 100dvh; }
+/* 시안 A — 좌측 레일 · 가운데 컨텐츠(최대폭) · 우측 레일이 여백(테마 배경)에 떠 있음 */
+#app {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  justify-content: center;
+  gap: 18px;
+  padding: 14px;
+  height: 100vh;
+  height: 100dvh;
+}
 
-/* --------------------------------------------------------------- 왼쪽 사이드바 (아이콘 레일, 항상 표시) */
+/* --------------------------------------------------------------- 좌측 레일 (아이콘, 항상 표시) */
 #sidebar {
   flex: 0 0 var(--sidebar-w);
   background: var(--surface-0);
-  border-right: 1px solid var(--border);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 50;
-}
-
-.sidebar-header {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px;
-  border-bottom: 1px solid var(--border);
-  height: var(--topbar-h);
-}
-
-/* 접기 토글은 이제 필요 없습니다 (항상 아이콘 레일) */
-#sidebar-toggle-btn { display: none; }
-
-.sidebar-toggle {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--radius-sm);
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.sidebar-toggle:hover {
-  background: var(--surface-2);
-  color: var(--text);
-}
-
-.toggle-icon {
-  font-size: 18px;
 }
 
 .sidebar-nav {
@@ -89,7 +67,44 @@
 .sidebar-item .label { display: none; }
 
 /* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
-.pomo-item { flex-direction: column; gap: 2px; padding: 8px 4px; }
+.pomo-item { flex-direction: column; gap: 2px; }
+
+/* --------------------------------------------------------------- 우측 레일 (도구) */
+#toolrail {
+  flex: 0 0 var(--sidebar-w);
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 8px;
+  z-index: 50;
+}
+.tool-item {
+  width: 100%;
+  min-height: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.tool-item:hover { background: var(--surface-2); color: var(--text); }
+.tool-item.active { background: var(--accent-dim); color: var(--accent); }
+.tool-item .icon { font-size: 18px; line-height: 1; }
+.tool-item .tp-time {
+  font-size: 9px; font-weight: 600; color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+#pomodoro-trigger.running { color: var(--accent); }
+#pomodoro-trigger.running .tp-time { color: var(--accent); }
 
 /* --------------------------------------------------------------- 상단 음악바 */
 #topbar {
@@ -105,43 +120,30 @@
   z-index: 60;
 }
 
-/* 빠른 입력 필드 — 하단 바에 고정 (모바일·데스크톱 공통) */
-.quick-add-wrap {
-  display: flex;
-  flex: 1;
-  min-width: 0;
+/* 빠른 일정 입력 — #content 하단 가운데에 떠 있음 (바 배경 없음) */
+#quickbar {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  z-index: 40;
 }
-
 .quick-add-input {
   width: 100%;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--surface-1);
+  height: 46px;
+  padding: 0 18px;
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface-0);
   color: var(--text);
-  font-size: 13px;
+  font-size: 13.5px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  box-shadow: var(--shadow);
+  transition: border-color 0.15s;
 }
-
-.quick-add-input::placeholder {
-  color: var(--text-dim);
-}
-
-.quick-add-input:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px var(--accent-dim);
-}
-
-/* 사이드바 하단 영역 (설정 — 맨 아래 고정) */
-.sidebar-footer {
-  flex: 0 0 auto;
-  padding: 8px;
-  border-top: 1px solid var(--border);
-}
-.sidebar-footer .sidebar-item { width: 100%; }
-#pomodoro-trigger { width: 100%; }
+.quick-add-input::placeholder { color: var(--text-dim); }
+.quick-add-input:focus { border-color: var(--accent); }
 #pomodoro-trigger .tp-time {
   margin: 0;
   font-size: 9.5px; font-weight: 600; color: var(--text-dim);
@@ -217,15 +219,18 @@
 .track-item .t-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-item .t-idx { font-size: 11px; color: var(--text-dim); width: 18px; text-align: right; flex-shrink: 0; }
 
-/* --------------------------------------------------------------- 본문 배치 */
-#body {
-  flex: 1;
+/* --------------------------------------------------------------- 가운데 컨텐츠 (최대폭) */
+#content {
+  flex: 0 1 var(--content-max, 1100px);
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  min-height: 0;
-  /* 넓은 콘텐츠(홈 해빗 그리드 등)가 있어도 사이드바 옆 남은 폭보다
-     넓어지지 않도록 — 안쪽 스크롤 컨테이너가 넘침을 처리합니다. */
-  min-width: 0;
+  position: relative;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  overflow: hidden;
 }
 
 #main {
@@ -236,12 +241,12 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  padding-bottom: 76px;   /* 떠 있는 입력창 자리 확보 */
 }
 
 .page {
   display: none;
-  padding: 20px 24px 60px;
-  max-width: 1100px;
+  padding: 20px 24px 24px;
   width: 100%;
   /* 넓은 자식(예: 홈 해빗 그리드)이 있어도 뷰포트보다 커지지 않도록 —
      안쪽 overflow-x:auto 컨테이너가 스크롤을 담당합니다. */
@@ -348,18 +353,6 @@
 }
 .today-title { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; word-break: break-word; }
 
-/* --------------------------------------------------- 하단 바 (빠른 일정 입력) */
-#tabbar {
-  flex: 0 0 auto;
-  min-height: var(--tabbar-h);
-  background: var(--surface-0);
-  border-top: 1px solid var(--border);
-  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-  z-index: 60;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 /* --------------------------------------------------------------- 플로팅 창 */
 .float {
@@ -398,17 +391,19 @@
 
 .side-panel {
   position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
+  top: 14px;
+  right: calc(var(--sidebar-w) + 28px);   /* 우측 레일 왼쪽에 뜨는 패널 */
+  bottom: 14px;
   width: var(--side-panel-w);
   background: var(--surface-1);
-  border-left: 1px solid var(--border-accent);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   z-index: 500;
-  transform: translateX(100%);
+  transform: translateX(calc(100% + var(--sidebar-w) + 28px));
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .side-panel.open { transform: none; }
@@ -475,68 +470,48 @@
 .form-row > label { font-size: 12px; color: var(--text-muted); font-weight: 500; }
 .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
+/* 우측 레일이 메모 여는 손잡이를 대신하므로 가장자리 손잡이는 숨김 */
+.side-panel-handle { display: none !important; }
+
 /* --------------------------------------------------------------- 반응형 */
-@media (max-width: 900px) {
+/* #6 4단계에서 상단 nav · 떠 있는 도구 pill 로 정식 개편 예정.
+   지금은 좁은 화면에서 깨지지 않을 정도로만. 분기점 640 — 한 곳만 고치면 됨. */
+@media (max-width: 640px) {
   :root { --topbar-h: 52px; }
 
-  /* 사이드바(아이콘 레일)는 데스크톱과 동일 — base 규칙 그대로 사용 */
-  #topbar { gap: 6px; padding: 0 8px; }
-
-  /* 모바일: 메인 콘텐츠 */
-  #body {
+  #app {
     flex-direction: column;
+    gap: 8px;
+    padding: 8px;
   }
+  #sidebar, #toolrail {
+    flex: 0 0 auto;
+    flex-direction: row;
+    justify-content: space-around;
+  }
+  #sidebar .sidebar-nav { flex-direction: row; }
+  .sidebar-item, .tool-item { flex: 1; }
 
-  #main {
-    align-items: stretch;
-    /* body(overflow:hidden) 는 스크롤하지 않으므로, 데스크톱처럼 #main 이
-       스크롤 컨테이너가 되어야 페이지를 위아래로 움직일 수 있습니다. */
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    min-height: 0;
-  }
-
-  /* 하단 입력 바는 화면에 고정. 왼쪽은 아이콘 레일 다음부터.
-     (.page 하단 패딩이 이 높이만큼 확보돼 있음) */
-  #tabbar {
-    position: fixed;
-    left: var(--sidebar-w);
-    right: 0;
-    bottom: 0;
-  }
-
-  .page {
-    padding: 16px 12px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom));
-    max-width: 100%;
-  }
+  #content { flex: 1; }
+  #topbar { gap: 6px; padding: 0 8px; }
+  #main { align-items: stretch; -webkit-overflow-scrolling: touch; }
+  .page { padding: 16px 12px 24px; }
 
   /* 모바일: 플로팅 창 전체화면 */
   .float.open {
-    inset: var(--topbar-h) 0 var(--tabbar-h) 0 !important;
+    inset: 8px !important;
     width: auto !important;
     height: auto !important;
-    border-radius: 0;
-    border: none;
-    border-top: 1px solid var(--border);
+    border-radius: var(--radius);
     z-index: 400;
   }
-
-  .float-head {
-    cursor: default;
-  }
-
-  .float-resize {
-    display: none;
-  }
+  .float-head { cursor: default; }
+  .float-resize { display: none; }
 
   /* 모바일: 메모 패널은 아래에서 올라오는 바텀 시트 */
   .side-panel {
-    top: auto;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: auto;
-    height: 82vh;
+    top: auto; left: 0; right: 0; bottom: 0;
+    width: auto; height: 82vh;
     border-left: none;
     border-top: 1px solid var(--border-accent);
     border-radius: 16px 16px 0 0;
@@ -546,28 +521,10 @@
   .side-panel.open { transform: none; }
   .side-panel-head { border-radius: 16px 16px 0 0; }
 
-  /* 손잡이는 데스크톱과 동일하게 오른쪽 가장자리 세로 중앙.
-     시트는 전체 너비라 열려도 손잡이는 그대로 오른쪽 끝(닫기 버튼 역할). */
-  .side-panel-handle.open { right: 0; }
-
-  .popover {
-    right: 8px;
-    left: 8px;
-    width: auto;
-  }
+  .popover { right: 8px; left: 8px; width: auto; }
 }
 
-@media (min-width: 901px) {
-  /* 데스크톱: 메인과 상단바 세로 배치 */
-  #body {
-    flex-direction: column;
-    transition: padding-right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* 데스크톱: 메모 패널이 열리면 본문을 그만큼 좁혀 겹치지 않게 합니다 */
-  body.panel-memo-open #body {
-    padding-right: var(--side-panel-w);
-  }
+@media (min-width: 641px) {
 
   /* 플로팅 창: registerFloat 이 지정한 left/top/width/height 인라인 값을 그대로 사용.
      모바일 전체화면 규칙은 max-width:900px 미디어쿼리 안에만 있으므로 여기서 되돌릴 필요가 없습니다.

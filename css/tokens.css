@@ -66,8 +66,9 @@
   --radius: 12px;
   --radius-sm: 8px;
   --topbar-h: 56px;
-  --sidebar-w: 56px;   /* 아이콘 레일 (항상 아이콘만) */
+  --sidebar-w: 56px;   /* 좌·우 아이콘 레일 */
   --tabbar-h: 60px;
+  --content-max: 1100px;   /* 가운데 컨텐츠 최대폭 (설정 → 테마에서 변경, #6 3단계) */
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 
   /* 테마 시스템 정적 폴백 — 아래 프리셋 / applyTheme() 이 덮어씁니다 */

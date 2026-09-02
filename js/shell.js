@@ -31,8 +31,6 @@ window.MW = window.MW || {};
     $$('[data-nav]').forEach(function (b) { b.classList.toggle('active', b.dataset.nav === route); });
     var main = $('#main');
     if (main) main.scrollTop = 0;
-    var body = $('#body');
-    if (body) body.scrollTop = 0;
     if (routeHandlers[route]) routeHandlers[route](route);
   }
 
@@ -381,18 +379,6 @@ window.MW = window.MW || {};
     root.classList.toggle('motion-ok', v === 'off');
   }
 
-  /* ---------------------------------------------------------- 사이드바 토글 */
-
-  var sidebarCollapsed = false;
-
-  function toggleSidebar() {
-    var sidebar = $('#sidebar');
-    if (!sidebar) return;
-    sidebarCollapsed = !sidebarCollapsed;
-    sidebar.classList.toggle('collapsed');
-    try { localStorage.setItem('mw.sidebar.collapsed', sidebarCollapsed ? '1' : '0'); } catch (e) {}
-  }
-
   /* --------------------------------------------------------------- 초기화 */
 
   function init() {
@@ -403,23 +389,11 @@ window.MW = window.MW || {};
       go(t.dataset.nav);
     });
 
-    /* 플로팅·도킹 위젯 (메모 버튼 등에서 작동) */
+    /* 플로팅·도킹 위젯 (좌·우 레일 도구 버튼에서 작동) */
     U.on(document.body, 'click', '[data-float]', function (e, t) {
       var f = floats[t.dataset.float];
       if (f) f.toggle();
     });
-
-    /* 사이드바 토글 */
-    var sidebarToggleBtn = $('#sidebar-toggle-btn');
-    if (sidebarToggleBtn) {
-      sidebarToggleBtn.addEventListener('click', toggleSidebar);
-    }
-
-    /* 사이드바 저장된 상태 복원 */
-    try {
-      var collapsed = localStorage.getItem('mw.sidebar.collapsed') === '1';
-      if (collapsed) toggleSidebar();
-    } catch (e) {}
 
     /* 빠른 입력 초기화 */
     if (MW.quickAdd) MW.quickAdd.init();
