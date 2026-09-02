@@ -69,7 +69,7 @@
 /* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
 .pomo-item { flex-direction: column; gap: 2px; }
 
-/* --------------------------------------------------------------- 우측 레일 (도구) */
+/* --------------------------------------------------------------- 우측 레일 (도구, 세로 텍스트) */
 #toolrail {
   flex: 0 0 var(--sidebar-w);
   background: var(--surface-0);
@@ -79,18 +79,18 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 6px;
-  padding: 8px;
+  justify-content: center;   /* 가운데 버튼 느낌 */
+  gap: 26px;
+  padding: 12px 4px;
   z-index: 50;
 }
 .tool-item {
-  width: 100%;
-  min-height: 40px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 3px;
+  font-size: 12.5px;
+  font-weight: 600;
+  padding: 12px 5px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
@@ -98,13 +98,15 @@
 }
 .tool-item:hover { background: var(--surface-2); color: var(--text); }
 .tool-item.active { background: var(--accent-dim); color: var(--accent); }
-.tool-item .icon { font-size: 18px; line-height: 1; }
 .tool-item .tp-time {
-  font-size: 9px; font-weight: 600; color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
+  writing-mode: horizontal-tb;
+  display: none;
+  margin-top: 6px;
+  font-size: 10px; font-weight: 600; color: var(--accent);
+  letter-spacing: 0; font-variant-numeric: tabular-nums;
 }
 #pomodoro-trigger.running { color: var(--accent); }
-#pomodoro-trigger.running .tp-time { color: var(--accent); }
+#pomodoro-trigger.running .tp-time { display: block; }
 
 /* --------------------------------------------------------------- 상단 음악바 */
 #topbar {
@@ -498,17 +500,26 @@
   #content #main { padding-bottom: 118px; }
   .page { padding: 16px 12px 24px; }
 
-  /* 도구줄: 하단에 떠 있음, 입력창 바로 위 */
+  /* 도구줄: 하단에 떠 있음, 입력창 바로 위 (가로 텍스트) */
   #toolrail {
     position: fixed;
     left: 10px; right: 10px;
     bottom: calc(62px + env(safe-area-inset-bottom));
     flex-direction: row;
     justify-content: space-around;
+    gap: 4px;
     padding: 4px;
     z-index: 280;
   }
-  .tool-item { flex: 1; min-height: 34px; }
+  .tool-item {
+    flex: 1;
+    writing-mode: horizontal-tb;
+    letter-spacing: 0;
+    text-align: center;
+    padding: 8px 4px;
+    min-height: 34px;
+  }
+  .tool-item .tp-time { margin-top: 2px; }
 
   /* 입력창: 화면 최하단에 고정, 도구보다 위 레이어 */
   #quickbar {
@@ -520,34 +531,33 @@
     z-index: 300;
   }
 
-  /* 뽀모도로 플로팅 창: 화면을 덮지 않고 도구줄 위에 작게 */
-  .float.open {
+  /* 뽀모도로 창 · 메모 패널: 화면을 덮지 않고 도구줄 위에 뜸 (입력창 안 가림) */
+  .float.open,
+  .side-panel {
+    position: fixed;
     top: auto !important;
     left: 10px !important;
     right: 10px !important;
     bottom: calc(112px + env(safe-area-inset-bottom)) !important;
     width: auto !important;
     height: auto !important;
-    max-height: 46vh;
+    border: 1px solid var(--border-accent);
     border-radius: var(--radius);
-    z-index: 250;
   }
-  .float-body { overflow-y: auto; }
+  .float.open { max-height: 46vh; z-index: 250; }
+  .side-panel {
+    max-height: 62vh;
+    transform: translateY(20px);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 260;
+  }
+  .side-panel.open { transform: none; opacity: 1; pointer-events: auto; }
+  .side-panel-head { border-radius: var(--radius) var(--radius) 0 0; }
+
+  .float-body, .side-panel-body { overflow-y: auto; }
   .float-head { cursor: default; }
   .float-resize { display: none; }
-
-  /* 모바일: 메모 패널은 아래에서 올라오는 바텀 시트 */
-  .side-panel {
-    top: auto; left: 0; right: 0; bottom: 0;
-    width: auto; height: 82vh;
-    border-left: none;
-    border-top: 1px solid var(--border-accent);
-    border-radius: 16px 16px 0 0;
-    transform: translateY(100%);
-    z-index: 450;
-  }
-  .side-panel.open { transform: none; }
-  .side-panel-head { border-radius: 16px 16px 0 0; }
 
   .popover { right: 8px; left: 8px; width: auto; }
 }
