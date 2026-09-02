@@ -97,12 +97,38 @@ These are not suggestions; they're baked into the codebase:
 - **Backup**: JSON export (Settings → Data → Export) is the only backup. No cloud sync.
 - **Recovery**: JSON import (same settings page) restores from backup
 
-## Browser Environment
+### Migration to Desktop (Electron/Tauri)
+
+The code is already **abstracted for storage portability**. To switch from web to desktop:
+
+1. **Storage layer**: `MW.store` currently hardcodes localStorage. Wrap storage operations in a platform-check:
+   ```js
+   // In store.js, detect environment
+   var useFileSystem = typeof window.electronAPI !== 'undefined'; // or tauri window
+   // Route .get()/.update() to localStorage (web) or file I/O API (desktop)
+   ```
+2. **No other code changes needed**: All modules call `MW.store` uniformly; they don't know or care about storage backend.
+3. **Desktop extras** (not needed for web):
+   - App auto-launch, tray icon, background notifications → handled by Electron/Tauri wrapper, not app code
+   - Desktop version can use persistent file paths instead of localStorage key `mw.v1`
+
+**Current roadmap**: Desktop wrapper is planned; this app is ready for it.
+
+## Browser & Platform Environment
 
 - No ES modules (uses plain `<script>`); compatible with `file://` protocol
 - localStorage key is `mw.v1` (keyed to schema version)
 - Responsive: tested on mobile (≤900px) and desktop
+- **Platform detection ready**: Code can detect `window.electronAPI` or `window.__TAURI__` if running in desktop wrapper
 
----
+## Extending to Desktop App
 
-**Desktop wrapper (Electron/Tauri)**: In roadmap. Current code can be wrapped as-is; no changes needed for that migration.
+When wrapping with Electron or Tauri:
+
+1. **Before wrapping**: No code changes needed in this repo
+2. **Wrapper setup**: Define platform-specific APIs (file I/O, IPC for notifications, menu bar)
+3. **In `store.js` or early in `app.js`**: Add platform check to route `MW.store` calls to file I/O instead of localStorage
+4. **Data migration**: Parse old localStorage backup as initial file, then all saves go to disk
+5. **Bonus features** (desktop only): Auto-launch, tray icon, persistent notifications—handled by wrapper, not app code
+
+The **storage abstraction is built in**; just provide an alternative backend.
