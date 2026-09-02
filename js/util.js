@@ -213,9 +213,26 @@ window.MW = window.MW || {};
 
   /** hex 를 흰색 쪽으로 amt(0~1)만큼 섞습니다 — hover 색을 만들 때 씁니다 */
   function lighten(hex, amt) {
+    return mixHex(hex, '#ffffff', amt);
+  }
+
+  /** hex 를 target(hex) 쪽으로 amt(0~1)만큼 섞습니다 — lighten 의 일반화 */
+  function mixHex(hex, target, amt) {
+    var a = hexToRgb(hex), b = hexToRgb(target);
+    function m(x, y) { return Math.round(x + (y - x) * amt); }
+    return 'rgb(' + m(a.r, b.r) + ',' + m(a.g, b.g) + ',' + m(a.b, b.b) + ')';
+  }
+
+  /** WCAG 상대휘도(0~1) — 강조색 위에 어떤 글자색을 올릴지 판단합니다 */
+  function luminance(hex) {
     var c = hexToRgb(hex);
-    function mix(v) { return Math.round(v + (255 - v) * amt); }
-    return 'rgb(' + mix(c.r) + ',' + mix(c.g) + ',' + mix(c.b) + ')';
+    function lin(v) { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); }
+    return 0.2126 * lin(c.r) + 0.7152 * lin(c.g) + 0.0722 * lin(c.b);
+  }
+
+  /** 강조색(hex) 위에 올릴 글자색 — 밝은 색이면 짙게, 어두운 색이면 흰색 */
+  function onColor(hex) {
+    return luminance(hex) > 0.42 ? '#16181d' : '#ffffff';
   }
 
   MW.util = {
@@ -228,6 +245,7 @@ window.MW = window.MW || {};
     fmtMin: fmtMin, parseMin: parseMin, fmtClock: fmtClock,
     won: won, num: num, parseNum: parseNum,
     uid: uid, clamp: clamp, debounce: debounce, safeUrl: safeUrl, toast: toast,
-    hexToRgb: hexToRgb, rgbaOf: rgbaOf, lighten: lighten
+    hexToRgb: hexToRgb, rgbaOf: rgbaOf, lighten: lighten,
+    mixHex: mixHex, luminance: luminance, onColor: onColor
   };
 })();

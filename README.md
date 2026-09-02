@@ -44,7 +44,7 @@ index.html            앱 셸 (상단 네비 + 음악 · 모바일 하단탭 · 
 css/
   tokens.css          색·폰트 토큰 (기획서 v2.0 팔레트)
   shell.css           레이아웃 · 반응형 · 플로팅 창 · 모달
-  widgets.css         뽀모도로 · 마음가짐 · 투두 · 메모(마크다운)
+  widgets.css         뽀모도로 · 인박스 할 일 · 메모(마크다운)
   calendar.css        월/주/일 뷰 · 해빗 그리드 · 알람 카드
   ledger.css          정산 (가계부 · 어시스턴트 · 세무)
   work.css            작업 체크보드
@@ -54,9 +54,9 @@ js/
   shell.js            해시 라우팅 · 플로팅 창 · 모달 · 알림 · 사운드
   markdown.js         자체 마크다운 렌더러 (이스케이프 후 변환)
   pomodoro.js         타이머 — 플로팅 위젯 + 상단바 미니 표시 (legacy 파이썬 로직 이식)
-  motto.js            오늘의 마음가짐 한 줄 (홈)
-  music.js            YouTube IFrame API 플레이어 + 상단바
-  todo.js  memo.js    플로팅 위젯
+  music.js            YouTube IFrame API 플레이어 (상단바 인라인)
+  todo.js             인박스 할 일 (홈·캘린더에서 목록으로 재사용)
+  memo.js             메모장 플로팅/도킹 패널
   habits.js           해빗 데이터 엔진 (알람 슬롯 · 횟수 · 스트릭)
   habitgrid.js        해빗 트래커 화면 (날짜×해빗 그리드, 알람 카드)
   calendar.js         월/주/일 뷰 · 반복 일정 · .ics 가져오기 · 알림

@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-preset="base">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="개인 창작자용 워크스페이스 — 작업 관리, 일정, 정산과 세무 참고자료를 한 탭에서.">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="light">
 <title>Creator Workspace</title>
 <link rel="stylesheet" href="./css/tokens.css">
 <link rel="stylesheet" href="./css/shell.css">
@@ -112,17 +112,6 @@
         <input type="text" id="quick-add-input" class="quick-add-input" placeholder="내일 오후 3시 회의 / 할일" autocomplete="off">
       </div>
     </nav>
-
-    <!-- 음악 플레이어 팝업 -->
-    <div id="music-popup" class="music-popup">
-      <div class="music-popup-header">
-        <h3>음악</h3>
-        <button id="music-popup-close" class="btn btn-icon" aria-label="닫기">✕</button>
-      </div>
-      <div class="music-popup-body">
-        <div id="music-player-content"></div>
-      </div>
-    </div>
   </div>
 
 </div>
@@ -136,7 +125,6 @@
 <script src="./js/quick-add.js"></script>
 <script src="./js/markdown.js"></script>
 <script src="./js/pomodoro.js"></script>
-<script src="./js/motto.js"></script>
 <script src="./js/music.js"></script>
 <script src="./js/todo.js"></script>
 <script src="./js/memo.js"></script>

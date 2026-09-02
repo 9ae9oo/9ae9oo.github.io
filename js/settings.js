@@ -651,16 +651,24 @@ window.MW = window.MW || {};
 
   /* ------------------------------------------------------------ 테마 */
 
-  var ACCENT_PRESETS = [
-    { name: '블루 (기본)', color: '#6b8afd' },
-    { name: '그린', color: '#4ade80' },
-    { name: '퍼플', color: '#a78bfa' },
-    { name: '틸', color: '#2dd4bf' },
-    { name: '코랄', color: '#fb7185' },
-    { name: '엠버', color: '#fbbf24' },
-    { name: '레드', color: '#f87171' }
+  /* 프리셋 미리보기용 색 — 실제 값의 원본은 css/tokens.css 의 :root[data-preset="…"] */
+  var THEME_PRESETS = [
+    { id: 'base',     name: '화이트',   bg: '#f5f6fa', accent: '#9db8f0' },
+    { id: 'mint',     name: '민트',     bg: '#eff6f2', accent: '#86cfae' },
+    { id: 'peach',    name: '피치',     bg: '#fbf3ee', accent: '#f0a98c' },
+    { id: 'lavender', name: '라벤더',   bg: '#f5f2fb', accent: '#bfaced' },
+    { id: 'butter',   name: '버터',     bg: '#faf5e9', accent: '#e6c579' }
   ];
-  var DEFAULT_THEME = { mode: 'dark', accent: '#6b8afd' };
+  var ACCENT_PRESETS = [
+    { name: '블루',   color: '#9db8f0' },
+    { name: '민트',   color: '#86cfae' },
+    { name: '피치',   color: '#f0a98c' },
+    { name: '라벤더', color: '#bfaced' },
+    { name: '버터',   color: '#e6c579' },
+    { name: '로즈',   color: '#eba3b7' },
+    { name: '세이지', color: '#a9c08f' }
+  ];
+  var HEX_RE = /^#[0-9a-fA-F]{6}$/;
 
   function setTheme(patch) {
     MW.store.update(function (s) {
@@ -668,48 +676,106 @@ window.MW = window.MW || {};
     });
   }
 
+  function keyToVar(key) {
+    return key === 'accent' ? '--accent' : key === 'bg' ? '--bg' : '--surface-1';
+  }
+
+  /** 색상 입력의 현재값 — 사용자 오버라이드가 있으면 그 값, 없으면 화면에 적용 중인 프리셋 값 */
+  function currentColor(key) {
+    var t = MW.store.state.settings.theme || {};
+    if (HEX_RE.test(t[key] || '')) return t[key];
+    var v = getComputedStyle(document.documentElement).getPropertyValue(keyToVar(key)).trim();
+    return HEX_RE.test(v) ? v : (key === 'accent' ? '#9db8f0' : '#ffffff');
+  }
+
   function renderTheme(host) {
-    var t = MW.store.state.settings.theme || DEFAULT_THEME;
-    var accent = /^#[0-9a-fA-F]{6}$/.test(t.accent) ? t.accent : DEFAULT_THEME.accent;
+    var t = MW.store.state.settings.theme || {};
+    var preset = THEME_PRESETS.some(function (p) { return p.id === t.preset; }) ? t.preset : 'base';
 
-    var modeSeg = el('div.seg', {}, [
-      el('button' + (t.mode !== 'light' ? '.active' : ''), {
-        type: 'button', text: '🌙 다크', onclick: function () { setTheme({ mode: 'dark' }); }
-      }),
-      el('button' + (t.mode === 'light' ? '.active' : ''), {
-        type: 'button', text: '☀️ 라이트', onclick: function () { setTheme({ mode: 'light' }); }
-      })
-    ]);
-
-    var colorInput = el('input.theme-color', {
-      type: 'color', value: accent,
-      oninput: function () { setTheme({ accent: this.value }); }
-    });
-    var swatches = el('div.theme-swatches', {}, ACCENT_PRESETS.map(function (p) {
-      return el('button.swatch' + (accent.toLowerCase() === p.color ? '.active' : ''), {
-        type: 'button', title: p.name, style: { background: p.color },
-        onclick: function () { setTheme({ accent: p.color }); }
-      });
+    /* 1. 프리셋 */
+    var grid = el('div.preset-grid', {}, THEME_PRESETS.map(function (p) {
+      return el('button.preset-chip' + (preset === p.id ? '.active' : ''), {
+        type: 'button', title: p.name,
+        onclick: function () { setTheme({ preset: p.id, accent: '', bg: '', card: '' }); }
+      }, [
+        el('span.preset-chip-sw', { style: { background: p.bg } }, [
+          el('span.preset-chip-dot', { style: { background: p.accent } })
+        ]),
+        el('span.preset-chip-name', { text: p.name })
+      ]);
     }));
-
     host.appendChild(el('div.card', {}, [
-      el('h3', { text: '화면 모드' }),
-      el('div.small.dim', { text: '이 브라우저에만 저장됩니다. 다른 기기·브라우저는 따로 고릅니다.', style: { marginBottom: '10px' } }),
-      modeSeg
+      el('h3', { text: '테마 프리셋' }),
+      el('div.small.dim', { text: '배경·카드·강조색을 한 번에 바꿉니다. 이 브라우저에만 저장됩니다.', style: { marginBottom: '10px' } }),
+      grid
     ]));
 
+    /* 2. 세부 조정 — 프리셋 위에 개별 색을 덮어씀 */
+    function knob(label, key) {
+      var overridden = HEX_RE.test(t[key] || '');
+      var picker = el('input.theme-color', {
+        type: 'color', value: currentColor(key),
+        oninput: function () { var o = {}; o[key] = this.value; MW.shell.previewTheme(o); },
+        onchange: function () { var o = {}; o[key] = this.value; setTheme(o); }
+      });
+      return el('div.knob-row', {}, [
+        el('span.knob-label', { text: label }),
+        picker,
+        el('span.knob-state.small.dim', { text: overridden ? '사용자 지정' : '프리셋 기본값' }),
+        el('button.btn.btn-sm', {
+          text: '되돌리기', disabled: !overridden,
+          onclick: function () { var o = {}; o[key] = ''; setTheme(o); }
+        })
+      ]);
+    }
+    var accentSwatches = el('div.theme-swatches', { style: { marginTop: '2px', marginBottom: '4px' } },
+      ACCENT_PRESETS.map(function (p) {
+        return el('button.swatch' + ((t.accent || '').toLowerCase() === p.color ? '.active' : ''), {
+          type: 'button', title: p.name, style: { background: p.color },
+          onclick: function () { setTheme({ accent: p.color }); }
+        });
+      }));
     host.appendChild(el('div.card', {}, [
-      el('h3', { text: '강조 색상' }),
-      el('div.small.dim', { text: '버튼·선택 표시·활성 탭 등에 쓰입니다.', style: { marginBottom: '10px' } }),
-      el('div.row', { style: { gap: '10px', flexWrap: 'wrap' } }, [colorInput, swatches]),
-      el('button.btn.btn-sm', {
-        text: '기본값으로', style: { marginTop: '12px' },
-        onclick: function () { setTheme(DEFAULT_THEME); }
-      })
+      el('h3', { text: '세부 조정' }),
+      el('div.small.dim', { text: '"되돌리기"를 누르면 프리셋 기본값으로 돌아갑니다.', style: { marginBottom: '10px' } }),
+      knob('강조색', 'accent'),
+      accentSwatches,
+      knob('배경색', 'bg'),
+      knob('카드색', 'card')
     ]));
+
+    /* 3. 배경 이미지 */
+    host.appendChild(bgImageCard());
 
     host.appendChild(homeOrderCard());
     host.appendChild(homeImageCard());
+  }
+
+  function bgImageCard() {
+    var cur = (MW.store.state.settings.theme || {}).bgImage || '';
+    var file = el('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
+    file.addEventListener('change', function () {
+      var f = this.files && this.files[0];
+      this.value = '';
+      if (!f) return;
+      shrinkImage(f, 2000, function (dataUrl) {
+        setTheme({ bgImage: dataUrl });
+        U.toast('배경 이미지를 넣었습니다.');
+      });
+    });
+    return el('div.card', {}, [
+      el('h3', { text: '배경 이미지' }),
+      el('div.small.dim', {
+        text: '화면 전체 뒤에 깔립니다. 사이드바·상단바·하단바는 반투명해지고 카드는 그대로 유지됩니다. (긴 그림은 가로 2000px 로 줄여 저장)',
+        style: { marginBottom: '10px' }
+      }),
+      cur ? el('img.home-image-preview', { src: cur, alt: '' }) : el('div.empty', { text: '설정된 배경 이미지가 없습니다.' }),
+      el('div.row-wrap', { style: { marginTop: '10px' } }, [
+        el('button.btn.btn-sm', { text: cur ? '이미지 바꾸기' : '이미지 선택', onclick: function () { file.click(); } }),
+        cur ? el('button.btn.btn-sm.btn-danger', { text: '제거', onclick: function () { setTheme({ bgImage: '' }); } }) : null,
+        file
+      ])
+    ]);
   }
 
   function exportJson() {

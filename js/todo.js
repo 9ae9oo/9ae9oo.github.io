@@ -1,8 +1,8 @@
 /* ==========================================================================
-   MW.todo — 인박스형 투두리스트 (플로팅 위젯 + 캘린더 공유)
-   · 날짜 없이도 바로 추가되는 "인박스" 개념
-   · 그룹(폴더) 탭으로 분류, 그룹 기본색을 캘린더에서 상속
-   · 데이터는 store.todos 한 곳에만 존재하고, 캘린더는 date 가 있는 항목만 필터해서 표시
+   MW.todo — 인박스형 할 일 (홈 대시보드 · 캘린더 일/주 뷰에서 목록으로 표시)
+   · 날짜 없이 바로 추가되는 "인박스" 개념
+   · 데이터는 store.todos 한 곳에만 존재
+   · 전용 창은 없음 — renderList 를 다른 화면이 재사용합니다
    ========================================================================== */
 window.MW = window.MW || {};
 
@@ -11,13 +11,11 @@ window.MW = window.MW || {};
   var U = MW.util, el = U.el;
 
   var COLORS = ['#6b8afd', '#4ade80', '#fbbf24', '#fb7185', '#a78bfa', '#2dd4bf', '#8b90a5'];
-  var float = null;
-  var activeGroup = 'all';
 
   function groups() { return MW.store.state.todoGroups; }
   function groupOf(id) { return groups().find(function (g) { return g.id === id; }) || null; }
 
-  /** 항목 색 = 개별 지정색 > 그룹 기본색 > 회색 */
+  /** 항목 색 = 개별 지정색 > 카테고리 기본색 > 회색 */
   function colorOf(t) {
     if (t.color) return t.color;
     var g = groupOf(t.groupId);
@@ -85,7 +83,7 @@ window.MW = window.MW || {};
           el('label.row.small.muted', { style: { gap: '6px', cursor: 'pointer' } }, [
             useOwn, '이 항목만 다른 색 쓰기', color
           ]),
-          el('div.small.dim', { text: '체크하지 않으면 그룹 기본색을 따릅니다.' })
+          el('div.small.dim', { text: '체크하지 않으면 카테고리 기본색을 따릅니다.' })
         ])
       ],
       extra: el('button.btn.btn-danger.btn-sm', {
@@ -107,53 +105,11 @@ window.MW = window.MW || {};
     });
   }
 
-  /* ------------------------------------------------------------ 드래그 정렬 */
-
-  var dragId = null;
-
-  function attachDrag(node, t, listEl) {
-    node.draggable = true;
-    node.addEventListener('dragstart', function (e) {
-      dragId = t.id;
-      node.classList.add('dragging');
-      try { e.dataTransfer.setData('text/plain', t.id); } catch (err) { /* 일부 브라우저 */ }
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    node.addEventListener('dragend', function () {
-      dragId = null;
-      node.classList.remove('dragging');
-      U.$$('.todo-item.drag-over', listEl).forEach(function (n) { n.classList.remove('drag-over'); });
-    });
-    node.addEventListener('dragover', function (e) {
-      if (!dragId || dragId === t.id) return;
-      e.preventDefault();
-      node.classList.add('drag-over');
-    });
-    node.addEventListener('dragleave', function () { node.classList.remove('drag-over'); });
-    node.addEventListener('drop', function (e) {
-      e.preventDefault();
-      node.classList.remove('drag-over');
-      var from = dragId;
-      if (!from || from === t.id) return;
-      MW.store.update(function (s) {
-        var a = s.todos.find(function (x) { return x.id === from; });
-        var b = s.todos.find(function (x) { return x.id === t.id; });
-        if (!a || !b) return;
-        var target = b.order || 0;
-        // 놓인 자리를 비우고 그 위치에 삽입
-        s.todos.forEach(function (x) {
-          if (x.id !== a.id && (x.order || 0) >= target) x.order = (x.order || 0) + 1;
-        });
-        a.order = target;
-      });
-    });
-  }
-
   /* ------------------------------------------------------------ 렌더 */
 
   /**
-   * 투두 목록을 그립니다. 캘린더 일간 뷰에서도 그대로 재사용합니다.
-   * opts: { filter: fn, showMeta: bool, listEl: 이미 만든 컨테이너, draggable: bool }
+   * 할 일 목록을 그립니다. 홈 대시보드 · 캘린더 일/주 뷰가 재사용합니다.
+   * opts: { filter: fn, showMeta: bool, emptyText: string }
    */
   function renderList(container, opts) {
     opts = opts || {};
@@ -172,8 +128,7 @@ window.MW = window.MW || {};
         if (g) meta.push(g.name);
         if (t.date) meta.push(U.fmtDate(t.date));
       }
-      var node = el('div.todo-item' + (t.done ? '.done' : ''), { dataset: { id: t.id } }, [
-        opts.draggable !== false ? el('span.grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
+      container.appendChild(el('div.todo-item' + (t.done ? '.done' : ''), { dataset: { id: t.id } }, [
         el('input.chk', {
           type: 'checkbox', checked: t.done,
           onchange: function () { toggle(t.id); }
@@ -188,62 +143,11 @@ window.MW = window.MW || {};
             text: '✎', title: '수정', onclick: function () { editDialog(t); }
           })
         ])
-      ]);
-      if (opts.draggable !== false) attachDrag(node, t, container);
-      container.appendChild(node);
+      ]));
     });
-  }
-
-  function render() {
-    if (!float) return;
-    U.clear(float.body);
-
-    var tabs = el('div.todo-tabs', {}, [
-      el('button.todo-tab' + (activeGroup === 'all' ? '.active' : ''), {
-        text: '전체', onclick: function () { activeGroup = 'all'; render(); }
-      })
-    ].concat(groups().map(function (g) {
-      return el('button.todo-tab' + (activeGroup === g.id ? '.active' : ''), {
-        text: g.name, onclick: function () { activeGroup = g.id; render(); }
-      });
-    })));
-
-    var input = el('input.field', {
-      placeholder: '생각난 할 일을 바로 적으세요 (Enter)',
-      onkeydown: function (e) {
-        if (e.key !== 'Enter') return;
-        var gid = activeGroup !== 'all' ? activeGroup : null;
-        if (add(this.value, gid)) this.value = '';
-      }
-    });
-
-    var listEl = el('div.todo-list');
-    renderList(listEl, {
-      filter: function (t) { return activeGroup === 'all' || t.groupId === activeGroup; },
-      emptyText: '비어 있습니다.\n떠오르는 일을 위에 적어 두세요.'
-    });
-
-    var all = MW.store.state.todos;
-    var left = all.filter(function (t) { return !t.done; }).length;
-
-    float.body.appendChild(tabs);
-    float.body.appendChild(el('div.todo-add', {}, [input]));
-    float.body.appendChild(listEl);
-    float.body.appendChild(el('div.small.dim', {
-      text: '남은 할 일 ' + left + '개 · 전체 ' + all.length + '개',
-      style: { marginTop: '10px', textAlign: 'right' }
-    }));
   }
 
   MW.todo = {
-    init: function () {
-      float = MW.shell.registerFloat('todo', {
-        title: '✅ 투두리스트',
-        rect: { x: Math.max(24, window.innerWidth - 400), y: 96, w: 360, h: 460 },
-        onOpen: render
-      });
-    },
-    render: function () { if (float && float.isOpen()) render(); },
     renderList: renderList,
     add: add, toggle: toggle, remove: remove, colorOf: colorOf, editDialog: editDialog,
     COLORS: COLORS

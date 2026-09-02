@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MW.quickAdd — 빠른 일정 입력 (데스크톱 전용)
+   MW.quickAdd — 빠른 일정 입력 (하단 바, 모바일·데스크톱 공통)
    자연어 파싱으로 할일 vs 일정을 자동 분류합니다.
    ========================================================================== */
 window.MW = window.MW || {};
@@ -61,33 +61,26 @@ window.MW = window.MW || {};
       remaining = remaining.substring(relStr.length).trim();
     }
 
-    // 2. 절대 날짜 파싱 (1/31, 3월 4일, 2025-01-31 등)
+    // 2. 절대 날짜 파싱 (2025-01-31, 1/31, 3월 4일, 15일)
     if (!result.date) {
+      var now = new Date();
+      var y0 = now.getFullYear(), mo0 = now.getMonth() + 1;
       var datePatterns = [
-        { regex: /^(\d{1,2})\/(\d{1,2})(?:\s|$)/, group: [1, 2] },
-        { regex: /^(\d{1,2})월\s*(\d{1,2})일(?:\s|$)/, group: [1, 2] },
-        { regex: /^(\d{1,2})일(?:\s|$)/, group: [1, null] },
-        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s|$)/, group: [1, 2, 3] }
+        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})(?:\s|$)/, build: function (m) { return { year: +m[1], month: +m[2], day: +m[3] }; } },
+        { regex: /^(\d{1,2})\/(\d{1,2})(?:\s|$)/,        build: function (m) { return { year: y0, month: +m[1], day: +m[2] }; } },
+        { regex: /^(\d{1,2})월\s*(\d{1,2})일(?:\s|$)/,   build: function (m) { return { year: y0, month: +m[1], day: +m[2] }; } },
+        { regex: /^(\d{1,2})일(?:\s|$)/,                 build: function (m) { return { year: y0, month: mo0, day: +m[1] }; } }
       ];
 
       for (var i = 0; i < datePatterns.length; i++) {
-        var pattern = datePatterns[i];
-        var m = remaining.match(pattern.regex);
-        if (m) {
-          var year = pattern.group.length === 3 && pattern.group[0] ? parseInt(m[pattern.group[0]]) : new Date().getFullYear();
-          var month = parseInt(m[pattern.group[0] || pattern.group[0]]);
-          var day = pattern.group[1] ? parseInt(m[pattern.group[1]]) : new Date().getDate();
-
-          if (pattern.group.length === 4) {
-            year = parseInt(m[pattern.group[0]]);
-            month = parseInt(m[pattern.group[1]]);
-            day = parseInt(m[pattern.group[2]]);
-          }
-
-          result.date = new Date(year, month - 1, day, 0, 0, 0);
-          remaining = remaining.replace(pattern.regex, '').trim();
-          break;
+        var m = remaining.match(datePatterns[i].regex);
+        if (!m) continue;
+        var p = datePatterns[i].build(m);
+        if (p.month >= 1 && p.month <= 12 && p.day >= 1 && p.day <= 31) {
+          result.date = new Date(p.year, p.month - 1, p.day, 0, 0, 0);
+          remaining = remaining.replace(datePatterns[i].regex, '').trim();
         }
+        break;
       }
     }
 

@@ -3,7 +3,7 @@
    ========================================================================== */
 
 .work-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
-.work-toolbar .btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+.work-toolbar .btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 .work-empty { padding: 48px 20px; text-align: center; }
 
@@ -72,7 +72,7 @@
   cursor: pointer; transition: background 0.08s, border-color 0.08s;
 }
 .cut:hover { border-color: var(--border-accent); color: var(--text); }
-.cut.on { background: var(--accent); border-color: var(--accent); color: #fff; font-weight: 600; }
+.cut.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
 
 .board-foot { margin-top: 10px; display: flex; justify-content: flex-end; }
 

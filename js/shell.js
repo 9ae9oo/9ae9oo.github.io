@@ -318,20 +318,53 @@ window.MW = window.MW || {};
 
   /* ----------------------------------------------------------------- 테마 */
 
+  var PRESETS = ['base', 'mint', 'peach', 'lavender', 'butter'];
+
+  function validHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v || ''); }
+
+  function setOrClear(root, name, value) {
+    if (value) root.style.setProperty(name, value);
+    else root.style.removeProperty(name);
+  }
+
   /**
-   * 설정 → 테마의 mode(dark/light)·accent 색을 실제 화면에 적용합니다.
-   * --accent 계열 변수만 갈아끼우므로 다른 색(성공·경고 등)은 그대로 유지됩니다.
+   * 설정 → 테마를 실제 화면에 적용합니다.
+   *  - <html data-preset="…"> 로 프리셋(배경·카드·글자색 팔레트)을 고르고
+   *  - 강조색 계열 · 배경/카드 오버라이드 · 배경 이미지는 그 위에 인라인 스타일로 얹습니다.
+   * override 를 주면(미리보기용) 스토어 대신 그 값을 씁니다.
    */
-  function applyTheme() {
-    var t = (MW.store.state.settings && MW.store.state.settings.theme) || {};
-    var mode = t.mode === 'light' ? 'light' : 'dark';
-    var accent = /^#[0-9a-fA-F]{6}$/.test(t.accent || '') ? t.accent : '#6b8afd';
+  function applyTheme(override) {
+    var t = override || (MW.store.state.settings && MW.store.state.settings.theme) || {};
+    var preset = PRESETS.indexOf(t.preset) >= 0 ? t.preset : 'base';
     var root = document.documentElement;
-    root.dataset.theme = mode;
-    root.style.colorScheme = mode;
+
+    root.dataset.preset = preset;
+    root.style.colorScheme = 'light';   // 프리셋 5개 모두 라이트 (다크 프리셋 추가 시 분기)
+
+    // 인라인 강조색을 먼저 지워야 getComputedStyle 이 "새 프리셋"의 CSS 값을 돌려줍니다
+    root.style.removeProperty('--accent');
+    root.style.removeProperty('--accent-dim');
+    root.style.removeProperty('--accent-hover');
+    root.style.removeProperty('--on-accent');
+
+    var presetAccent = getComputedStyle(root).getPropertyValue('--accent').trim();
+    var accent = validHex(t.accent) ? t.accent : (validHex(presetAccent) ? presetAccent : '#9db8f0');
+    var onAccent = U.onColor(accent);
     root.style.setProperty('--accent', accent);
-    root.style.setProperty('--accent-dim', U.rgbaOf(accent, 0.12));
-    root.style.setProperty('--accent-hover', U.lighten(accent, 0.18));
+    root.style.setProperty('--accent-dim', U.rgbaOf(accent, 0.16));
+    root.style.setProperty('--accent-hover', U.mixHex(accent, onAccent === '#ffffff' ? '#ffffff' : '#20222c', 0.14));
+    root.style.setProperty('--on-accent', onAccent);
+
+    setOrClear(root, '--bg', validHex(t.bg) ? t.bg : null);
+    setOrClear(root, '--surface-1', validHex(t.card) ? t.card : null);
+    root.style.setProperty('--bg-image', t.bgImage ? 'url("' + t.bgImage + '")' : 'none');
+    document.body.classList.toggle('bg-image', !!t.bgImage);
+  }
+
+  /** 스토어는 건드리지 않고 화면만 임시로 바꿔봅니다 (색상 선택 중 실시간 미리보기) */
+  function previewTheme(patch) {
+    var base = (MW.store.state.settings && MW.store.state.settings.theme) || {};
+    applyTheme(Object.assign({}, base, patch || {}));
   }
 
   /* ---------------------------------------------------------- 사이드바 토글 */
@@ -344,25 +377,6 @@ window.MW = window.MW || {};
     sidebarCollapsed = !sidebarCollapsed;
     sidebar.classList.toggle('collapsed');
     try { localStorage.setItem('mw.sidebar.collapsed', sidebarCollapsed ? '1' : '0'); } catch (e) {}
-  }
-
-  /* --------------------------------------------------- 음악 팝업 (하단) */
-
-  var musicPopupOpen = false;
-
-  function toggleMusicPopup() {
-    var popup = $('#music-popup');
-    if (!popup) return;
-    musicPopupOpen = !musicPopupOpen;
-    popup.classList.toggle('open');
-  }
-
-  function closeMusicPopup() {
-    var popup = $('#music-popup');
-    if (popup) {
-      popup.classList.remove('open');
-      musicPopupOpen = false;
-    }
   }
 
   /* --------------------------------------------------------------- 초기화 */
@@ -387,22 +401,6 @@ window.MW = window.MW || {};
       sidebarToggleBtn.addEventListener('click', toggleSidebar);
     }
 
-    /* 음악 팝업 닫기 (팝업은 music.js 의 재생목록 팝오버에서 여닫습니다) */
-    var musicPopupClose = $('#music-popup-close');
-    if (musicPopupClose) {
-      musicPopupClose.addEventListener('click', closeMusicPopup);
-    }
-
-    /* 음악 팝업 배경 클릭으로 닫기 */
-    var musicPopup = $('#music-popup');
-    if (musicPopup) {
-      musicPopup.addEventListener('click', function (e) {
-        if (e.target === musicPopup) {
-          closeMusicPopup();
-        }
-      });
-    }
-
     /* 사이드바 저장된 상태 복원 */
     try {
       var collapsed = localStorage.getItem('mw.sidebar.collapsed') === '1';
@@ -421,6 +419,6 @@ window.MW = window.MW || {};
     syncFloatButtons: syncButtons, isMobile: isMobile,
     modal: modal, closeModal: closeModal, confirm: confirmDialog,
     requestNotify: requestNotify, notify: notify, playSound: playSound,
-    applyTheme: applyTheme
+    applyTheme: applyTheme, previewTheme: previewTheme
   };
 })();

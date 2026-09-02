@@ -69,9 +69,15 @@
   --sidebar-w: 56px;   /* 아이콘 레일 (항상 아이콘만) */
   --tabbar-h: 60px;
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+
+  /* 테마 시스템 정적 폴백 — 아래 프리셋 / applyTheme() 이 덮어씁니다 */
+  --on-accent: #16181d;                 /* 강조색 배경 위 글자색 (JS가 강조색 밝기에 맞춰 재계산) */
+  --bg-image: none;                      /* 화면 전체 뒤 배경 이미지 (JS가 url(...) 로 채움) */
+  --chrome-bg: var(--surface-0);
+  --chrome-translucent: rgba(20, 22, 30, 0.72);
 }
 
-/* 라이트 모드 — 설정 → 테마 에서 고릅니다. --accent* 는 JS가 실시간으로 덮어씁니다 */
+/* 라이트 모드(구) — 이제 applyTheme() 은 data-preset 만 씁니다. 수동 지정 시의 폴백으로만 남겨둠 */
 :root[data-theme="light"] {
   --bg: #f4f5fa;
   --surface-0: #ffffff;
@@ -86,18 +92,103 @@
   --shadow: 0 8px 32px rgba(15, 17, 23, 0.12);
 }
 
+/* ============================================================
+   테마 프리셋 — 전부 화이트(라이트) 계열. 파스텔 포인트(강조)색만 다릅니다.
+   applyTheme() 이 <html data-preset="…"> 를 붙이고, 강조색 계열·배경/카드
+   오버라이드·배경 이미지는 그 위에 인라인 스타일로 얹습니다.
+   ============================================================ */
+
+/* 5개 프리셋이 공유하는 값 — 글자색, 흰 배경에 맞춘 옅은 채움(-dim) 알파 상향 */
+:root[data-preset] {
+  --text: #23262e;
+  --text-muted: #5c6472;
+  --text-dim: #949aa8;
+  --green-dim: rgba(74, 222, 128, 0.16);
+  --red-dim: rgba(248, 113, 113, 0.16);
+  --amber-dim: rgba(251, 191, 36, 0.18);
+  --purple-dim: rgba(167, 139, 250, 0.16);
+  --teal-dim: rgba(45, 212, 191, 0.16);
+  --coral-dim: rgba(251, 113, 133, 0.16);
+  --shadow: 0 6px 22px rgba(30, 36, 54, 0.10);
+  --chrome-translucent: rgba(255, 255, 255, 0.72);
+  --chrome-translucent: color-mix(in srgb, var(--surface-0) 74%, transparent);
+}
+
+:root[data-preset="base"] {
+  --bg: #f5f6fa;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #eceef5;
+  --surface-3: #e0e3ee;
+  --border: #e4e7f0;
+  --border-accent: #cfd4e3;
+  --accent: #9db8f0;
+}
+
+:root[data-preset="mint"] {
+  --bg: #eff6f2;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #e2efe8;
+  --surface-3: #d3e6dc;
+  --border: #dceae3;
+  --border-accent: #c0d8cd;
+  --accent: #86cfae;
+}
+
+:root[data-preset="peach"] {
+  --bg: #fbf3ee;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #f6e7dd;
+  --surface-3: #efd9ca;
+  --border: #f0e0d4;
+  --border-accent: #ddc4b2;
+  --accent: #f0a98c;
+}
+
+:root[data-preset="lavender"] {
+  --bg: #f5f2fb;
+  --surface-0: #ffffff;
+  --surface-1: #ffffff;
+  --surface-2: #ece5f6;
+  --surface-3: #e0d6f0;
+  --border: #e7dff4;
+  --border-accent: #cfc2e6;
+  --accent: #bfaced;
+}
+
+:root[data-preset="butter"] {
+  --bg: #faf5e9;
+  --surface-0: #fffdf7;
+  --surface-1: #fffdf7;
+  --surface-2: #f3ead3;
+  --surface-3: #ecdfbf;
+  --border: #efe4c9;
+  --border-accent: #ddcca6;
+  --accent: #e6c579;
+}
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
 html, body { height: 100%; }
 
 body {
   font-family: var(--font);
-  background: var(--bg);
+  background-color: var(--bg);
+  background-image: var(--bg-image, none);
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
   color: var(--text);
   line-height: 1.6;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+@media (max-width: 900px) {
+  /* 모바일에서 fixed 배경은 스크롤 시 버벅여서 scroll 로 */
+  body { background-attachment: scroll; }
 }
 
 button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
@@ -130,7 +221,7 @@ textarea.field { resize: vertical; line-height: 1.6; }
   white-space: nowrap;
 }
 .btn:hover { background: var(--surface-3); border-color: var(--border-accent); }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: #0f1117; font-weight: 600; }
+.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
 .btn-primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .btn-ghost { background: transparent; border-color: transparent; color: var(--text-muted); }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
@@ -219,3 +310,28 @@ textarea.field { resize: vertical; line-height: 1.6; }
   background: var(--surface-0); border: 1px solid var(--border); border-radius: var(--radius-sm);
   cursor: pointer;
 }
+
+/* --- 테마 프리셋 칩 (설정 → 테마) --- */
+.preset-grid { display: flex; flex-wrap: wrap; gap: 10px; }
+.preset-chip {
+  display: flex; flex-direction: column; align-items: center; gap: 6px;
+  padding: 8px 8px 6px; min-width: 76px;
+  background: var(--surface-0);
+  border: 2px solid var(--border); border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.preset-chip:hover { border-color: var(--border-accent); transform: translateY(-1px); }
+.preset-chip.active { border-color: var(--accent); }
+.preset-chip-sw {
+  width: 44px; height: 44px; border-radius: 50%;
+  border: 1px solid var(--border);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.preset-chip-dot { width: 18px; height: 18px; border-radius: 50%; }
+.preset-chip-name { font-size: 12px; font-weight: 600; color: var(--text-muted); }
+
+/* --- 세부 조정 노브 --- */
+.knob-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
+.knob-label { min-width: 52px; font-size: 13px; font-weight: 600; }
+.knob-state { min-width: 70px; }

@@ -178,7 +178,6 @@ window.MW = window.MW || {};
     else if (route === 'calendar') MW.calendar.render();
     else if (route === 'ledger') MW.ledger.render();
     else if (route === 'settings') MW.settings.render();
-    MW.todo.render();
     MW.memo.render();
     MW.music.render();
     MW.pomodoro.renderMini();
@@ -195,7 +194,6 @@ window.MW = window.MW || {};
 
     MW.music.mount($('#musicbar'));
     MW.pomodoro.init();
-    MW.todo.init();
     MW.memo.init();
     MW.work.mount($('#page-work-body'));
     MW.calendar.mount($('#page-calendar-body'));

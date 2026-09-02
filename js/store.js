@@ -12,8 +12,6 @@ window.MW = window.MW || {};
   var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
   var VERSION = 4;
 
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
-
   function catsOf(names) {
     return names.map(function (n) { return { id: 'c-' + n, name: n }; });
   }
@@ -32,10 +30,13 @@ window.MW = window.MW || {};
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
         homeOrder: ['calendar', 'inbox', 'habits', 'money'],  // 홈 대시보드 카드 순서 (설정 → 테마에서 변경)
         homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
-        theme: { mode: 'dark', accent: '#6b8afd' }  // mode: 'dark' | 'light'
+        /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
+           preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
+           accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
+           bgImage: data URL (화면 전체 뒤 배경, 비우면 없음) */
+        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '' }
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
-      motto: { text: '', date: '' },   // 오늘의 마음가짐 (홈에서만 표시, 체크 없음)
       playlists: [],
       player: { playlistId: null, index: 0, mode: 'seq' },
       /* 일정 카테고리 — 투두 + 캘린더가 함께 씁니다.
@@ -114,11 +115,19 @@ window.MW = window.MW || {};
     if (!Array.isArray(out.settings.homeOrder)) out.settings.homeOrder = base.settings.homeOrder.slice();
     if (typeof out.settings.homeImage !== 'string') out.settings.homeImage = '';
     delete out.settings.pomoScale;   // 구버전 필드 — 이제 창 크기(settings.floats.pomodoro)로 대체
-    // theme 은 중첩 객체라 얕은 병합으로는 accent 가 없는 절반짜리 값이 그대로 남을 수 있어 따로 채웁니다
-    if (!out.settings.theme || typeof out.settings.theme !== 'object') out.settings.theme = Object.assign({}, base.settings.theme);
-    else out.settings.theme = Object.assign({}, base.settings.theme, out.settings.theme);
-    if (out.settings.theme.mode !== 'light') out.settings.theme.mode = 'dark';
-    if (!/^#[0-9a-fA-F]{6}$/.test(out.settings.theme.accent || '')) out.settings.theme.accent = base.settings.theme.accent;
+    // theme: 프리셋 + 세부 오버라이드 구조로 정규화. 구버전( { mode, accent } )도 여기서 흡수합니다.
+    var th = (out.settings.theme && typeof out.settings.theme === 'object') ? out.settings.theme : {};
+    var HEX = /^#[0-9a-fA-F]{6}$/;
+    var PRESETS = ['base', 'mint', 'peach', 'lavender', 'butter'];
+    // 구버전 기본 강조색(#6b8afd)은 "일부러 고른 값"이 아니므로 오버라이드로 이어받지 않습니다.
+    var carryAccent = HEX.test(th.accent || '') && String(th.accent).toLowerCase() !== '#6b8afd';
+    out.settings.theme = {
+      preset: PRESETS.indexOf(th.preset) >= 0 ? th.preset : 'base',
+      accent: carryAccent ? th.accent : '',
+      bg: HEX.test(th.bg || '') ? th.bg : '',
+      card: HEX.test(th.card || '') ? th.card : '',
+      bgImage: typeof th.bgImage === 'string' ? th.bgImage : ''
+    };
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
@@ -128,18 +137,11 @@ window.MW = window.MW || {};
     if (!out.habitLog || typeof out.habitLog !== 'object') out.habitLog = {};
 
     /* v1 → v2 -------------------------------------------------------------
-       · goals[] (여러 개 + 완료 체크) → motto 한 줄
        · habitLog[day] = [habitId,…] (했다/안했다) → { habitId: {done, pass} } (횟수)
-       · habits[].times 신설 (알람 시각 목록 = 하루 목표 횟수)                */
-    if (!out.motto || typeof out.motto !== 'object') out.motto = { text: '', date: '' };
-    if (Array.isArray(data.goals) && !out.motto.text) {
-      var today = new Date();
-      var ymd = today.getFullYear() + '-' + pad(today.getMonth() + 1) + '-' + pad(today.getDate());
-      var carry = data.goals.filter(function (g) { return g && g.date === ymd && !g.done; })[0]
-        || data.goals.filter(function (g) { return g && g.date === ymd; })[0];
-      if (carry) out.motto = { text: String(carry.text || ''), date: ymd };
-    }
+       · habits[].times 신설 (알람 시각 목록 = 하루 목표 횟수)
+       · (구) goals[] / motto 한 줄 기능은 제거됨 — 남은 데이터는 버립니다      */
     delete out.goals;
+    delete out.motto;
 
     out.habits = out.habits.map(function (h) {
       if (!h || typeof h !== 'object') return h;

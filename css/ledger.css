@@ -104,7 +104,7 @@ table.tx tr.month-sum:hover td { background: var(--surface-2); }
 }
 .seg button + button { border-left: 1px solid var(--border); }
 .seg button:hover { color: var(--text); }
-.seg button.active { background: var(--accent); color: #fff; }
+.seg button.active { background: var(--accent); color: var(--on-accent); }
 
 /* --------------------------------------------------------------- 배지 */
 .chip-sm, .chip-warn, .chip-ok, .chip-ref {
