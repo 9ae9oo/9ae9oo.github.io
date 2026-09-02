@@ -112,26 +112,21 @@ window.MW = window.MW || {};
     return svg;
   }
 
-  /** 상단바의 작은 남은시간 표시 — 플로팅을 닫아도 시간이 보이도록 */
+  /** 상단바 뽀모도로 버튼의 남은시간 표시 — 패널을 닫아도 시간이 보이도록 */
   function renderMini() {
     if (remaining === null) remaining = total();
     var time = U.fmtClock(remaining);
-    var title = LABEL[session] + ' ' + time + (running ? ' (진행 중)' : ' (멈춤)');
 
-    /* 상단 미니 표시 (선택사항) */
-    var mini = document.querySelector('.top-pomo .tp-time');
-    if (mini) {
-      mini.textContent = time;
-      var btn = mini.parentNode;
-      btn.classList.toggle('running', running);
-      btn.title = title;
+    var trigger = document.getElementById('pomodoro-trigger');
+    if (trigger) {
+      var t = trigger.querySelector('.tp-time');
+      if (t) t.textContent = time;
+      trigger.classList.toggle('running', running);
+      trigger.title = LABEL[session] + ' ' + time + (running ? ' (진행 중)' : ' (멈춤)');
     }
 
-    /* 하단 탭 뽀모도로 시간 */
-    var tabTime = document.querySelector('#tabbar .pomo-time');
-    if (tabTime) {
-      tabTime.textContent = time;
-    }
+    /* 다른 곳(예: 홈 카드)에 뽀모도로 미니 표시가 있으면 함께 갱신 */
+    document.querySelectorAll('[data-pomo-time]').forEach(function (n) { n.textContent = time; });
   }
 
   function mount(container) {
@@ -170,14 +165,75 @@ window.MW = window.MW || {};
     render();
   }
 
-  var float = null;
+  /* ---------------------------------------------------- 상단바 드롭다운 패널 */
+
+  var trigger = null, panel = null, panelOpen = false;
+
+  function pinned() { return !!(MW.store.state.settings && MW.store.state.settings.pomoPinned); }
+  function setPinned(v) { MW.store.update(function (s) { s.settings.pomoPinned = !!v; }); }
+
+  function positionPanel() {
+    if (!trigger || !panel) return;
+    var r = trigger.getBoundingClientRect();
+    var w = panel.offsetWidth || 300;
+    // 트리거(상단바, 데스크톱에선 사이드바 오른쪽) 아래에 붙이되 화면 밖으로 나가지 않게 클램프
+    var left = U.clamp(r.left, 8, Math.max(8, window.innerWidth - w - 8));
+    panel.style.left = left + 'px';
+    panel.style.top = ((r.bottom || 52) + 6) + 'px';
+  }
+
+  function openPanel() {
+    if (!panel) return;
+    U.clear(panel);
+    panel.appendChild(el('div.pomo-panel-head', {}, [
+      el('span.pomo-panel-title', { text: '🍅 뽀모도로' }),
+      el('label.pomo-pin', { title: '켜두면 패널이 계속 열려 있습니다' }, [
+        el('input', {
+          type: 'checkbox', checked: pinned(),
+          onchange: function () { setPinned(this.checked); }
+        }),
+        el('span', { text: '고정하기' })
+      ]),
+      el('button.btn.btn-ghost.btn-icon.btn-sm', {
+        text: '✕', 'aria-label': '닫기', onclick: closePanel
+      })
+    ]));
+    var bodyEl = el('div.pomo-panel-body');
+    panel.appendChild(bodyEl);
+    mount(bodyEl);
+
+    panel.hidden = false;
+    panelOpen = true;
+    positionPanel();
+    if (trigger) trigger.setAttribute('aria-expanded', 'true');
+  }
+
+  function closePanel() {
+    if (!panel) return;
+    panel.hidden = true;
+    panelOpen = false;
+    if (trigger) trigger.setAttribute('aria-expanded', 'false');
+  }
+
+  function togglePanel() { panelOpen ? closePanel() : openPanel(); }
 
   function init() {
-    float = MW.shell.registerFloat('pomodoro', {
-      title: '🍅 뽀모도로',
-      rect: { x: Math.max(24, window.innerWidth - 780), y: 96, w: 300, h: 380 },
-      onOpen: function (api) { mount(api.body); }
-    });
+    trigger = document.getElementById('pomodoro-trigger');
+    panel = document.getElementById('pomodoro-panel');
+
+    if (trigger && panel) {
+      trigger.addEventListener('click', function (e) { e.stopPropagation(); togglePanel(); });
+      document.addEventListener('click', function (e) {
+        if (!panelOpen || pinned()) return;
+        if (panel.contains(e.target) || trigger.contains(e.target)) return;
+        closePanel();
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && panelOpen && !pinned()) closePanel();
+      });
+      window.addEventListener('resize', function () { if (panelOpen) positionPanel(); });
+      if (pinned()) openPanel();
+    }
     renderMini();
   }
 
@@ -185,6 +241,7 @@ window.MW = window.MW || {};
     init: init,
     mount: mount,
     renderMini: renderMini,
+    open: openPanel,
     /** 설정 페이지에서 시간 값이 바뀌었을 때 다시 그리기 위해 */
     refresh: function () { if (ui.time) { if (!running) remaining = total(); render(); } },
     state: function () { return { session: session, count: count, remaining: remaining, running: running }; }

@@ -16,6 +16,7 @@ window.MW = window.MW || {};
   var apiFailed = false;
   var pending = null;          // API 준비 전에 누른 재생 요청
   var playing = false;
+  var errorStreak = 0;         // 연속 재생 실패 수 — 무한 스킵 방지
   var ui = {};
   var popover = null;
 
@@ -90,11 +91,22 @@ window.MW = window.MW || {};
         onStateChange: function (e) {
           if (e.data === YT.PlayerState.ENDED) nextTrack(true);
           playing = (e.data === YT.PlayerState.PLAYING);
-          if (playing) syncTitleFromPlayer();
+          if (playing) { errorStreak = 0; syncTitleFromPlayer(); }
           renderBar();
         },
         onError: function () {
-          U.toast('이 영상은 재생할 수 없습니다 (비공개·삭제·임베드 차단).', 'warn');
+          // 재생 불가 영상에서 다음 곡으로 자동 이동하되, 목록을 한 바퀴
+          // 다 돌 때까지 성공이 없으면 멈춰서 토스트가 무한히 쌓이지 않게 합니다.
+          var pl = currentPlaylist();
+          var total = pl && pl.tracks.length ? pl.tracks.length : 1;
+          errorStreak++;
+          if (errorStreak >= total) {
+            errorStreak = 0;
+            playing = false;
+            renderBar();
+            U.toast('재생할 수 있는 영상이 없습니다. 설정에서 링크를 확인해 주세요.', 'warn');
+            return;
+          }
           nextTrack(true);
         }
       }
@@ -137,6 +149,7 @@ window.MW = window.MW || {};
   }
 
   function togglePlay() {
+    errorStreak = 0;   // 사용자가 직접 재생을 누르면 실패 카운트 초기화
     if (!player || !player.getPlayerState) {
       playTrack(st().player.index || 0, true);
       return;
@@ -167,6 +180,7 @@ window.MW = window.MW || {};
   }
 
   function selectPlaylist(id) {
+    errorStreak = 0;
     MW.store.update(function (s) { s.player.playlistId = id; s.player.index = 0; });
     playTrack(0, false);
     closePopover();
@@ -223,29 +237,32 @@ window.MW = window.MW || {};
   /* ------------------------------------------------------------ 하단 팝업 표시 */
 
   function renderBar() {
-    if (!ui.title) return;
     var pl = currentPlaylist();
     var t = currentTrack();
-    ui.title.textContent = t ? (t.title || t.videoId) : '재생할 곡이 없습니다';
-    ui.sub.textContent = apiFailed
+    var titleText = t ? (t.title || t.videoId) : '재생할 곡이 없습니다';
+    var subText = apiFailed
       ? 'YouTube 플레이어를 불러올 수 없는 환경입니다'
       : (pl ? pl.name + ' · ' + (pl.tracks.length ? (U.clamp(st().player.index || 0, 0, pl.tracks.length - 1) + 1) + '/' + pl.tracks.length : '0곡') : '설정에서 재생목록을 만들어 주세요');
-    ui.play.textContent = playing ? '❚❚' : '▶';
-    ui.mode.textContent = st().player.mode === 'shuffle' ? '🔀' : '🔁';
-    ui.mode.title = st().player.mode === 'shuffle' ? '셔플 재생 (클릭 시 순차)' : '순차 재생 (클릭 시 셔플)';
-    ui.mode.classList.toggle('on', st().player.mode === 'shuffle');
-    syncTabIcon();
-  }
 
-  /** 하단 탭바 음악 아이콘 — 재생 중이면 강조 표시 */
-  function syncTabIcon() {
-    var tabBtn = document.getElementById('music-popup-trigger-bottom');
-    if (tabBtn) tabBtn.classList.toggle('running', playing);
+    if (ui.title) ui.title.textContent = titleText;
+    if (ui.sub) ui.sub.textContent = subText;
+    if (ui.play) ui.play.textContent = playing ? '❚❚' : '▶';
+    if (ui.mode) {
+      ui.mode.textContent = st().player.mode === 'shuffle' ? '🔀' : '🔁';
+      ui.mode.title = st().player.mode === 'shuffle' ? '셔플 재생 (클릭 시 순차)' : '순차 재생 (클릭 시 셔플)';
+      ui.mode.classList.toggle('on', st().player.mode === 'shuffle');
+    }
+
+    /* 상단바 인라인 표시 — 재생 버튼 + [제목] 만 */
+    if (ui.barPlay) ui.barPlay.textContent = playing ? '❚❚' : '▶';
+    if (ui.barTitle) {
+      ui.barTitle.textContent = t ? ('[ ' + titleText + ' ]') : titleText;
+      ui.barTitle.title = titleText;
+    }
   }
 
   function mount(bar) {
-    // 상단바에는 화면에 보이는 컨트롤을 두지 않습니다 (배경음악은 하단 팝업 전용).
-    // YouTube 플레이어는 어차피 숨김(iframe) 이라 어디에 있어도 상관없어 그대로 둡니다.
+    // 숨김 YouTube iframe 는 어디에 있어도 무방합니다.
     bar.appendChild(el('div', { id: 'yt-host' }));
 
     ui.title = el('div.mb-now-title');
@@ -258,6 +275,14 @@ window.MW = window.MW || {};
       title: '재생 모드 변경',
       onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
     });
+
+    /* 상단바 인라인 미니 플레이어 — 재생 버튼 + 곡 제목(누르면 전체 팝업) */
+    ui.barPlay = el('button.btn.btn-icon.mbar-play', { title: '재생/일시정지', onclick: togglePlay });
+    ui.barTitle = el('button.mbar-title', {
+      title: '음악 플레이어 열기',
+      onclick: function () { popover ? closePopover() : openPopover(); }
+    });
+    bar.appendChild(el('div.mbar', {}, [ui.barTitle, ui.barPlay]));
 
     /* 하단 음악 팝업 콘텐츠 마운트 — 재생 컨트롤은 여기 하나만 존재합니다 */
     var playerContent = document.getElementById('music-player-content');

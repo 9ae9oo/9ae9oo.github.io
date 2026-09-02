@@ -102,6 +102,7 @@
 
 /* ------------------------------------------------------------------- 주간 */
 .week-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+.week-inbox { margin-top: 14px; }
 .week-col {
   border: 1px solid var(--border); border-radius: var(--radius-sm);
   background: var(--surface-1); padding: 8px; min-height: 190px;

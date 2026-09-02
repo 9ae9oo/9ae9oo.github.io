@@ -14,7 +14,8 @@ window.MW = window.MW || {};
   var float = null;
   var filterGroup = 'all';
 
-  function groups() { return MW.store.state.todoGroups; }
+  /** 메모의 분류 = 태그. 일정 카테고리(todoGroups)와 분리된 memoTags 만 씁니다. */
+  function groups() { return MW.store.state.memoTags; }
 
   function add() {
     var id = U.uid('memo');
@@ -23,7 +24,7 @@ window.MW = window.MW || {};
         id: id,
         title: '새 메모',
         body: '',
-        groupId: filterGroup !== 'all' ? filterGroup : (s.todoGroups[0] ? s.todoGroups[0].id : null),
+        groupId: filterGroup !== 'all' ? filterGroup : (s.memoTags[0] ? s.memoTags[0].id : null),
         color: COLORS[s.memos.length % COLORS.length]
       });
     });
@@ -174,12 +175,13 @@ window.MW = window.MW || {};
 
   MW.memo = {
     init: function () {
-      float = MW.shell.registerFloat('memo', {
+      // 데스크톱: 오른쪽 도킹 패널 / 모바일: 아래에서 올라오는 시트 (shell.registerPanel 이 처리)
+      float = MW.shell.registerPanel('memo', {
         title: '📝 메모장',
-        rect: { x: Math.max(24, window.innerWidth - 800), y: 96, w: 380, h: 480 },
         onOpen: render
       });
     },
-    render: function () { if (float && float.isOpen()) render(); }
+    render: function () { if (float && float.isOpen()) render(); },
+    COLORS: COLORS
   };
 })();

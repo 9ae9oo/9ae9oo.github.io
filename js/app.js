@@ -16,43 +16,46 @@ window.MW = window.MW || {};
 
     var today = U.ymd(new Date());
     var evs = MW.calendar.eventsOn(today);
+    var dayTodos = MW.calendar.todosOn(today).filter(function (t) { return !t.done; });
     var sum = MW.ledger.summary(U.ym(new Date()));
 
-    // 1) 오늘의 마음가짐 — 체크 없는 한 줄
-    host.appendChild(MW.motto.node());
+    // 홈 제목 = 오늘 날짜
+    var titleEl = $('#home-title');
+    if (titleEl) titleEl.textContent = U.fmtLongDate(today);
 
-    // 2) 오늘 일정 · 오늘 할 일 (요약 카드는 아래 목록과 내용이 겹쳐서 두지 않습니다)
+    var goToday = function () { MW.shell.go('calendar'); MW.calendar.goto(today); };
+
+    // 1) 오늘 일정 — 오늘의 일정 + 날짜가 오늘인 할 일을 한 목록에 점으로 표시
+    var rows = [];
+    evs.forEach(function (ev) {
+      rows.push(el('div.today-row', { onclick: goToday }, [
+        el('span.today-dot', { style: { background: ev.color || '#6b8afd' } }),
+        el('span.today-time', { text: ev.allDay || ev.start === null ? '종일' : U.fmtMin(ev.start) }),
+        el('span.today-title', { text: ev.title })
+      ]));
+    });
+    dayTodos.forEach(function (t) {
+      rows.push(el('div.today-row', { onclick: goToday }, [
+        el('span.today-dot', { style: { background: MW.todo.colorOf(t) } }),
+        el('span.today-title', { text: t.title })
+      ]));
+    });
+
     var evCard = el('div.card', {}, [
-      el('h3', {}, ['오늘 일정 ', el('span.muted', { text: U.fmtLongDate(today) })]),
-      evs.length ? el('div', {}, evs.map(function (ev) {
-        return el('div.ev-row', { onclick: function () { MW.shell.go('calendar'); MW.calendar.goto(today); } }, [
-          el('div.ev-bar', { style: { background: ev.color || '#6b8afd' } }),
-          el('div.ev-main', {}, [
-            el('div.ev-time', { text: ev.allDay || ev.start === null ? '종일' : U.fmtMin(ev.start) }),
-            el('div.ev-title', { text: ev.title })
-          ])
-        ]);
-      })) : el('div.empty', { text: '오늘 등록된 일정이 없습니다.' }),
-      el('button.btn.btn-sm', {
-        text: '캘린더 열기', style: { marginTop: '8px' },
-        onclick: function () { MW.shell.go('calendar'); }
-      })
+      el('h3', { text: '오늘 일정' }),
+      rows.length ? el('div.today-list', {}, rows) : el('div.empty', { text: '오늘 일정이 없습니다.' })
     ]);
 
     var todoBox = el('div.todo-list');
     MW.todo.renderList(todoBox, {
-      filter: function (t) { return !t.done && (t.date === today || !t.date); },
+      filter: function (t) { return !t.done && !t.date; },
       draggable: false,
       emptyText: '지금 할 일이 없습니다.'
     });
 
     var todoCard = el('div.card', {}, [
-      el('h3', { text: '인박스 · 오늘 할 일' }),
-      todoBox,
-      el('button.btn.btn-sm', {
-        text: '투두 창 열기', style: { marginTop: '8px' },
-        onclick: function () { MW.shell.floats.todo.open(); }
-      })
+      el('h3', { text: '인박스' }),
+      todoBox
     ]);
 
     host.appendChild(el('div.home-cols', {}, [evCard, todoCard]));

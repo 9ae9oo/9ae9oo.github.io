@@ -60,8 +60,20 @@ window.MW = window.MW || {};
       start: opts.start === undefined ? 9 * 60 : opts.start,
       end: opts.end === undefined ? 10 * 60 : opts.end,
       allDay: opts.allDay || false,
-      color: COLORS[0], repeat: { freq: 'none' }, notifyMin: 0
+      color: COLORS[0], categoryId: null, repeat: { freq: 'none' }, notifyMin: 0
     };
+
+    var cats = MW.store.state.todoGroups;
+    var category = el('select.field', {
+      onchange: function () {
+        var c = cats.find(function (x) { return x.id === category.value; });
+        if (c) color.value = c.color;   // 카테고리를 고르면 표시색을 그 색으로 맞춰 줍니다
+      }
+    }, [el('option', { value: '', text: '카테고리 없음', selected: !d.categoryId })].concat(
+      cats.map(function (c) {
+        return el('option', { value: c.id, text: c.name, selected: c.id === d.categoryId });
+      })
+    ));
 
     var title = el('input.field', { value: d.title, placeholder: '일정 제목' });
     var date = el('input.field', { type: 'date', value: d.date });
@@ -106,7 +118,10 @@ window.MW = window.MW || {};
           el('div.form-row', {}, [el('label', { text: '반복' }), repeat]),
           el('div.form-row', {}, [el('label', { text: '알림' }), notifyMin])
         ]),
-        el('div.form-row', {}, [el('label', { text: '색상' }), color]),
+        el('div.form-grid', {}, [
+          el('div.form-row', {}, [el('label', { text: '카테고리' }), category]),
+          el('div.form-row', {}, [el('label', { text: '색상' }), color])
+        ]),
         !isNew && d.repeat && d.repeat.freq !== 'none'
           ? el('div.small.dim', { text: '반복 일정은 전체가 함께 수정·삭제됩니다.' })
           : null
@@ -131,6 +146,7 @@ window.MW = window.MW || {};
           start: allDay.checked ? null : (U.parseMin(start.value) === null ? 9 * 60 : U.parseMin(start.value)),
           end: allDay.checked ? null : (U.parseMin(end.value) === null ? null : U.parseMin(end.value)),
           color: color.value,
+          categoryId: category.value || null,
           repeat: { freq: repeat.value },
           notifyMin: +notifyMin.value
         };
@@ -191,9 +207,8 @@ window.MW = window.MW || {};
           if (d.getDay() === 0) cls += '.sun';
           if (d.getDay() === 6) cls += '.sat';
 
-          var evs = eventsOn(day);
-          var tds = todosOn(day);
-          var items = evs.map(pillFor).concat(tds.map(todoPill));
+          // 할 일은 인박스(날짜 없음) 개념이라 날짜 칸에는 일정만 표시합니다.
+          var items = eventsOn(day).map(pillFor);
           var shown = items.slice(0, 3);
 
           row.appendChild(el(cls, {
@@ -220,7 +235,6 @@ window.MW = window.MW || {};
   function sidePanel() {
     var day = selected;
     var evs = eventsOn(day);
-    var tds = todosOn(day);
 
     return el('div.cal-side', {}, [
       el('h3', { text: U.fmtLongDate(day) }),
@@ -248,13 +262,14 @@ window.MW = window.MW || {};
       ]),
 
       el('section', {}, [
-        el('h4', { text: '이 날의 할 일' }),
+        el('h4', { text: '인박스' }),
+        el('div.small.dim', { text: '날짜·시간이 정해지지 않은 할 일', style: { marginBottom: '6px' } }),
         (function () {
           var box = el('div.todo-list');
           MW.todo.renderList(box, {
-            filter: function (t) { return t.date === day; },
+            filter: function (t) { return !t.date; },
             draggable: false, showMeta: false,
-            emptyText: '없습니다.'
+            emptyText: '인박스가 비어 있습니다.'
           });
           return box;
         })(),
@@ -263,10 +278,10 @@ window.MW = window.MW || {};
           onclick: function () {
             var input = el('input.field', { placeholder: '할 일 제목' });
             MW.shell.modal({
-              title: U.fmtDate(day) + ' 할 일 추가',
+              title: '할 일 추가',
               body: [el('div.form-row', {}, [el('label', { text: '제목' }), input])],
               onOk: function () {
-                if (!MW.todo.add(input.value, null, day)) { U.toast('제목을 입력해 주세요.', 'warn'); return false; }
+                if (!MW.todo.add(input.value)) { U.toast('제목을 입력해 주세요.', 'warn'); return false; }
               }
             });
           }
@@ -289,7 +304,6 @@ window.MW = window.MW || {};
         var timed = evs.filter(function (e) { return !e.allDay && e.start !== null && e.start !== undefined; });
         var allDayEvs = evs.filter(function (e) { return e.allDay || e.start === null || e.start === undefined; });
         var untimed = [];      // 시간이 지정되지 않은 일정은 시간 일정 아래로
-        var tds = todosOn(day);
 
         function evPill(ev, showTime) {
           return el('div.cal-pill', {
@@ -299,21 +313,13 @@ window.MW = window.MW || {};
           });
         }
 
-        var todoBox = el('div.todo-list');
-        MW.todo.renderList(todoBox, {
-          filter: function (t) { return t.date === day; },
-          draggable: false, showMeta: false, emptyText: ''
-        });
-
-        // 두 번째 카드: 시간 지정 일정 → 시간 미지정 → 할 일
+        // 두 번째 카드: 시간 지정 일정 → 시간 미지정 (할 일은 주간 하단 인박스로 분리)
         var bodyCard = el('div.week-card', {}, [
           timed.length
             ? el('div.week-stack', {}, timed.map(function (ev) { return evPill(ev, true); }))
             : el('div.week-none', { text: '시간 일정 없음' }),
           untimed.length ? el('div.week-divider', { text: '시간 미지정' }) : null,
-          untimed.length ? el('div.week-stack', {}, untimed.map(function (ev) { return evPill(ev, false); })) : null,
-          tds.length ? el('div.week-divider', { text: '할 일' }) : null,
-          tds.length ? todoBox : null
+          untimed.length ? el('div.week-stack', {}, untimed.map(function (ev) { return evPill(ev, false); })) : null
         ]);
 
         var col = el('div.week-col' + (U.isToday(d) ? '.today' : ''), {
@@ -337,6 +343,32 @@ window.MW = window.MW || {};
       })(U.addDays(start, i));
     }
     host.appendChild(grid);
+
+    // 주간 달력 하단: 인박스 (날짜 없는 할 일) — 좁은 칸에 눌러 담지 않고 한 곳에 모읍니다
+    var weekInbox = el('div.todo-list');
+    MW.todo.renderList(weekInbox, {
+      filter: function (t) { return !t.date; },
+      draggable: false, showMeta: false,
+      emptyText: '인박스가 비어 있습니다.'
+    });
+    host.appendChild(el('div.card.week-inbox', {}, [
+      el('h3', { text: '인박스' }),
+      el('div.small.dim', { text: '날짜·시간이 정해지지 않은 할 일', style: { marginBottom: '8px' } }),
+      weekInbox,
+      el('button.btn.btn-sm', {
+        text: '＋ 할 일 추가', style: { width: '100%', marginTop: '8px' },
+        onclick: function () {
+          var input = el('input.field', { placeholder: '할 일 제목' });
+          MW.shell.modal({
+            title: '할 일 추가',
+            body: [el('div.form-row', {}, [el('label', { text: '제목' }), input])],
+            onOk: function () {
+              if (!MW.todo.add(input.value)) { U.toast('제목을 입력해 주세요.', 'warn'); return false; }
+            }
+          });
+        }
+      })
+    ]));
   }
 
   /* ------------------------------------------------------------ 일간 뷰 */
@@ -430,11 +462,11 @@ window.MW = window.MW || {};
       eventDialog({ date: day, start: a % 1440, end: b % 1440 === 0 ? 1439 : b % 1440 });
     }
 
-    // 시간이 지정되지 않은 그날의 할 일 — 타임라인 오른쪽 열
+    // 시간 미지정 할 일 = 인박스 (날짜 없는 할 일 전체). 어느 날을 봐도 같은 인박스를 보여줍니다.
     var sideTodos = el('div.todo-list');
     MW.todo.renderList(sideTodos, {
-      filter: function (t) { return t.date === day; },
-      draggable: false, showMeta: false, emptyText: '시간 없이 오늘 할 일이 없습니다.'
+      filter: function (t) { return !t.date; },
+      draggable: false, showMeta: false, emptyText: '인박스가 비어 있습니다.'
     });
 
     host.appendChild(el('div', {}, [
@@ -442,9 +474,9 @@ window.MW = window.MW || {};
       el('div.day-layout', {}, [
         timeline,
         el('div.card.day-side', {}, [
-          el('h3', { text: '시간 미지정 할 일' }),
+          el('h3', { text: '인박스' }),
           el('div.small.dim', {
-            text: '기상 ' + U.pad2(wake) + ':00 기준 · 타임라인을 드래그하면 일정이 추가됩니다.',
+            text: '날짜·시간이 정해지지 않은 할 일 · 타임라인을 드래그하면 일정이 추가됩니다.',
             style: { marginBottom: '10px' }
           }),
           sideTodos,
@@ -453,10 +485,10 @@ window.MW = window.MW || {};
             onclick: function () {
               var input = el('input.field', { placeholder: '할 일 제목' });
               MW.shell.modal({
-                title: U.fmtDate(day) + ' 할 일 추가',
+                title: '할 일 추가',
                 body: [el('div.form-row', {}, [el('label', { text: '제목' }), input])],
                 onOk: function () {
-                  if (!MW.todo.add(input.value, null, day)) { U.toast('제목을 입력해 주세요.', 'warn'); return false; }
+                  if (!MW.todo.add(input.value)) { U.toast('제목을 입력해 주세요.', 'warn'); return false; }
                 }
               });
             }

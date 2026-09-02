@@ -17,6 +17,9 @@
 
 <div id="app">
 
+  <!-- 모바일 사이드바 드로어 배경 -->
+  <div class="sidebar-overlay"></div>
+
   <!-- 왼쪽 사이드바 (메인 페이지 네비게이션) -->
   <aside id="sidebar" class="sidebar">
     <div class="sidebar-header">
@@ -51,26 +54,28 @@
   <div id="body">
     <!-- 상단 고정 네비게이션 — 빠른 입력 + 음악 플레이어 -->
     <header id="topbar">
-      <!-- 빠른 일정 입력 (데스크톱 전용) -->
-      <div class="quick-add-wrap">
-        <input type="text" id="quick-add-input" class="quick-add-input" placeholder="내일 오후 3시 회의 / 할일" autocomplete="off">
-      </div>
-
-      <!-- 음악 (music.js 가 내용을 채웁니다) -->
-      <div id="musicbar"></div>
-
-      <!-- 음악 플레이어 팝업 트리거 (모바일) -->
-      <button id="music-popup-trigger" class="btn btn-icon music-popup-btn" title="음악 플레이어" aria-label="음악 플레이어">
-        <span class="icon">🎵</span>
+      <!-- 내비게이션 메뉴 (홈 · 작업 · 캘린더 · 정산 · 설정) — 모바일 전용, 왼쪽 -->
+      <button id="nav-menu-trigger" class="btn btn-icon" title="메뉴" aria-label="메뉴" aria-haspopup="true" aria-expanded="false">
+        <span class="icon">☰</span>
       </button>
+
+      <!-- 뽀모도로 — 음악 플레이어 가장 왼쪽. 누르면 아래 패널이 열림 -->
+      <button id="pomodoro-trigger" title="뽀모도로" aria-label="뽀모도로" aria-haspopup="true" aria-expanded="false">
+        <span class="tp-icon">🍅</span><span class="tp-time">25:00</span>
+      </button>
+
+      <!-- 음악 플레이어 (music.js 가 곡 제목 + 재생 버튼을 채웁니다) -->
+      <div id="musicbar"></div>
     </header>
+
+    <!-- 뽀모도로 패널 (상단바 뽀모도로 버튼 아래로 펼쳐짐) -->
+    <div id="pomodoro-panel" hidden></div>
 
     <main id="main">
 
       <section class="page active" data-page="home">
         <div class="page-head">
-          <h1>홈</h1>
-          <p>오늘 하루를 한눈에. 타이머·메모·할 일은 위쪽 버튼으로 언제든 띄웁니다.</p>
+          <h1 id="home-title">홈</h1>
         </div>
         <div id="page-home-body"></div>
       </section>
@@ -109,24 +114,11 @@
 
     </main>
 
-    <!-- 하단 탭바 — 항상 접근 가능한 위젯 -->
+    <!-- 하단 바 — 빠른 일정 입력 (모바일 · 데스크톱 공통) -->
     <nav id="tabbar" class="tabbar">
-      <button class="tabbar-item" data-float="todo" title="할 일">
-        <span class="icon">✅</span>
-        <span class="label">할일</span>
-      </button>
-      <button class="tabbar-item" data-float="memo" title="메모장">
-        <span class="icon">📝</span>
-        <span class="label">메모</span>
-      </button>
-      <button class="tabbar-item" data-float="pomodoro" title="뽀모도로">
-        <span class="icon">🍅</span>
-        <span class="label pomo-time">25:00</span>
-      </button>
-      <button class="tabbar-item" id="music-popup-trigger-bottom" title="음악 플레이어">
-        <span class="icon">🎵</span>
-        <span class="label">음악</span>
-      </button>
+      <div class="quick-add-wrap">
+        <input type="text" id="quick-add-input" class="quick-add-input" placeholder="내일 오후 3시 회의 / 할일" autocomplete="off">
+      </div>
     </nav>
 
     <!-- 음악 플레이어 팝업 -->

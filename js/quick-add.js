@@ -139,9 +139,16 @@ window.MW = window.MW || {};
   function save(parsed) {
     if (!parsed || !parsed.title) return;
 
-    if (parsed.hasDateTime && parsed.date) {
+    if (parsed.hasDateTime) {
+      // 날짜 없이 시간만 입력하면 오늘 날짜로 간주합니다.
+      var evDate = parsed.date;
+      if (!evDate) {
+        evDate = new Date();
+        evDate.setHours(0, 0, 0, 0);
+      }
+
       // 일정으로 저장 — calendar.js 이벤트 구조(start/end 는 자정부터의 분 단위)에 맞춤
-      var dateStr = parsed.date.getFullYear() + '-' + pad2(parsed.date.getMonth() + 1) + '-' + pad2(parsed.date.getDate());
+      var dateStr = evDate.getFullYear() + '-' + pad2(evDate.getMonth() + 1) + '-' + pad2(evDate.getDate());
       var hasTime = !!parsed.time;
       var start = hasTime ? (parsed.time.hour * 60 + parsed.time.min) : null;
       var end = hasTime ? Math.min(start + 60, 24 * 60) : null;
@@ -155,6 +162,7 @@ window.MW = window.MW || {};
           start: start,
           end: end,
           color: '#6b8afd',
+          categoryId: null,
           repeat: { freq: 'none' },
           notifyMin: 0
         });

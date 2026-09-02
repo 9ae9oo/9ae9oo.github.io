@@ -108,6 +108,55 @@ window.MW = window.MW || {};
     return api;
   }
 
+  /* ---------------------------------------------------------- 사이드 도킹 패널
+     데스크톱에서는 오른쪽에 붙는 패널, 모바일에서는 아래에서 올라오는 시트.
+     플로팅 창과 달리 위치를 옮기지 않고, 가장자리 가운데의 손잡이 버튼으로 여닫습니다.
+     하단 탭바의 [data-float] 버튼과 syncButtons 가 그대로 동작하도록 floats 맵에 등록합니다. */
+  function registerPanel(id, opts) {
+    opts = opts || {};
+    var node = el('aside.side-panel', { id: 'panel-' + id });
+    var body = el('div.side-panel-body');
+    // 손잡이는 패널 밖(body 직속)에 둡니다. 패널이 transform 으로 숨겨질 때
+    // 자식이면 함께 사라져 열 수단이 없어지기 때문입니다. 데스크톱·모바일 동일한 가장자리 탭.
+    var handle = el('button.side-panel-handle', {
+      id: 'panel-' + id + '-handle', type: 'button',
+      'aria-label': (opts.title || '') + ' 열고 닫기',
+      onclick: function () { api.toggle(); }
+    }, [el('span.side-panel-handle-icon', { text: '‹' })]);
+    var head = el('div.side-panel-head', {}, [
+      el('h3', { text: opts.title || '' }),
+      el('button.btn.btn-ghost.btn-icon', {
+        title: '닫기', 'aria-label': '닫기', text: '✕',
+        onclick: function () { api.close(); }
+      })
+    ]);
+    node.appendChild(head);
+    node.appendChild(body);
+    document.body.appendChild(node);
+    document.body.appendChild(handle);
+
+    var api = {
+      id: id, node: node, body: body,
+      isOpen: function () { return node.classList.contains('open'); },
+      open: function () {
+        node.classList.add('open');
+        handle.classList.add('open');
+        document.body.classList.add('panel-' + id + '-open');
+        syncButtons();
+        if (opts.onOpen) opts.onOpen(api);
+      },
+      close: function () {
+        node.classList.remove('open');
+        handle.classList.remove('open');
+        document.body.classList.remove('panel-' + id + '-open');
+        syncButtons();
+      },
+      toggle: function () { api.isOpen() ? api.close() : api.open(); }
+    };
+    floats[id] = api;
+    return api;
+  }
+
   function syncButtons() {
     $$('[data-float]').forEach(function (b) {
       var f = floats[b.dataset.float];
@@ -297,13 +346,17 @@ window.MW = window.MW || {};
     try { localStorage.setItem('mw.sidebar.collapsed', sidebarCollapsed ? '1' : '0'); } catch (e) {}
   }
 
+  function setNavDrawer(open) {
+    var sidebar = $('#sidebar');
+    var overlay = $('.sidebar-overlay');
+    var trigger = $('#nav-menu-trigger');
+    if (sidebar) sidebar.classList.toggle('open', open);
+    if (overlay) overlay.classList.toggle('open', open);
+    if (trigger) trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+
   function closeSidebarOnMobile() {
-    if (window.innerWidth <= 900) {
-      var sidebar = $('#sidebar');
-      if (sidebar && sidebar.classList.contains('open')) {
-        sidebar.classList.remove('open');
-      }
-    }
+    if (window.innerWidth <= 900) setNavDrawer(false);
   }
 
   /* --------------------------------------------------- 음악 팝업 (하단) */
@@ -336,10 +389,27 @@ window.MW = window.MW || {};
       closeSidebarOnMobile();
     });
 
-    /* 플로팅 위젯 (하단 탭에서도 작동) */
+    /* 플로팅·도킹 위젯 (메모 버튼 등에서 작동) */
     U.on(document.body, 'click', '[data-float]', function (e, t) {
       var f = floats[t.dataset.float];
       if (f) f.toggle();
+    });
+
+    /* 모바일 내비게이션 메뉴 (상단바 오른쪽 ☰) — 사이드바 드로어를 여닫습니다 */
+    var navMenuTrigger = $('#nav-menu-trigger');
+    if (navMenuTrigger) {
+      navMenuTrigger.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var sidebar = $('#sidebar');
+        setNavDrawer(!(sidebar && sidebar.classList.contains('open')));
+      });
+    }
+    var sidebarOverlay = $('.sidebar-overlay');
+    if (sidebarOverlay) {
+      sidebarOverlay.addEventListener('click', function () { setNavDrawer(false); });
+    }
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') setNavDrawer(false);
     });
 
     /* 사이드바 토글 */
@@ -348,17 +418,7 @@ window.MW = window.MW || {};
       sidebarToggleBtn.addEventListener('click', toggleSidebar);
     }
 
-    /* 음악 팝업 토글 */
-    var musicPopupTrigger = $('#music-popup-trigger');
-    if (musicPopupTrigger) {
-      musicPopupTrigger.addEventListener('click', toggleMusicPopup);
-    }
-
-    var musicPopupTriggerBottom = $('#music-popup-trigger-bottom');
-    if (musicPopupTriggerBottom) {
-      musicPopupTriggerBottom.addEventListener('click', toggleMusicPopup);
-    }
-
+    /* 음악 팝업 닫기 (팝업은 music.js 의 재생목록 팝오버에서 여닫습니다) */
     var musicPopupClose = $('#music-popup-close');
     if (musicPopupClose) {
       musicPopupClose.addEventListener('click', closeMusicPopup);
@@ -388,7 +448,8 @@ window.MW = window.MW || {};
 
   MW.shell = {
     init: init, go: go, onRoute: onRoute, route: function () { return current; },
-    registerFloat: registerFloat, floats: floats, syncFloatButtons: syncButtons, isMobile: isMobile,
+    registerFloat: registerFloat, registerPanel: registerPanel, floats: floats,
+    syncFloatButtons: syncButtons, isMobile: isMobile,
     modal: modal, closeModal: closeModal, confirm: confirmDialog,
     requestNotify: requestNotify, notify: notify, playSound: playSound,
     applyTheme: applyTheme

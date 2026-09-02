@@ -77,7 +77,7 @@ window.MW = window.MW || {};
       body: [
         el('div.form-row', {}, [el('label', { text: '제목' }), title]),
         el('div.form-grid', {}, [
-          el('div.form-row', {}, [el('label', { text: '그룹' }), group]),
+          el('div.form-row', {}, [el('label', { text: '카테고리' }), group]),
           el('div.form-row', {}, [el('label', { text: '날짜 (비우면 인박스)' }), date])
         ]),
         el('div.form-row', {}, [

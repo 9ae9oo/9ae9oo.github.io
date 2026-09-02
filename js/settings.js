@@ -367,25 +367,47 @@ window.MW = window.MW || {};
         : [el('div.empty', { text: '해빗이 없습니다.' })])
     ]));
 
-    var addGroup = function () {
-      var v = groupInput.value.trim();
+    host.appendChild(listEditorCard({
+      key: 'todoGroups', idPrefix: 'g', palette: MW.todo.COLORS,
+      title: '일정 카테고리',
+      hint: '— 투두와 캘린더가 함께 쓰는 분류입니다. 카테고리 색이 캘린더 표시색의 기본값이 됩니다',
+      placeholder: '새 카테고리 이름'
+    }));
+
+    host.appendChild(listEditorCard({
+      key: 'memoTags', idPrefix: 'mt', palette: MW.memo.COLORS,
+      title: '메모 태그',
+      hint: '— 메모장 전용입니다. 일정 카테고리와 분리되어 따로 관리됩니다',
+      placeholder: '새 태그 이름'
+    }));
+  }
+
+  /**
+   * 이름 + 색만 있는 분류 목록(일정 카테고리 / 메모 태그)을 편집하는 카드.
+   * opts: { key, idPrefix, palette, title, hint, placeholder }
+   */
+  function listEditorCard(opts) {
+    var list = MW.store.state[opts.key];
+    var addItem = function () {
+      var v = input.value.trim();
       if (!v) return;
       MW.store.update(function (st) {
-        st.todoGroups.push({ id: U.uid('g'), name: v, color: MW.todo.COLORS[st.todoGroups.length % MW.todo.COLORS.length] });
+        var arr = st[opts.key];
+        arr.push({ id: U.uid(opts.idPrefix), name: v, color: opts.palette[arr.length % opts.palette.length] });
       });
-      groupInput.value = '';
+      input.value = '';
     };
-    var groupInput = el('input.field', {
-      placeholder: '새 그룹 이름',
-      onkeydown: function (e) { if (e.key === 'Enter') addGroup(); }
+    var input = el('input.field', {
+      placeholder: opts.placeholder,
+      onkeydown: function (e) { if (e.key === 'Enter') addItem(); }
     });
-    host.appendChild(el('div.card', {}, [
-      el('h3', {}, ['투두 · 메모 그룹 ', el('span.muted', { text: '— 그룹 색이 캘린더 표시색의 기본값이 됩니다' })]),
+    return el('div.card', {}, [
+      el('h3', {}, [opts.title + ' ', el('span.muted', { text: opts.hint })]),
       el('div.row', {}, [
-        groupInput,
-        el('button.btn.btn-primary.btn-sm', { text: '추가', onclick: addGroup })
+        input,
+        el('button.btn.btn-primary.btn-sm', { text: '추가', onclick: addItem })
       ]),
-      el('div', { style: { marginTop: '10px' } }, MW.store.state.todoGroups.map(function (g) {
+      el('div', { style: { marginTop: '10px' } }, list.map(function (g) {
         return el('div.row', { style: { padding: '5px 0' } }, [
           el('input', {
             type: 'color', value: g.color,
@@ -393,7 +415,7 @@ window.MW = window.MW || {};
             onchange: function () {
               var v = this.value;
               MW.store.update(function (st) {
-                var x = st.todoGroups.find(function (y) { return y.id === g.id; });
+                var x = st[opts.key].find(function (y) { return y.id === g.id; });
                 if (x) x.color = v;
               });
             }
@@ -403,7 +425,7 @@ window.MW = window.MW || {};
             onchange: function () {
               var v = this.value.trim() || '이름 없음';
               MW.store.update(function (st) {
-                var x = st.todoGroups.find(function (y) { return y.id === g.id; });
+                var x = st[opts.key].find(function (y) { return y.id === g.id; });
                 if (x) x.name = v;
               });
             }
@@ -412,13 +434,13 @@ window.MW = window.MW || {};
             text: '✕', title: '삭제',
             onclick: function () {
               MW.store.update(function (st) {
-                st.todoGroups = st.todoGroups.filter(function (y) { return y.id !== g.id; });
+                st[opts.key] = st[opts.key].filter(function (y) { return y.id !== g.id; });
               });
             }
           })
         ]);
       }))
-    ]));
+    ]);
   }
 
   /* ------------------------------------------------------------ 일반 */

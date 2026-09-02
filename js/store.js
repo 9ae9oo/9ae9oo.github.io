@@ -10,7 +10,7 @@ window.MW = window.MW || {};
   var U = MW.util;
 
   var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
-  var VERSION = 3;
+  var VERSION = 4;
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
 
@@ -29,16 +29,26 @@ window.MW = window.MW || {};
         icalUrl: '',
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
+        pomoPinned: false,    // 상단바 뽀모도로 패널을 계속 열어둘지
         theme: { mode: 'dark', accent: '#6b8afd' }  // mode: 'dark' | 'light'
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       motto: { text: '', date: '' },   // 오늘의 마음가짐 (홈에서만 표시, 체크 없음)
       playlists: [],
       player: { playlistId: null, index: 0, mode: 'seq' },
+      /* 일정 카테고리 — 투두 + 캘린더가 함께 씁니다.
+         투두 = 캘린더에서 날짜·시간이 아직 정해지지 않은 일정으로 보기 때문에
+         두 곳의 분류 체계를 하나로 공유합니다. 카테고리 색이 캘린더 표시색의 기본값이 됩니다. */
       todoGroups: [
-        { id: 'g-work', name: '업무메모', color: '#6b8afd' },
-        { id: 'g-personal', name: '개인일정', color: '#4ade80' },
+        { id: 'g-work', name: '업무', color: '#6b8afd' },
+        { id: 'g-personal', name: '개인', color: '#4ade80' },
         { id: 'g-etc', name: '기타', color: '#8b90a5' }
+      ],
+      /* 메모 태그 — 메모장 전용. 일정 카테고리와 완전히 분리되어 독립적으로 관리됩니다. */
+      memoTags: [
+        { id: 'mt-idea', name: '아이디어', color: '#fbbf24' },
+        { id: 'mt-ref', name: '자료', color: '#6b8afd' },
+        { id: 'mt-etc', name: '기타', color: '#8b90a5' }
       ],
       todos: [],
       memos: [],
@@ -107,7 +117,7 @@ window.MW = window.MW || {};
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
-    ['playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events', 'works'].forEach(function (k) {
+    ['playlists', 'todoGroups', 'memoTags', 'todos', 'memos', 'habits', 'events', 'works'].forEach(function (k) {
       if (!Array.isArray(out[k])) out[k] = base[k];
     });
     if (!out.habitLog || typeof out.habitLog !== 'object') out.habitLog = {};
@@ -194,6 +204,26 @@ window.MW = window.MW || {};
     ['budgets', 'carry', 'vat'].forEach(function (k) {
       if (!out.ledger[k] || typeof out.ledger[k] !== 'object') out.ledger[k] = {};
     });
+
+    /* v3 → v4 -------------------------------------------------------------
+       · 투두·메모가 공유하던 todoGroups 를 분리:
+         - todoGroups  = 일정 카테고리 (투두 + 캘린더)
+         - memoTags    = 메모 태그 (메모장 전용)
+       · 기존 데이터에 memoTags 가 없으면 todoGroups 를 그대로 복제해
+         메모에 이미 붙어 있던 분류(groupId)가 깨지지 않게 합니다.               */
+    if (!Array.isArray(data.memoTags)) {
+      out.memoTags = out.todoGroups.map(function (g) {
+        return { id: g.id, name: g.name, color: g.color };
+      });
+    }
+    if (!out.memoTags.length) out.memoTags = base.memoTags;
+
+    // 일정에도 카테고리(선택)를 붙일 수 있게 필드를 추가합니다. 색은 그대로 두고 분류만 기록합니다.
+    out.events = out.events.map(function (ev) {
+      if (ev && typeof ev === 'object' && ev.categoryId === undefined) ev.categoryId = null;
+      return ev;
+    });
+
     return out;
   }
 

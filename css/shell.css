@@ -63,11 +63,11 @@
 .sidebar-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
+  gap: 13px;
+  padding: 12px 13px;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
-  font-size: 13.5px;
+  font-size: 15px;
   font-weight: 500;
   white-space: nowrap;
   cursor: pointer;
@@ -86,8 +86,8 @@
 }
 
 .sidebar-item .icon {
-  flex: 0 0 20px;
-  font-size: 16px;
+  flex: 0 0 24px;
+  font-size: 19px;
   text-align: center;
 }
 
@@ -120,15 +120,16 @@
   z-index: 60;
 }
 
-/* 빠른 입력 필드 */
+/* 빠른 입력 필드 — 하단 바에 고정 (모바일·데스크톱 공통) */
 .quick-add-wrap {
-  display: none;
-  flex: 0 0 250px;
+  display: flex;
+  flex: 1;
+  min-width: 0;
 }
 
 .quick-add-input {
   width: 100%;
-  height: 30px;
+  height: 34px;
   padding: 0 12px;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
@@ -160,20 +161,73 @@
 .topnav-item.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
 .topnav-item .ico { font-size: 14px; }
 
-/* 플로팅 위젯 버튼 */
-.top-widgets { display: flex; align-items: center; gap: 4px; }
-.top-pomo {
-  width: auto; padding: 0 10px; height: 30px;
+/* 상단바 뽀모도로 버튼 (음악 플레이어 가장 왼쪽) */
+#pomodoro-trigger {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 5px;
+  height: 30px; padding: 0 10px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-1); border: 1px solid var(--border);
+  color: var(--text-muted);
   font-size: 12.5px; font-weight: 600; font-variant-numeric: tabular-nums;
-  color: var(--text-muted); background: var(--surface-1); border: 1px solid var(--border);
+  cursor: pointer;
 }
-.top-pomo::before { content: '🍅'; margin-right: 5px; font-size: 11px; }
-.top-pomo:hover { background: var(--surface-2); color: var(--text); }
-.top-pomo.running { color: var(--accent); border-color: var(--accent); }
-.top-pomo.active { box-shadow: inset 0 0 0 1px var(--accent); }
+#pomodoro-trigger:hover { background: var(--surface-2); color: var(--text); }
+#pomodoro-trigger[aria-expanded="true"] { box-shadow: inset 0 0 0 1px var(--accent); color: var(--text); }
+#pomodoro-trigger.running { color: var(--accent); border-color: var(--accent); }
+#pomodoro-trigger .tp-icon { font-size: 12px; }
 
-/* 배경음악은 하단 팝업 전용이라 상단바에는 숨김 플레이어(yt-host)만 둡니다 */
-#musicbar { flex: 0 0 auto; }
+/* 뽀모도로 드롭다운 패널 — JS(positionPanel)가 트리거 아래로 위치를 잡습니다.
+   아래 값은 초기/폴백값. 데스크톱에선 왼쪽 사이드바(240px)를 가리지 않도록 오른쪽으로. */
+#pomodoro-panel {
+  position: fixed;
+  top: var(--topbar-h);
+  left: 8px;
+  width: 300px;
+  max-width: calc(100vw - 16px);
+  background: var(--surface-1);
+  border: 1px solid var(--border-accent);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  z-index: 520;
+  overflow: hidden;
+}
+.pomo-panel-head {
+  display: flex; align-items: center; gap: 8px;
+  padding: 8px 8px 8px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.pomo-panel-title { flex: 1; font-size: 13px; font-weight: 600; }
+.pomo-pin {
+  display: flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-muted); cursor: pointer; white-space: nowrap;
+}
+.pomo-pin input { cursor: pointer; }
+.pomo-panel-body { padding: 12px; }
+
+/* 상단바 = 인라인 미니 플레이어 (재생 버튼 + 곡 제목). yt-host 는 숨김. */
+#musicbar { flex: 1; min-width: 0; display: flex; align-items: center; }
+
+.mbar { display: flex; align-items: center; gap: 8px; min-width: 0; width: 100%; }
+.mbar-play {
+  flex: 0 0 auto;
+  width: 34px; height: 34px;
+  background: var(--accent) !important;
+  color: #0f1117 !important;
+  border-radius: 50%;
+  font-size: 14px;
+}
+.mbar-play:hover { background: var(--accent-hover) !important; }
+.mbar-title {
+  flex: 1; min-width: 0;
+  text-align: left;
+  font-size: 13px; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  padding: 6px 8px; border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.mbar-title:hover { background: var(--surface-2); }
 
 .mb-controls { display: flex; align-items: center; gap: 2px; }
 .mb-controls .btn-icon { color: var(--text-muted); border-radius: 50%; }
@@ -294,68 +348,39 @@
 .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
 .card h3 .muted { font-weight: 400; }
 
-/* --------------------------------------------------------------- 하단 탭바 */
-#tabbar {
-  flex: 0 0 auto;
-  height: var(--tabbar-h);
-  background: var(--surface-0);
-  border-top: 1px solid var(--border);
-  padding-bottom: env(safe-area-inset-bottom);
-  z-index: 60;
-  display: flex;
-  gap: 0;
-}
-
-#tabbar .tabbar-item {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  color: var(--text-dim);
-  font-size: 10px;
-  font-weight: 500;
+/* 오늘 일정 목록 — 캘린더 일간 목록과 같은 점 + 제목 스타일 */
+.today-list { display: flex; flex-direction: column; gap: 2px; }
+.today-row {
+  display: flex; align-items: baseline; gap: 9px;
+  padding: 7px 6px; border-radius: var(--radius-sm);
   cursor: pointer;
-  transition: all 0.2s;
 }
-
-#tabbar .tabbar-item:hover {
-  background: var(--surface-1);
-  color: var(--text);
+.today-row:hover { background: var(--surface-2); }
+.today-dot {
+  flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%;
+  align-self: center; background: var(--accent);
 }
-
-#tabbar .tabbar-item.active {
-  color: var(--accent);
-  background: var(--accent-dim);
-}
-
-/* 음악 재생 중 — 하단 탭 아이콘 강조 */
-#tabbar .tabbar-item.running {
-  color: var(--accent);
-}
-#tabbar .tabbar-item.running .icon {
-  animation: tabbar-pulse 1.6s ease-in-out infinite;
-}
-@keyframes tabbar-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.55; }
-}
-
-#tabbar .tabbar-item .icon {
-  font-size: 20px;
-  line-height: 1;
-}
-
-#tabbar .tabbar-item .label {
-  white-space: nowrap;
-}
-
-#tabbar .tabbar-item .pomo-time {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 10px;
+.today-time {
+  flex: 0 0 auto; font-size: 11px; color: var(--text-dim);
   font-variant-numeric: tabular-nums;
 }
+.today-title { flex: 1; min-width: 0; font-size: 13.5px; line-height: 1.45; word-break: break-word; }
+
+/* --------------------------------------------------- 하단 바 (빠른 일정 입력) */
+#tabbar {
+  flex: 0 0 auto;
+  min-height: var(--tabbar-h);
+  background: var(--surface-0);
+  border-top: 1px solid var(--border);
+  padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 내비게이션 메뉴 버튼 (상단바 ☰) — 데스크톱은 왼쪽 사이드바가 있어 숨깁니다 */
+#nav-menu-trigger { display: none; }
 
 /* --------------------------------------------------------------- 음악 플레이어 팝업 */
 .music-popup {
@@ -419,11 +444,6 @@
   color: var(--accent);
 }
 
-/* 음악바(상단)에서 팝업 트리거 버튼 숨기기 - 반응형에서만 표시 */
-#music-popup-trigger {
-  display: none;
-}
-
 /* --------------------------------------------------------------- 플로팅 창 */
 .float {
   position: fixed;
@@ -454,6 +474,67 @@
   cursor: nwse-resize;
   background: linear-gradient(135deg, transparent 50%, var(--border-accent) 50%);
 }
+
+/* --------------------------------------------------------- 사이드 도킹 패널 (메모)
+   기본값 = 데스크톱: 오른쪽에 붙는 세로 패널. 손잡이 버튼은 왼쪽 가장자리 가운데. */
+:root { --side-panel-w: min(380px, 86vw); }
+
+.side-panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--side-panel-w);
+  background: var(--surface-1);
+  border-left: 1px solid var(--border-accent);
+  box-shadow: var(--shadow);
+  display: flex;
+  flex-direction: column;
+  z-index: 500;
+  transform: translateX(100%);
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.side-panel.open { transform: none; }
+
+.side-panel-head {
+  flex: 0 0 auto;
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+.side-panel-head h3 { font-size: 13px; font-weight: 600; flex: 1; }
+.side-panel-body { flex: 1; overflow: auto; padding: 12px; min-height: 0; }
+
+/* 손잡이 — 화면 오른쪽 가장자리 세로 중앙의 탭. 패널 밖(body 직속)이라
+   패널이 숨겨져도 항상 보입니다. 데스크톱·모바일 동일. */
+.side-panel-handle {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 30px;
+  height: 64px;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--surface-2);
+  border: 1px solid var(--border-accent);
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  box-shadow: var(--shadow);
+  z-index: 499;
+  transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.side-panel-handle:hover { color: var(--text); }
+/* 데스크톱: 패널이 열리면 손잡이도 패널 왼쪽 가장자리로 함께 이동 */
+.side-panel-handle.open { right: var(--side-panel-w); }
+.side-panel-handle-icon {
+  font-size: 18px; line-height: 1;
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+/* 닫혀 있을 때 ‹ (열기), 열려 있을 때 › (닫기) */
+.side-panel-handle.open .side-panel-handle-icon { transform: rotate(180deg); }
 
 /* --------------------------------------------------------------- 모달 */
 .modal-backdrop {
@@ -513,34 +594,21 @@
     display: block;
   }
 
-  /* 모바일: 상단 음악바 간결히 */
+  /* 모바일: 상단 음악바 간결히 + 오른쪽 ☰ 내비 버튼 */
   #topbar {
     gap: 8px;
     padding: 0 8px;
   }
 
-  .mb-controls .btn-icon {
-    width: 28px;
-    height: 28px;
+  #nav-menu-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 0 0 auto;
   }
 
-  .mb-play {
-    width: 32px;
-    height: 32px;
-  }
-
-  #musicbar {
-    flex: 1;
-    min-width: 0;
-  }
-
-  #music-popup-trigger {
-    display: block;
-  }
-
-  #music-popup-trigger-bottom {
-    display: none;
-  }
+  .mb-controls .btn-icon { width: 28px; height: 28px; }
+  .mb-play { width: 32px; height: 32px; }
 
   /* 모바일: 메인 콘텐츠 */
   #body {
@@ -552,8 +620,17 @@
     overflow: visible;
   }
 
+  /* 모바일에서는 본문이 body 스크롤이라, 하단 입력 바를 화면에 고정해
+     어느 페이지에서든 항상 보이게 합니다. */
+  #tabbar {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+  }
+
   .page {
-    padding: 16px 12px calc(var(--tabbar-h) + 20px);
+    padding: 16px 12px calc(var(--tabbar-h) + 28px);
     max-width: 100%;
   }
 
@@ -575,6 +652,27 @@
   .float-resize {
     display: none;
   }
+
+  /* 모바일: 메모 패널은 아래에서 올라오는 바텀 시트 */
+  .side-panel {
+    top: auto;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: 82vh;
+    border-left: none;
+    border-top: 1px solid var(--border-accent);
+    border-radius: 16px 16px 0 0;
+    transform: translateY(100%);
+    z-index: 450;
+  }
+  .side-panel.open { transform: none; }
+  .side-panel-head { border-radius: 16px 16px 0 0; }
+
+  /* 손잡이는 데스크톱과 동일하게 오른쪽 가장자리 세로 중앙.
+     시트는 전체 너비라 열려도 손잡이는 그대로 오른쪽 끝(닫기 버튼 역할). */
+  .side-panel-handle.open { right: 0; }
 
   .popover {
     right: 8px;
@@ -600,28 +698,23 @@
     display: none !important;
   }
 
-  #music-popup-trigger {
-    display: none;
-  }
-
-  #music-popup-trigger-bottom {
-    display: flex;
-  }
-
-  /* 데스크톱: 빠른 입력 필드 표시 */
-  .quick-add-wrap {
-    display: flex;
-  }
+  /* 데스크톱: 뽀모도로 패널이 왼쪽 사이드바(240px)를 가리지 않도록 */
+  #pomodoro-panel { left: 252px; }
 
   /* 데스크톱: 메인과 상단바 세로 배치 */
   #body {
     flex-direction: column;
+    transition: padding-right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
-  /* 플로팅 창: 자유로운 위치 */
-  .float.open {
-    inset: auto !important;
+  /* 데스크톱: 메모 패널이 열리면 본문을 그만큼 좁혀 겹치지 않게 합니다 */
+  body.panel-memo-open #body {
+    padding-right: var(--side-panel-w);
   }
+
+  /* 플로팅 창: registerFloat 이 지정한 left/top/width/height 인라인 값을 그대로 사용.
+     모바일 전체화면 규칙은 max-width:900px 미디어쿼리 안에만 있으므로 여기서 되돌릴 필요가 없습니다.
+     (inset:auto !important 를 주면 인라인 left/top 이 무시돼 창이 화면 밖으로 밀려납니다.) */
 }
 
 /* --------------------------------------------------------------- 홈 */
