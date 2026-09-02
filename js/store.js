@@ -30,6 +30,7 @@ window.MW = window.MW || {};
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
         homeOrder: ['calendar', 'inbox', 'habits', 'money'],  // 홈 대시보드 카드 순서 (설정 → 테마에서 변경)
         homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
+        reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
            accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
@@ -114,6 +115,7 @@ window.MW = window.MW || {};
     out.settings = Object.assign({}, base.settings, data.settings || {});
     if (!Array.isArray(out.settings.homeOrder)) out.settings.homeOrder = base.settings.homeOrder.slice();
     if (typeof out.settings.homeImage !== 'string') out.settings.homeImage = '';
+    if (['auto', 'on', 'off'].indexOf(out.settings.reduceMotion) < 0) out.settings.reduceMotion = 'auto';
     delete out.settings.pomoScale;   // 구버전 필드 — 이제 창 크기(settings.floats.pomodoro)로 대체
     // theme: 프리셋 + 세부 오버라이드 구조로 정규화. 구버전( { mode, accent } )도 여기서 흡수합니다.
     var th = (out.settings.theme && typeof out.settings.theme === 'object') ? out.settings.theme : {};

@@ -197,6 +197,26 @@ body.bg-image {
   body { background-attachment: scroll; }
 }
 
+/* --- 동작(애니메이션) 줄이기 --- (설정 → 테마. shell.applyMotion 이 <html> 클래스 지정) */
+:root.reduce-motion *,
+:root.reduce-motion *::before,
+:root.reduce-motion *::after {
+  animation-duration: 1ms !important;
+  animation-iteration-count: 1 !important;
+  transition-duration: 1ms !important;
+  scroll-behavior: auto !important;
+}
+@media (prefers-reduced-motion: reduce) {
+  :root:not(.motion-ok) *,
+  :root:not(.motion-ok) *::before,
+  :root:not(.motion-ok) *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 button, input, select, textarea { font-family: inherit; font-size: inherit; color: inherit; }
 button { cursor: pointer; background: none; border: none; }
 a { color: var(--accent); }

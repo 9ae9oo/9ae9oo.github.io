@@ -190,7 +190,8 @@ window.MW = window.MW || {};
   function boot() {
     MW.store.load();
     MW.shell.applyTheme();
-    MW.store.on(function () { MW.shell.applyTheme(); });   // 색 변경은 렌더 지연 없이 바로 반영
+    MW.shell.applyMotion();
+    MW.store.on(function () { MW.shell.applyTheme(); MW.shell.applyMotion(); });   // 색·동작 변경은 렌더 지연 없이 바로 반영
 
     MW.music.mount($('#musicbar'));
     MW.pomodoro.init();

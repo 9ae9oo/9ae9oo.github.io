@@ -134,12 +134,13 @@
   box-shadow: 0 0 0 2px var(--accent-dim);
 }
 
-/* 사이드바 하단 영역 (뽀모도로) */
+/* 사이드바 하단 영역 (설정 — 맨 아래 고정) */
 .sidebar-footer {
   flex: 0 0 auto;
   padding: 8px;
   border-top: 1px solid var(--border);
 }
+.sidebar-footer .sidebar-item { width: 100%; }
 #pomodoro-trigger { width: 100%; }
 #pomodoro-trigger .tp-time {
   margin: 0;

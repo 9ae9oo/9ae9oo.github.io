@@ -41,17 +41,18 @@
         <span class="icon">💰</span>
         <span class="label">정산</span>
       </button>
-      <button class="sidebar-item" data-nav="settings" title="설정">
-        <span class="icon">⚙️</span>
-        <span class="label">설정</span>
-      </button>
-    </nav>
-    <!-- 뽀모도로 — 사이드바 하단. 누르면 플로팅 창을 켜고 끔 -->
-    <div class="sidebar-footer">
+      <!-- 뽀모도로 — 라우팅 아님. 누르면 플로팅 창을 켜고 끔 -->
       <button id="pomodoro-trigger" class="sidebar-item pomo-item" data-float="pomodoro" title="뽀모도로" aria-label="뽀모도로">
         <span class="icon">🍅</span>
         <span class="label">뽀모도로</span>
         <span class="tp-time">25:00</span>
+      </button>
+    </nav>
+    <!-- 설정 — 사이드바 맨 아래 고정 -->
+    <div class="sidebar-footer">
+      <button class="sidebar-item" data-nav="settings" title="설정" aria-label="설정">
+        <span class="icon">⚙️</span>
+        <span class="label">설정</span>
       </button>
     </div>
   </aside>

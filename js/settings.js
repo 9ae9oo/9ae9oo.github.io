@@ -747,8 +747,27 @@ window.MW = window.MW || {};
     /* 3. 배경 이미지 */
     host.appendChild(bgImageCard());
 
+    /* 4. 동작(애니메이션) 줄이기 */
+    host.appendChild(motionCard());
+
     host.appendChild(homeOrderCard());
     host.appendChild(homeImageCard());
+  }
+
+  function motionCard() {
+    var cur = MW.store.state.settings.reduceMotion || 'auto';
+    var opts = [['auto', '자동 (OS 설정)'], ['on', '항상 줄이기'], ['off', '항상 켜기']];
+    var seg = el('div.seg', {}, opts.map(function (o) {
+      return el('button' + (cur === o[0] ? '.active' : ''), {
+        type: 'button', text: o[1],
+        onclick: function () { MW.store.update(function (s) { s.settings.reduceMotion = o[0]; }); }
+      });
+    }));
+    return el('div.card', {}, [
+      el('h3', { text: '동작 줄이기' }),
+      el('div.small.dim', { text: '패널·플로팅 창이 열고 닫힐 때의 애니메이션을 줄입니다.', style: { marginBottom: '10px' } }),
+      seg
+    ]);
   }
 
   function bgImageCard() {

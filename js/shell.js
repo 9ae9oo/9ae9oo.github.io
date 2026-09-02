@@ -368,6 +368,19 @@ window.MW = window.MW || {};
     applyTheme(Object.assign({}, base, patch || {}));
   }
 
+  /**
+   * 동작(애니메이션) 줄이기 — 설정값에 따라 <html> 클래스를 붙입니다.
+   *  'auto' → 클래스 없음 (CSS 의 prefers-reduced-motion 미디어쿼리에 맡김)
+   *  'on'   → .reduce-motion (항상 줄임)
+   *  'off'  → .motion-ok    (OS가 줄이라고 해도 애니메이션 유지)
+   */
+  function applyMotion() {
+    var v = (MW.store.state.settings && MW.store.state.settings.reduceMotion) || 'auto';
+    var root = document.documentElement;
+    root.classList.toggle('reduce-motion', v === 'on');
+    root.classList.toggle('motion-ok', v === 'off');
+  }
+
   /* ---------------------------------------------------------- 사이드바 토글 */
 
   var sidebarCollapsed = false;
@@ -420,6 +433,6 @@ window.MW = window.MW || {};
     syncFloatButtons: syncButtons, isMobile: isMobile,
     modal: modal, closeModal: closeModal, confirm: confirmDialog,
     requestNotify: requestNotify, notify: notify, playSound: playSound,
-    applyTheme: applyTheme, previewTheme: previewTheme
+    applyTheme: applyTheme, previewTheme: previewTheme, applyMotion: applyMotion
   };
 })();
