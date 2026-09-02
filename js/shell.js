@@ -125,6 +125,7 @@ window.MW = window.MW || {};
     }, [el('span.side-panel-handle-icon', { text: '‹' })]);
     var head = el('div.side-panel-head', {}, [
       el('h3', { text: opts.title || '' }),
+      opts.headExtra || null,
       el('button.btn.btn-ghost.btn-icon', {
         title: '닫기', 'aria-label': '닫기', text: '✕',
         onclick: function () { api.close(); }
@@ -136,7 +137,7 @@ window.MW = window.MW || {};
     document.body.appendChild(handle);
 
     var api = {
-      id: id, node: node, body: body,
+      id: id, node: node, body: body, head: head,
       isOpen: function () { return node.classList.contains('open'); },
       open: function () {
         node.classList.add('open');

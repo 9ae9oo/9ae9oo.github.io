@@ -74,39 +74,74 @@ input[type="checkbox"].chk:checked::after {
 .todo-item .t-actions { display: flex; gap: 2px; opacity: 0; }
 .todo-item:hover .t-actions { opacity: 1; }
 
-/* --------------------------------------------------------------- 메모 */
-.memo-toolbar-top { display: flex; gap: 6px; margin-bottom: 10px; }
-
+/* --------------------------------------------------------------- 메모 (포스트잇) */
 .memo-card {
-  background: var(--surface-0);
+  /* background · border-color 는 메모 색상에 따라 JS가 인라인으로 지정 */
   border: 1px solid var(--border);
-  border-left: 3px solid var(--amber);
   border-radius: var(--radius-sm);
   margin-bottom: 10px;
-  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 6px 16px rgba(0, 0, 0, 0.05);
 }
-.memo-head { display: flex; align-items: center; gap: 6px; padding: 7px 8px; background: var(--surface-2); }
+
+.memo-head { display: flex; align-items: flex-start; gap: 6px; padding: 8px 10px 2px; }
 .memo-head .m-title {
   flex: 1; background: transparent; border: none; outline: none;
-  font-size: 13px; font-weight: 600; color: var(--text); min-width: 0;
+  font-size: 13.5px; font-weight: 700; color: var(--text); min-width: 0;
 }
-.memo-head select { width: auto; padding: 3px 6px; font-size: 11px; }
+.memo-head .m-title::placeholder { color: var(--text-dim); font-weight: 600; }
 
-.memo-tools { display: flex; flex-wrap: wrap; gap: 2px; padding: 5px 6px; border-bottom: 1px solid var(--border); }
-.memo-tools button {
-  font-size: 11px; padding: 2px 7px; border-radius: 5px; color: var(--text-muted);
-  border: 1px solid transparent;
+.memo-del {
+  flex: 0 0 auto; font-size: 11px; line-height: 1; padding: 3px;
+  color: var(--text-dim); opacity: 0; transition: opacity 0.12s;
 }
-.memo-tools button:hover { background: var(--surface-2); color: var(--text); border-color: var(--border); }
+.memo-card:hover .memo-del, .memo-del:focus { opacity: 0.7; }
+.memo-del:hover { opacity: 1; color: var(--red); }
 
+.memo-view {
+  padding: 4px 12px 8px; font-size: 13px; line-height: 1.7;
+  color: var(--text); cursor: text; min-height: 22px;
+}
+.memo-empty { color: var(--text-dim); }
 .memo-input {
   width: 100%; background: transparent; border: none; outline: none; resize: none;
-  padding: 9px 10px; font-size: 13px; line-height: 1.65; color: var(--text-muted);
-  font-family: var(--font); min-height: 54px; display: block;
+  padding: 4px 12px 8px; font-size: 13px; line-height: 1.7; color: var(--text);
+  font-family: var(--font); min-height: 48px; display: block;
 }
-.memo-preview { padding: 4px 10px 10px; font-size: 13px; line-height: 1.7; border-top: 1px dashed var(--border); }
-.memo-preview:empty { display: none; }
-.memo-label { font-size: 10px; color: var(--text-dim); padding: 5px 10px 0; letter-spacing: 0.05em; }
+.memo-input::placeholder { color: var(--text-dim); }
+
+.memo-foot { display: flex; align-items: center; gap: 8px; padding: 0 10px 8px; }
+.memo-tag {
+  background: transparent; border: none; outline: none; cursor: pointer;
+  color: var(--text-muted); font-size: 11px; padding: 2px 0; max-width: 100%;
+}
+
+/* 헤더의 태그 필터 (가로 스크롤) */
+.memo-tabs {
+  flex: 1; min-width: 0;
+  display: flex; gap: 4px; overflow-x: auto;
+  scrollbar-width: none;
+}
+.memo-tabs::-webkit-scrollbar { height: 0; }
+
+/* 상단 고정 입력줄 (헤더 바로 아래, 패널 스크롤 영역 밖) */
+.memo-compose {
+  flex: 0 0 auto;
+  display: flex; align-items: flex-end; gap: 6px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-2);
+}
+.memo-compose-input {
+  flex: 1; min-width: 0; display: block;
+  resize: vertical;                       /* 우하단 모서리를 끌어 높이 조절 */
+  min-height: 64px; max-height: 60vh; overflow-y: auto;
+  background: var(--surface-0); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font); font-size: 13px; line-height: 1.6;
+  padding: 9px 11px;
+}
+.memo-compose-input:focus { border-color: var(--accent); }
+.memo-compose-add { flex: 0 0 auto; align-self: flex-end; height: 36px; padding: 0 13px; }
 
 /* 마크다운 렌더 결과 */
 .md h1, .md h2, .md h3 { font-size: 15px; font-weight: 700; margin: 8px 0 4px; }

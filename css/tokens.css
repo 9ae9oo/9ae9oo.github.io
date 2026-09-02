@@ -73,8 +73,7 @@
   /* 테마 시스템 정적 폴백 — 아래 프리셋 / applyTheme() 이 덮어씁니다 */
   --on-accent: #16181d;                 /* 강조색 배경 위 글자색 (JS가 강조색 밝기에 맞춰 재계산) */
   --bg-image: none;                      /* 화면 전체 뒤 배경 이미지 (JS가 url(...) 로 채움) */
-  --chrome-bg: var(--surface-0);
-  --chrome-translucent: rgba(20, 22, 30, 0.72);
+  --bg-scrim: rgba(255, 255, 255, 0.84); /* 배경 이미지 위에 덮는 밝은 막 — 짙은 사진도 옅게 눌러 가독성 유지 */
 }
 
 /* 라이트 모드(구) — 이제 applyTheme() 은 data-preset 만 씁니다. 수동 지정 시의 폴백으로만 남겨둠 */
@@ -110,8 +109,8 @@
   --teal-dim: rgba(45, 212, 191, 0.16);
   --coral-dim: rgba(251, 113, 133, 0.16);
   --shadow: 0 6px 22px rgba(30, 36, 54, 0.10);
-  --chrome-translucent: rgba(255, 255, 255, 0.72);
-  --chrome-translucent: color-mix(in srgb, var(--surface-0) 74%, transparent);
+  --bg-scrim: rgba(255, 255, 255, 0.84);
+  --bg-scrim: color-mix(in srgb, var(--surface-0) 84%, transparent);
 }
 
 :root[data-preset="base"] {
@@ -176,15 +175,22 @@ html, body { height: 100%; }
 body {
   font-family: var(--font);
   background-color: var(--bg);
-  background-image: var(--bg-image, none);
   background-size: cover;
   background-position: center;
+  background-repeat: no-repeat;
   background-attachment: fixed;
   color: var(--text);
   line-height: 1.6;
   font-size: 14px;
   -webkit-font-smoothing: antialiased;
   overflow: hidden;
+}
+/* 배경 이미지가 있을 때만: 밝은 막을 한 겹 덮어 항상 옅게 (짙은 사진에서도 카드·글자가 보이도록).
+   사이드바·상단바·하단바는 불투명 흰색 그대로 둡니다. */
+body.bg-image {
+  background-image:
+    linear-gradient(var(--bg-scrim), var(--bg-scrim)),
+    var(--bg-image);
 }
 @media (max-width: 900px) {
   /* 모바일에서 fixed 배경은 스크롤 시 버벅여서 scroll 로 */
