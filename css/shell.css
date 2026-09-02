@@ -7,16 +7,17 @@
 #app {
   display: flex;
   flex-direction: row;
-  align-items: stretch;
+  align-items: center;   /* 좌·우 레일은 세로 가운데의 작은 메뉴 */
   justify-content: center;
   padding: 14px;
   height: 100vh;
   height: 100dvh;
 }
 
-/* --------------------------------------------------------------- 좌측 레일 (여백에 떠 있음) */
+/* --------------------------------------------------------------- 좌측 레일 (여백에 떠 있는 작은 메뉴) */
 #sidebar {
   flex: 0 0 var(--sidebar-w);
+  align-self: center;
   margin-right: 18px;   /* 컨텐츠와 사이 여백 (우측 레일과 달리 떨어져 있음) */
   background: var(--surface-0);
   border: 1px solid var(--border);
@@ -70,21 +71,22 @@
 /* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
 .pomo-item { flex-direction: column; gap: 2px; }
 
-/* --------------------------------------------------- 우측 레일 (컨텐츠에 붙음, 세로 텍스트) */
+/* --------------------------------------------------- 우측 레일 (컨텐츠 오른쪽 가장자리 가운데의 작은 탭) */
 #toolrail {
-  position: relative;   /* .side-panel 이 left:100% 로 이 레일의 오른쪽에 붙음 */
   flex: 0 0 var(--sidebar-w);
+  align-self: center;
+  margin-left: -1px;                       /* 컨텐츠 오른쪽 테두리와 겹쳐 하나처럼 */
   background: var(--surface-0);
   border: 1px solid var(--border);
-  border-left: none;                       /* 컨텐츠 오른쪽 테두리를 공유 */
+  border-left: none;
   border-radius: 0 var(--radius) var(--radius) 0;
-  box-shadow: var(--shadow);
+  box-shadow: 6px 0 18px rgba(0, 0, 0, 0.06);
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;   /* 가운데 버튼 느낌 */
-  gap: 26px;
-  padding: 12px 4px;
+  justify-content: center;
+  gap: 22px;
+  padding: 16px 4px;
   z-index: 51;
 }
 .tool-item {
@@ -224,16 +226,17 @@
 .track-item .t-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-item .t-idx { font-size: 11px; color: var(--text-dim); width: 18px; text-align: right; flex-shrink: 0; }
 
-/* --------------------------------------------------------------- 가운데 컨텐츠 (최대폭) */
+/* --------------------------------------------------------------- 가운데 컨텐츠 (최대폭, 전체 높이) */
 #content {
   flex: 0 1 var(--content-max, 1100px);
+  align-self: stretch;
   min-width: 0;
   display: flex;
   flex-direction: column;
   position: relative;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius) 0 0 var(--radius);   /* 오른쪽은 우측 레일이 이어받음 */
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   overflow: hidden;
 }
@@ -394,28 +397,25 @@
    기본값 = 데스크톱: 오른쪽에 붙는 세로 패널. 손잡이 버튼은 왼쪽 가장자리 가운데. */
 :root { --side-panel-w: min(380px, 86vw); }
 
-/* 데스크톱: 우측 레일(#toolrail)의 자식. 레일 오른쪽 여백으로 펼쳐짐 */
+/* 데스크톱: 화면 오른쪽 모서리에서 슬라이드해 나오는 드로어 (기존 메모장 방식) */
 .side-panel {
-  position: absolute;
-  left: 100%;
-  top: -1px;
-  bottom: -1px;
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  bottom: 14px;
   width: var(--side-panel-w);
-  max-width: 42vw;
   background: var(--surface-1);
   border: 1px solid var(--border-accent);
-  border-radius: 0 var(--radius) var(--radius) 0;
+  border-radius: var(--radius);
   box-shadow: var(--shadow);
   display: flex;
   flex-direction: column;
   overflow: hidden;
   z-index: 500;
-  opacity: 0;
-  transform: translateX(-10px);
-  pointer-events: none;
-  transition: opacity 0.2s, transform 0.24s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateX(calc(100% + 20px));
+  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.side-panel.open { opacity: 1; transform: none; pointer-events: auto; }
+.side-panel.open { transform: none; }
 
 .side-panel-head {
   flex: 0 0 auto;

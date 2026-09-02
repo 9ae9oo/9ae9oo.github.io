@@ -131,8 +131,7 @@ window.MW = window.MW || {};
     ]);
     node.appendChild(head);
     node.appendChild(body);
-    // 데스크톱: 우측 레일 안에 붙여 레일 오른쪽으로 펼쳐지게. 모바일: CSS가 fixed 로 덮어씀.
-    ($('#toolrail') || document.body).appendChild(node);
+    document.body.appendChild(node);
     document.body.appendChild(handle);
 
     var api = {
