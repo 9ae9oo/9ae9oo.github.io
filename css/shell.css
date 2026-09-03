@@ -531,51 +531,62 @@ body.panel-instant #panelhost { transition: none !important; }
 /* #6 4단계에서 상단 nav · 떠 있는 도구 pill 로 정식 개편 예정.
    지금은 좁은 화면에서 깨지지 않을 정도로만. 분기점 640 — 한 곳만 고치면 됨. */
 @media (max-width: 640px) {
-  :root { --topbar-h: 52px; }
+  /* 위 = 어디로 갈까(메뉴), 아래 = 무엇을 할까(도구 탭 + 입력창).
+     도구 탭은 데스크톱의 "붙은 탭"을 90° 돌려 입력창 윗변에 붙인 것입니다. */
 
   #app {
     flex-direction: column;
     gap: 8px;
     padding: 8px;
   }
-  /* 상단 = 메인 메뉴, 하단 = 도구. 서로 덮지 않도록 흐름에 둠 */
+
+  /* 메뉴 — 상단 가로 바. 라벨은 base 규칙대로 계속 숨김(아이콘만) */
   #sidebar {
     flex: 0 0 auto;
-    order: 0;
+    align-self: stretch;
+    margin-right: 0;
   }
   #sidebar .sidebar-nav { flex-direction: row; }
   .sidebar-item { flex: 1; }
 
-  #content { flex: 1; order: 1; min-width: 0; min-height: 0; max-width: none; }
-  body.anypanel-open #content { max-width: none; }
+  #content { flex: 1; min-width: 0; min-height: 0; }
   #panelhost { flex-basis: 0 !important; overflow: visible; }
+
   #main { align-items: stretch; -webkit-overflow-scrolling: touch; }
-  /* #main 하단 패딩 = 떠 있는 도구줄 + 입력창 높이만큼 */
-  #content #main { padding-bottom: 118px; }
+  /* 상단 메뉴는 흐름 안에 있어 겹치지 않음. 아래는 [도구 탭 + 입력창] 만큼 비움 */
+  #content #main {
+    padding-top: 8px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+  }
   .page { padding: 16px 12px 24px; }
 
-  /* 모바일에서 미니바 숨김 (도구 메뉴와 충돌) */
+  /* 미니바는 좁은 화면에서 숨김 — BGM 탭으로 제어합니다 */
   #musicmini { display: none !important; }
 
-  /* 도구줄: 하단에 떠 있음, 입력창 바로 위 (가로 텍스트) */
+  /* 입력창 — 화면 최하단. base 의 top:14px / translateX 를 반드시 풀어야
+     위·아래가 동시에 걸려 세로로 늘어나지 않습니다. */
+  #quickbar {
+    position: fixed;
+    top: auto;
+    left: 10px; right: 10px;
+    bottom: calc(8px + env(safe-area-inset-bottom));
+    transform: none;
+    width: auto;
+    z-index: 300;
+  }
+  /* 알약이면 위에 붙는 탭이 곡면에 얹혀 어긋납니다 — 평평한 윗변이 필요 */
+  .quick-add-input { border-radius: var(--radius-sm); }
+
+  /* 도구 탭 — 입력창(높이 46px) 윗변에 틈 없이 붙습니다 */
   #toolrail {
     position: fixed;
     top: auto;
-    align-self: auto;
-    margin-left: 0;
-    margin-right: 0;
     left: 10px; right: 10px;
-    bottom: calc(62px + env(safe-area-inset-bottom));
+    bottom: calc(54px + env(safe-area-inset-bottom));
     transform: none;
     flex-direction: row;
-    justify-content: space-around;
-    gap: 4px;
-    padding: 4px;
-    background: var(--surface-0);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    box-shadow: var(--shadow);
-    z-index: 280;
+    gap: 3px;
+    z-index: 299;
   }
   .tool-item {
     flex: 1;
@@ -584,38 +595,28 @@ body.panel-instant #panelhost { transition: none !important; }
     text-align: center;
     padding: 8px 4px;
     min-height: 34px;
-    border: none;
-    box-shadow: none;
-    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    border-bottom: none;   /* 입력창과 맞닿는 변 */
+    border-radius: var(--radius-sm) var(--radius-sm) 0 0;   /* 바깥쪽(위)만 둥글게 */
+    box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   }
   .tool-item .tp-time { margin-top: 2px; }
 
-  /* 입력창: 화면 최하단에 고정, 도구보다 위 레이어 */
-  #quickbar {
-    position: fixed;
-    left: 10px; right: 10px;
-    bottom: calc(8px + env(safe-area-inset-bottom));
-    transform: none;
-    width: auto;
-    z-index: 300;
-  }
-
-  /* 뽀모도로 창 · 메모 패널: 화면을 덮지 않고 도구줄 위에 뜸 (입력창 안 가림) */
+  /* 도구 패널 — 탭 바로 위에서 올라옵니다 */
   .float.open,
   .side-panel {
     position: fixed;
     top: auto !important;
     left: 10px !important;
     right: 10px !important;
-    bottom: calc(112px + env(safe-area-inset-bottom)) !important;
+    bottom: calc(88px + env(safe-area-inset-bottom)) !important;
     width: auto !important;
     max-width: none !important;
     height: auto !important;
     border: 1px solid var(--border-accent);
     border-radius: var(--radius);
   }
-  /* 모바일: 뽀모도로 창이 최상단 레이어가 되지 않게 (도구줄·입력창이 위).
-     registerFloat 이 인라인 z-index 를 주므로 !important 필요. */
+  /* registerFloat 이 인라인 z-index 를 주므로 !important 필요 */
   .float.open { max-height: 46vh; z-index: 250 !important; }
   .side-panel {
     display: flex !important;   /* 모바일은 opacity 로 여닫음 */
@@ -631,7 +632,6 @@ body.panel-instant #panelhost { transition: none !important; }
   .float-body, .side-panel-body { overflow-y: auto; }
   .float-head { cursor: default; }
   .float-resize { display: none; }
-
 }
 
 
