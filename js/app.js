@@ -199,8 +199,8 @@ window.MW = window.MW || {};
     MW.shell.onRoute('settings', function () { MW.settings.render(); });
     MW.shell.init();
 
-    // 넓은 화면에선 도구 영역(우측 레일 + 패널)이 늘 한 그룹으로 보이도록 기본 패널을 하나 엽니다
-    if (window.innerWidth > 640 && MW.shell.floats.inbox) MW.shell.floats.inbox.open();
+    // 아주 넓은 화면(> 2500px)에서만 도구 영역을 펼친 상태로 시작. 그 외엔 닫힌 채로.
+    if (window.innerWidth > 2500 && MW.shell.floats.inbox) MW.shell.floats.inbox.open();
 
     MW.store.on(renderAll);
     renderHome();

@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;   /* 좌·우 레일은 세로 가운데의 작은 메뉴 */
-  justify-content: flex-start;   /* 왼쪽 정렬 — 남는 공간은 #content 의 margin-right:auto 가 처리 */
-  padding: 14px 0 14px 14px;   /* 오른쪽은 0 — 패널 존이 화면 끝까지 붙도록 */
+  justify-content: center;   /* [사이드바][컨텐츠][도구영역] 덩어리를 화면 중앙에 */
+  padding: 14px;
   height: 100vh;
   height: 100dvh;
 }
@@ -207,8 +207,7 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
    패널이 열려 #panelhost 가 넓어지면: 먼저 auto 여백이 줄고, 그래도 모자라면 flex-shrink 로 컨텐츠가 줄어듦. */
 #content {
   flex: 0 1 var(--content-max, 1100px);
-  margin-left: auto;         /* 남는 폭은 왼쪽으로 → [컨텐츠][탭][패널] 이 오른쪽에 붙어 고정.
-                                컨텐츠 max-width 넘는 화면에선 오른쪽 정렬, toolrail 은 항상 컨텐츠 옆(18px) */
+  /* 사이드바(왼쪽 18px)·도구영역(오른쪽 18px)이 양옆에 붙고, #app 이 이 덩어리를 화면 중앙에 둠 */
   align-self: stretch;
   min-width: 0;
   display: flex;
