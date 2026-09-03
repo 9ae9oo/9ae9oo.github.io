@@ -29,6 +29,11 @@
   </aside>
 
   <div id="content">
+    <!-- 빠른 일정 입력 — 컨텐츠 상단에 떠 있음 (바 배경 없음) -->
+    <div id="quickbar">
+      <input type="text" id="quick-add-input" class="quick-add-input" placeholder="내일 오후 3시 회의 / 할일" autocomplete="off">
+    </div>
+
     <main id="main">
 
       <section class="page active" data-page="home">
@@ -72,10 +77,8 @@
 
     </main>
 
-    <!-- 빠른 일정 입력 — 컨텐츠 하단에 떠 있음 (바 배경 없음) -->
-    <div id="quickbar">
-      <input type="text" id="quick-add-input" class="quick-add-input" placeholder="내일 오후 3시 회의 / 할일" autocomplete="off">
-    </div>
+    <!-- 음악 미니바 — 컨텐츠 하단에 떠 있음. music.js 가 채웁니다 (곡 없으면 숨김) -->
+    <div id="musicmini" hidden></div>
   </div>
 
   <!-- 우측 레일 — 컨텐츠 오른쪽 가장자리 가운데의 작은 탭들 -->

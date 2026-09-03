@@ -131,11 +131,11 @@
 }
 body.anypanel-open #panelhost { width: var(--side-panel-w); }
 
-/* 빠른 일정 입력 — #content 하단 가운데에 떠 있음 (바 배경 없음) */
+/* 빠른 일정 입력 — #content 상단 가운데에 떠 있음 (바 배경 없음) */
 #quickbar {
   position: absolute;
   left: 50%;
-  bottom: 14px;
+  top: 14px;
   transform: translateX(-50%);
   width: min(560px, calc(100% - 32px));
   z-index: 40;
@@ -155,6 +155,62 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 }
 .quick-add-input::placeholder { color: var(--text-dim); }
 .quick-add-input:focus { border-color: var(--accent); }
+
+/* ---- 음악 미니바 — #content 하단 가운데에 떠 있음. [◀ ▶ ▶] │ 제목·시간 / 프로그레스 ---- */
+#musicmini {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  width: min(560px, calc(100% - 32px));
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px 7px 8px;
+  background: var(--surface-0);
+  border: 2px solid var(--border);
+  border-radius: 999px;
+  box-shadow: var(--shadow);
+}
+#musicmini[hidden] { display: none; }
+
+.mm-ctrls { flex: 0 0 auto; display: flex; align-items: center; gap: 2px; }
+.mm-btn {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 11px; cursor: pointer;
+  transition: background 0.12s, color 0.12s;
+}
+.mm-btn:hover { background: var(--surface-2); color: var(--text); }
+.mm-play { background: var(--accent); color: var(--on-accent); width: 30px; height: 30px; font-size: 12px; }
+.mm-play:hover { background: var(--accent-hover); color: var(--on-accent); }
+
+.mm-sep { flex: 0 0 auto; width: 1px; align-self: stretch; margin: 2px 2px; background: var(--border); }
+
+.mm-right { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.mm-titlerow { display: flex; align-items: baseline; gap: 8px; }
+.mm-title {
+  flex: 1; min-width: 0;
+  font-size: 12px; font-weight: 500; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mm-time { flex: 0 0 auto; font-size: 10.5px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+
+.mm-track {
+  position: relative; height: 5px; border-radius: 999px;
+  background: var(--surface-2); cursor: pointer;
+  margin-right: 6px;   /* ◎ 헤드가 끝에서 잘리지 않게 */
+}
+.mm-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: var(--accent); border-radius: 999px; }
+.mm-head {
+  position: absolute; top: 50%; left: 0;
+  width: 12px; height: 12px; border-radius: 50%;
+  background: var(--accent); border: 2px solid var(--surface-0);
+  transform: translate(-50%, -50%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+.mm-track:hover .mm-head, .mm-track.dragging .mm-head { width: 15px; height: 15px; }
 #pomodoro-trigger .tp-time {
   margin: 0;
   font-size: 9.5px; font-weight: 600; color: var(--text-dim);
@@ -235,7 +291,8 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-bottom: 76px;   /* 떠 있는 입력창 자리 확보 */
+  padding-top: 70px;      /* 상단에 떠 있는 입력창 자리 */
+  padding-bottom: 76px;   /* 하단에 떠 있는 음악 미니바 자리 */
 }
 
 .page {

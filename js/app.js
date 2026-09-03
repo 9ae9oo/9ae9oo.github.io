@@ -175,6 +175,30 @@ window.MW = window.MW || {};
     MW.shell.syncFloatButtons();
   }, 40);
 
+  /* ------------------------------------- 넓은 화면에서 도구 패널 자동 펼침 */
+
+  /* 창이 2400px 을 넘어가면 접혀 있던 패널을 엽니다. 넘어가는 순간의 "직전 상태"를
+     기억해뒀다가 다시 2400 이하로 줄면 그 상태로 되돌립니다.
+       열려 있었음 → 넓어짐(유지) → 좁아짐: 열림
+       닫혀 있었음 → 넓어짐(자동 열림) → 좁아짐: 닫힘                             */
+  var WIDE_W = 2400;
+  var wasWide = false;
+  var stateBeforeWide = false;
+
+  function anyPanelOpen() { return document.body.classList.contains('anypanel-open'); }
+
+  function syncWidePanel() {
+    var wide = window.innerWidth > WIDE_W;
+    if (wide === wasWide) return;
+    if (wide) {
+      stateBeforeWide = anyPanelOpen();
+      if (!stateBeforeWide && MW.shell.floats.inbox) MW.shell.floats.inbox.open();
+    } else if (!stateBeforeWide) {
+      MW.shell.closeAllPanels();
+    }
+    wasWide = wide;
+  }
+
   /* ------------------------------------------------------------ 부팅 */
 
   function boot() {
@@ -199,8 +223,11 @@ window.MW = window.MW || {};
     MW.shell.onRoute('settings', function () { MW.settings.render(); });
     MW.shell.init();
 
-    // 아주 넓은 화면(> 2500px)에서만 도구 영역을 펼친 상태로 시작. 그 외엔 닫힌 채로.
-    if (window.innerWidth > 2500 && MW.shell.floats.inbox) MW.shell.floats.inbox.open();
+    syncWidePanel();
+    // 넓은 화면에서 사용자가 직접 여닫으면 "기억해둔 직전 상태"를 그 결과로 갱신
+    U.on(document.body, 'click', '[data-float]', function () {
+      if (window.innerWidth > WIDE_W) setTimeout(function () { stateBeforeWide = anyPanelOpen(); }, 0);
+    });
 
     MW.store.on(renderAll);
     renderHome();
@@ -226,7 +253,10 @@ window.MW = window.MW || {};
     // 닫기 전에 마지막 상태를 확실히 저장
     window.addEventListener('beforeunload', function () { MW.store.flush(); });
 
-    window.addEventListener('resize', U.debounce(function () { MW.shell.syncFloatButtons(); }, 200));
+    window.addEventListener('resize', U.debounce(function () {
+      MW.shell.syncFloatButtons();
+      syncWidePanel();
+    }, 200));
   }
 
   MW.app = {

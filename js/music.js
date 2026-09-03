@@ -19,6 +19,9 @@ window.MW = window.MW || {};
   var errorStreak = 0;         // 연속 재생 실패 수 — 무한 스킵 방지
   var ui = {};
   var panel = null;
+  var miniHost = null;
+  var seeking = false;         // 미니바 플레이헤드 드래그 중
+  var seekPct = 0;
 
   /* ------------------------------------------------------------ 데이터 */
 
@@ -207,7 +210,96 @@ window.MW = window.MW || {};
         ? pl.name + ' · ' + (pl.tracks.length ? (U.clamp(st().player.index || 0, 0, pl.tracks.length - 1) + 1) + '/' + pl.tracks.length : '0곡')
         : '설정에서 재생목록을 만들어 주세요';
     }
+
+    // 미니바 — 재생할 곡이 없으면 통째로 숨김
+    if (miniHost) miniHost.hidden = !t;
+    if (ui.miniPlay) ui.miniPlay.textContent = playing ? '❚❚' : '▶';
+    if (ui.miniTitle) ui.miniTitle.textContent = titleText;
+
     renderList();
+  }
+
+  /* --------------------------------------------------- 미니바 (컨텐츠 하단) */
+
+  function duration() {
+    if (!player || !player.getDuration) return 0;
+    try { var d = player.getDuration(); return (typeof d === 'number' && isFinite(d) && d > 0) ? d : 0; }
+    catch (e) { return 0; }
+  }
+  function currentTime() {
+    if (!player || !player.getCurrentTime) return 0;
+    try { var c = player.getCurrentTime(); return (typeof c === 'number' && isFinite(c)) ? c : 0; }
+    catch (e) { return 0; }
+  }
+
+  function paintProgress(p) {
+    if (!ui.miniFill) return;
+    ui.miniFill.style.width = (p * 100) + '%';
+    ui.miniHead.style.left = (p * 100) + '%';
+  }
+
+  function tickProgress() {
+    if (!ui.miniTrack || seeking) return;
+    var dur = duration(), cur = currentTime();
+    paintProgress(dur > 0 ? U.clamp(cur / dur, 0, 1) : 0);
+    if (ui.miniTime) ui.miniTime.textContent = U.fmtClock(cur) + ' / ' + U.fmtClock(dur);
+  }
+
+  /** ◎ 플레이헤드를 끌거나 바를 눌러 구간 이동 */
+  function attachSeek(track) {
+    function pctFrom(e) {
+      var r = track.getBoundingClientRect();
+      return r.width ? U.clamp((e.clientX - r.left) / r.width, 0, 1) : 0;
+    }
+    function move(e) { seekPct = pctFrom(e); paintProgress(seekPct); if (e.cancelable) e.preventDefault(); }
+    function up() {
+      if (!seeking) return;
+      seeking = false;
+      track.classList.remove('dragging');
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      var dur = duration();
+      if (dur > 0 && player && player.seekTo) {
+        try { player.seekTo(seekPct * dur, true); } catch (e) { /* 무시 */ }
+      }
+    }
+    track.addEventListener('pointerdown', function (e) {
+      if (duration() <= 0) return;
+      seeking = true;
+      track.classList.add('dragging');
+      seekPct = pctFrom(e);
+      paintProgress(seekPct);
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      e.preventDefault();
+    });
+  }
+
+  function mountMini(host) {
+    if (!host) return;
+    miniHost = host;
+    U.clear(host);
+
+    ui.miniPlay = el('button.mm-btn.mm-play', { type: 'button', title: '재생/일시정지', onclick: togglePlay });
+    ui.miniTitle = el('span.mm-title');
+    ui.miniTime = el('span.mm-time', { text: '00:00 / 00:00' });
+    ui.miniFill = el('div.mm-fill');
+    ui.miniHead = el('div.mm-head');
+    ui.miniTrack = el('div.mm-track', { title: '끌어서 구간 이동' }, [ui.miniFill, ui.miniHead]);
+
+    host.appendChild(el('div.mm-ctrls', {}, [
+      el('button.mm-btn', { type: 'button', text: '◀', title: '이전 곡', onclick: prevTrack }),
+      ui.miniPlay,
+      el('button.mm-btn', { type: 'button', text: '▶', title: '다음 곡', onclick: function () { nextTrack(false); } })
+    ]));
+    host.appendChild(el('div.mm-sep'));
+    host.appendChild(el('div.mm-right', {}, [
+      el('div.mm-titlerow', {}, [ui.miniTitle, ui.miniTime]),
+      ui.miniTrack
+    ]));
+
+    attachSeek(ui.miniTrack);
+    setInterval(tickProgress, 400);
   }
 
   function renderList() {
@@ -276,6 +368,8 @@ window.MW = window.MW || {};
   function init() {
     panel = MW.shell.registerPanel('music', { title: '🎵 BGM', onOpen: renderBar });
     mount(panel.body);
+    mountMini(document.getElementById('musicmini'));
+    renderBar();
   }
 
   /* --------------------------------------------- 설정 페이지에서 쓰는 API */

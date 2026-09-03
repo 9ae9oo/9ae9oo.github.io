@@ -178,6 +178,11 @@ window.MW = window.MW || {};
     return api;
   }
 
+  /** 열려 있는 도구 패널을 모두 닫습니다 (뽀모도로 같은 플로팅 창은 그대로) */
+  function closeAllPanels() {
+    Object.keys(panels).forEach(function (k) { panels[k].close(); });
+  }
+
   function syncButtons() {
     $$('[data-float]').forEach(function (b) {
       var f = floats[b.dataset.float];
@@ -429,6 +434,7 @@ window.MW = window.MW || {};
   MW.shell = {
     init: init, go: go, onRoute: onRoute, route: function () { return current; },
     registerFloat: registerFloat, registerPanel: registerPanel, floats: floats,
+    closeAllPanels: closeAllPanels,
     syncFloatButtons: syncButtons, isMobile: isMobile,
     modal: modal, closeModal: closeModal, confirm: confirmDialog,
     requestNotify: requestNotify, notify: notify, playSound: playSound,
