@@ -652,9 +652,18 @@ body.panel-instant #panelhost { transition: none !important; }
 .home-order-btns button:disabled { color: var(--border); cursor: default; }
 
 /* --------------------------------------------------------- 홈 꾸밈 이미지 (날짜 아래) */
+/* 꾸미기 이미지 — 대시보드 카드 순서에 함께 놓입니다. 높이는 설정에서 고릅니다 */
 .home-image { margin-bottom: 14px; border-radius: var(--radius); overflow: hidden; height: 200px; }
 .home-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
-@media (max-width: 640px) { .home-image { height: 140px; } }
+.card + .home-image { margin-top: 14px; }   /* 카드 뒤에 올 때도 간격이 생기게 */
+.home-image.h-sm { height: 120px; }
+.home-image.h-md { height: 200px; }
+.home-image.h-lg { height: 320px; }
+@media (max-width: 640px) {
+  .home-image.h-sm { height: 90px; }
+  .home-image.h-md { height: 140px; }
+  .home-image.h-lg { height: 220px; }
+}
 .home-image-preview {
   display: block; width: 100%; max-height: 220px; object-fit: cover;
   border-radius: var(--radius-sm); border: 1px solid var(--border);

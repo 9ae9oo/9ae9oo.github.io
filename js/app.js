@@ -113,6 +113,14 @@ window.MW = window.MW || {};
     ]);
   }
 
+  /** 꾸미기 이미지 — 설정에서 넣지 않았으면 null 이라 자리 자체가 생기지 않습니다 */
+  function imageCard() {
+    var img = MW.store.state.settings.homeImage;
+    if (!img) return null;
+    var size = MW.store.state.settings.homeImageSize || 'md';
+    return el('div.home-image.h-' + size, {}, [el('img', { src: img, alt: '' })]);
+  }
+
   function moneyCard() {
     var today = U.ymd(new Date());
     var ym = today.slice(0, 7);
@@ -133,8 +141,9 @@ window.MW = window.MW || {};
 
   /* -------- 카드 순서 (설정 → 테마 탭에서 편집) -------- */
 
-  var HOME_SECTIONS = ['today', 'next', 'habits', 'money'];
+  var HOME_SECTIONS = ['image', 'today', 'next', 'habits', 'money'];
   var HOME_SECTION_LABELS = {
+    image: '꾸미기 이미지',
     today: '오늘 일정',
     next: '내일 · 미뤄진 일정',
     habits: '오늘 한 해빗',
@@ -150,7 +159,12 @@ window.MW = window.MW || {};
       var key = HOME_LEGACY[k] || k;
       if (HOME_SECTIONS.indexOf(key) >= 0 && ordered.indexOf(key) < 0) ordered.push(key);
     });
-    HOME_SECTIONS.forEach(function (k) { if (ordered.indexOf(k) < 0) ordered.push(k); });
+    // 새로 생긴 카드는 뒤에 붙입니다. 다만 꾸미기 이미지는 예전에 늘 맨 위 고정이었으므로
+    // 기존 사용자의 화면에서 갑자기 아래로 내려가지 않게 그 자리를 지켜줍니다.
+    HOME_SECTIONS.forEach(function (k) {
+      if (ordered.indexOf(k) >= 0) return;
+      if (k === 'image') ordered.unshift(k); else ordered.push(k);
+    });
     return ordered;
   }
 
@@ -165,6 +179,7 @@ window.MW = window.MW || {};
   }
 
   function sectionNode(key) {
+    if (key === 'image') return imageCard();
     if (key === 'today') return todayCard();
     if (key === 'next') return nextCard();
     if (key === 'habits') return habitsCard();
@@ -178,12 +193,6 @@ window.MW = window.MW || {};
     U.clear(host);
 
     homeClock();
-
-    // 꾸밈 이미지 — 날짜(제목) 바로 아래. 설정에서 넣지 않으면 칸 자체가 없습니다
-    var img = MW.store.state.settings.homeImage;
-    if (img) {
-      host.appendChild(el('div.home-image', {}, [el('img', { src: img, alt: '' })]));
-    }
 
     homeOrder().forEach(function (key) {
       var node = sectionNode(key);

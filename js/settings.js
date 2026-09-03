@@ -550,8 +550,8 @@ window.MW = window.MW || {};
 
   /* ------------------------------------------------- 홈 대시보드 (테마 탭) */
 
-  var HOME_KEYS_FALLBACK = ['today', 'next', 'habits', 'money'];
-  var HOME_LABELS_FALLBACK = { today: '오늘 일정', next: '내일 · 미뤄진 일정', habits: '오늘 한 해빗', money: '오늘 쓴 돈' };
+  var HOME_KEYS_FALLBACK = ['image', 'today', 'next', 'habits', 'money'];
+  var HOME_LABELS_FALLBACK = { image: '꾸미기 이미지', today: '오늘 일정', next: '내일 · 미뤄진 일정', habits: '오늘 한 해빗', money: '오늘 쓴 돈' };
 
   /** 홈 카드 순서 편집 — MW.app 의 헬퍼를 쓰되(부팅 후 존재) 없으면 폴백 */
   function homeOrderCard() {
@@ -613,6 +613,7 @@ window.MW = window.MW || {};
 
   function homeImageCard() {
     var cur = MW.store.state.settings.homeImage || '';
+    var size = MW.store.state.settings.homeImageSize || 'md';
     var file = el('input', { type: 'file', accept: 'image/*', style: { display: 'none' } });
     file.addEventListener('change', function () {
       var f = this.files && this.files[0];
@@ -627,10 +628,19 @@ window.MW = window.MW || {};
     return el('div.card', {}, [
       el('h3', { text: '홈 꾸미기 이미지' }),
       el('div.small.dim', {
-        text: '홈 화면 날짜 아래에 표시됩니다. 넣지 않으면 그 자리는 나타나지 않습니다. (긴 그림은 자동으로 가로 1600px 로 줄여 저장)',
+        text: '대시보드에 표시됩니다. 놓이는 자리는 아래 “대시보드 카드 순서”에서 정합니다. 넣지 않으면 그 자리는 나타나지 않습니다. (긴 그림은 자동으로 가로 1600px 로 줄여 저장)',
         style: { marginBottom: '10px' }
       }),
       cur ? el('img.home-image-preview', { src: cur, alt: '' }) : el('div.empty', { text: '설정된 이미지가 없습니다.' }),
+      cur ? el('div.knob-row', { style: { marginTop: '12px' } }, [
+        el('span.knob-label', { text: '높이' }),
+        el('div.seg', {}, [['sm', '낮게'], ['md', '보통'], ['lg', '높게']].map(function (o) {
+          return el('button' + (size === o[0] ? '.active' : ''), {
+            type: 'button', text: o[1],
+            onclick: function () { MW.store.update(function (s) { s.settings.homeImageSize = o[0]; }); }
+          });
+        }))
+      ]) : null,
       el('div.row-wrap', { style: { marginTop: '10px' } }, [
         el('button.btn.btn-sm', { text: cur ? '이미지 바꾸기' : '이미지 선택', onclick: function () { file.click(); } }),
         cur ? el('button.btn.btn-sm.btn-danger', {
