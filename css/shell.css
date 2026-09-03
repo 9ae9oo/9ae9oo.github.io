@@ -554,6 +554,9 @@ body.panel-instant #panelhost { transition: none !important; }
   #content #main { padding-bottom: 118px; }
   .page { padding: 16px 12px 24px; }
 
+  /* 모바일에서 미니바 숨김 (도구 메뉴와 충돌) */
+  #musicmini { display: none !important; }
+
   /* 도구줄: 하단에 떠 있음, 입력창 바로 위 (가로 텍스트) */
   #toolrail {
     position: fixed;
