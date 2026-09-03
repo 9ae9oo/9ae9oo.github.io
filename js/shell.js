@@ -132,8 +132,9 @@ window.MW = window.MW || {};
     ]);
     node.appendChild(head);
     node.appendChild(body);
-    // 패널은 화면 오른쪽에 고정. #panelhost 는 폭만 차지하는 스페이서라 메인이 그만큼 줄어듭니다.
-    document.body.appendChild(node);
+    // 패널은 #panelhost(화면 오른쪽 끝의 flex 존) 안에. 열리면 존 폭이 생겨 메인이 줄고,
+    // 우측 레일 탭은 이 존(=패널) 왼쪽 가장자리에 자동으로 붙습니다.
+    ($('#panelhost') || document.body).appendChild(node);
     document.body.appendChild(handle);
 
     function syncHost() {

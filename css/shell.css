@@ -8,8 +8,8 @@
   display: flex;
   flex-direction: row;
   align-items: center;   /* 좌·우 레일은 세로 가운데의 작은 메뉴 */
-  justify-content: center;
-  padding: 14px 0 14px 14px;   /* 오른쪽은 0 — 도구 패널이 화면 끝까지 붙도록 */
+  justify-content: flex-start;   /* 왼쪽 정렬 — 남는 공간은 #content 의 margin-right:auto 가 처리 */
+  padding: 14px 0 14px 14px;   /* 오른쪽은 0 — 패널 존이 화면 끝까지 붙도록 */
   height: 100vh;
   height: 100dvh;
 }
@@ -112,10 +112,12 @@
 #pomodoro-trigger.running { color: var(--accent); }
 #pomodoro-trigger.running .tp-time { display: block; }
 
-/* -------- 도구 패널 스페이서 — 폭만 차지. 열리면 여기에 폭이 생겨 메인(#content)이 줄어듦 */
+/* ---- 패널 존 — 화면 오른쪽 끝. 닫히면 폭 0, 열리면 --side-panel-w. .side-panel 이 이 안에 들어감.
+   #toolrail 이 바로 왼쪽 flex 항목이라 자동으로 이 존(=패널) 왼쪽 가장자리에 붙는다. */
 #panelhost {
   flex: 0 0 0px;
   align-self: stretch;
+  position: relative;
   overflow: hidden;
   transition: flex-basis 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -200,9 +202,11 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
 .track-item .t-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-item .t-idx { font-size: 11px; color: var(--text-dim); width: 18px; text-align: right; flex-shrink: 0; }
 
-/* --------------------------------------------------------------- 가운데 컨텐츠 (최대폭, 전체 높이) */
+/* ------- 가운데 컨텐츠 — max-width 로 크기 고정, margin-right:auto 로 남는 폭을 오른쪽으로 밀어냄.
+   패널이 열려 #panelhost 가 넓어지면: 먼저 auto 여백이 줄고, 그래도 모자라면 flex-shrink 로 컨텐츠가 줄어듦. */
 #content {
   flex: 0 1 var(--content-max, 1100px);
+  margin-right: auto;
   align-self: stretch;
   min-width: 0;
   display: flex;
@@ -213,11 +217,6 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
   border-radius: var(--radius);   /* 네 모서리 다 둥글게 */
   box-shadow: var(--shadow);
   overflow: hidden;
-  transition: max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-}
-/* 패널이 열리면 최대폭을 줄여 항상 눈에 띄게 축소되도록 */
-body.anypanel-open #content {
-  max-width: calc(var(--content-max, 1100px) - var(--side-panel-w));
 }
 
 #main {
@@ -376,27 +375,24 @@ body.anypanel-open #content {
    기본값 = 데스크톱: 오른쪽에 붙는 세로 패널. 손잡이 버튼은 왼쪽 가장자리 가운데. */
 :root { --side-panel-w: min(380px, 86vw); }
 
-/* 데스크톱: 화면 오른쪽에 고정, 위·아래·오른쪽 여백 없음. #panelhost 스페이서와 함께 슬라이드. */
+/* 데스크톱: #panelhost 안에 절대배치. host 가 0→--side-panel-w 로 넓어지며 왼쪽으로 드러남(슬라이드).
+   위·아래·오른쪽 여백 없이 화면 오른쪽 끝을 채움. */
 .side-panel {
-  position: fixed;
+  position: absolute;
   top: 0;
   right: 0;
   bottom: 0;
   width: var(--side-panel-w);
   background: var(--surface-1);
   border-left: 1px solid var(--border-accent);
-  border-radius: var(--radius) 0 0 var(--radius);
   box-shadow: -6px 0 24px rgba(0, 0, 0, 0.08);
-  display: flex;
+  display: none;
   flex-direction: column;
   overflow: hidden;
   z-index: 500;
-  transform: translateX(100%);
-  transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.side-panel.open { transform: none; }
+.side-panel.open { display: flex; }
 /* 패널끼리 전환할 때는 슬라이드 없이 즉시 */
-body.panel-instant .side-panel,
 body.panel-instant #panelhost { transition: none !important; }
 
 .side-panel-head {
