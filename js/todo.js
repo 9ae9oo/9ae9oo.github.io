@@ -1,8 +1,8 @@
 /* ==========================================================================
-   MW.todo — 인박스형 할 일 (홈 대시보드 · 캘린더 일/주 뷰에서 목록으로 표시)
+   MW.todo — 인박스형 할 일 (우측 레일의 📥 인박스 패널 · 캘린더 일/주 뷰에서도 목록으로)
    · 날짜 없이 바로 추가되는 "인박스" 개념
    · 데이터는 store.todos 한 곳에만 존재
-   · 전용 창은 없음 — renderList 를 다른 화면이 재사용합니다
+   · renderList 를 다른 화면(캘린더 등)이 재사용합니다
    ========================================================================== */
 window.MW = window.MW || {};
 
@@ -11,6 +11,8 @@ window.MW = window.MW || {};
   var U = MW.util, el = U.el;
 
   var COLORS = ['#6b8afd', '#4ade80', '#fbbf24', '#fb7185', '#a78bfa', '#2dd4bf', '#8b90a5'];
+  var panel = null;
+  var filterGroup = 'all';
 
   function groups() { return MW.store.state.todoGroups; }
   function groupOf(id) { return groups().find(function (g) { return g.id === id; }) || null; }
@@ -139,6 +141,10 @@ window.MW = window.MW || {};
           meta.length ? el('div.t-meta', { text: meta.join(' · ') }) : null
         ]),
         el('div.t-actions', {}, [
+          opts.onSchedule ? el('button.btn.btn-ghost.btn-icon.btn-sm', {
+            text: '📅', title: '캘린더에 배치',
+            onclick: function (e) { e.stopPropagation(); opts.onSchedule(t, e.currentTarget); }
+          }) : null,
           el('button.btn.btn-ghost.btn-icon.btn-sm', {
             text: '✎', title: '수정', onclick: function () { editDialog(t); }
           })
@@ -147,9 +153,84 @@ window.MW = window.MW || {};
     });
   }
 
+  /* -------------------------------------------------- 우측 레일 인박스 패널 */
+
+  function setDate(id, dateStr) {
+    MW.store.update(function (s) {
+      var t = s.todos.find(function (x) { return x.id === id; });
+      if (t) t.date = dateStr || null;
+    });
+    if (dateStr) U.toast(U.fmtDate(dateStr) + ' 로 배치했습니다.');
+  }
+
+  /** 인박스 항목의 📅 → 빠른 날짜 지정 메뉴 (항목 아래로 펼침) */
+  function scheduleMenu(t, btn) {
+    var item = btn.closest('.todo-item');
+    if (!item) return;
+    var existing = item.nextElementSibling;
+    if (existing && existing.classList.contains('inbox-sched')) { existing.remove(); return; }
+
+    var now = new Date();
+    var toSat = (6 - now.getDay() + 7) % 7 || 7;
+    var quick = [
+      ['오늘', U.ymd(now)],
+      ['내일', U.ymd(U.addDays(now, 1))],
+      ['모레', U.ymd(U.addDays(now, 2))],
+      ['이번 주말', U.ymd(U.addDays(now, toSat))]
+    ];
+    var picker = el('input.field', {
+      type: 'date',
+      onchange: function () { if (this.value) { setDate(t.id, this.value); menu.remove(); } }
+    });
+    var menu = el('div.inbox-sched', {},
+      quick.map(function (q) {
+        return el('button.btn.btn-sm', { type: 'button', text: q[0], onclick: function () { setDate(t.id, q[1]); menu.remove(); } });
+      }).concat([picker])
+    );
+    item.after(menu);
+    setTimeout(function () {
+      document.addEventListener('click', function close(e) {
+        if (!menu.contains(e.target) && !item.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); }
+      });
+    }, 0);
+  }
+
+  function renderPanel() {
+    if (!panel) return;
+    var host = panel.body;
+    U.clear(host);
+
+    var mk = function (id, label) {
+      return el('button.todo-tab' + (filterGroup === id ? '.active' : ''), {
+        type: 'button', text: label,
+        onclick: function () { filterGroup = id; renderPanel(); }
+      });
+    };
+    var tabs = el('div.todo-tabs', {}, [mk('all', '전체')].concat(
+      groups().map(function (g) { return mk(g.id, g.name); })
+    ));
+
+    var listBox = el('div.todo-list');
+    renderList(listBox, {
+      filter: function (t) {
+        return !t.done && !t.date && (filterGroup === 'all' || t.groupId === filterGroup);
+      },
+      emptyText: '인박스가 비어 있습니다.\n아래 입력창으로 추가하세요.',
+      onSchedule: scheduleMenu
+    });
+
+    host.appendChild(tabs);
+    host.appendChild(el('div.small.dim', { text: '📅 로 날짜를 지정하면 캘린더로 옮겨집니다.', style: { margin: '2px 2px 8px' } }));
+    host.appendChild(listBox);
+  }
+
   MW.todo = {
     renderList: renderList,
     add: add, toggle: toggle, remove: remove, colorOf: colorOf, editDialog: editDialog,
-    COLORS: COLORS
+    COLORS: COLORS,
+    initPanel: function () {
+      panel = MW.shell.registerPanel('inbox', { title: '📥 인박스', onOpen: renderPanel });
+    },
+    render: function () { if (panel && panel.isOpen()) renderPanel(); }
   };
 })();

@@ -73,6 +73,19 @@ input[type="checkbox"].chk:checked::after {
 .todo-item.done .t-title { text-decoration: line-through; }
 .todo-item .t-actions { display: flex; gap: 2px; opacity: 0; }
 .todo-item:hover .t-actions { opacity: 1; }
+/* 인박스 패널에서는 액션을 늘 보이게 (📅 로 캘린더 배치) */
+.side-panel .todo-item .t-actions { opacity: 0.5; }
+.side-panel .todo-item:hover .t-actions { opacity: 1; }
+
+/* 인박스 빠른 날짜 지정 메뉴 */
+.inbox-sched {
+  display: flex; flex-wrap: wrap; gap: 4px;
+  margin: 2px 0 5px 24px; padding: 8px;
+  background: var(--surface-0);
+  border: 1px solid var(--border-accent); border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+.inbox-sched .field { flex: 1 0 100%; width: auto; }
 
 /* --------------------------------------------------------------- 메모 (트위터식) */
 

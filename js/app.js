@@ -88,10 +88,9 @@ window.MW = window.MW || {};
 
   /* -------- 대시보드 카드 순서 (설정 → 테마 탭에서 편집) -------- */
 
-  var HOME_SECTIONS = ['calendar', 'inbox', 'habits', 'money'];
+  var HOME_SECTIONS = ['calendar', 'habits', 'money'];
   var HOME_SECTION_LABELS = {
     calendar: '오늘의 일정',
-    inbox: '인박스',
     habits: '해빗 트래커',
     money: '금전 요약'
   };
@@ -115,16 +114,6 @@ window.MW = window.MW || {};
 
   function sectionNode(key) {
     if (key === 'calendar') return eventCalendarCard();
-
-    if (key === 'inbox') {
-      var todoBox = el('div.todo-list');
-      MW.todo.renderList(todoBox, {
-        filter: function (t) { return !t.done && !t.date; },
-        draggable: false,
-        emptyText: '지금 할 일이 없습니다.'
-      });
-      return el('div.card', {}, [el('h3', { text: '인박스' }), todoBox]);
-    }
 
     if (key === 'habits') {
       return el('div.card', {}, [
@@ -180,6 +169,7 @@ window.MW = window.MW || {};
     else if (route === 'settings') MW.settings.render();
     MW.memo.render();
     MW.music.render();
+    MW.todo.render();
     MW.pomodoro.renderMini();
     MW.habitGrid.renderAlarms();
     MW.shell.syncFloatButtons();
@@ -196,6 +186,7 @@ window.MW = window.MW || {};
     MW.music.init();
     MW.pomodoro.init();
     MW.memo.init();
+    MW.todo.initPanel();
     MW.work.mount($('#page-work-body'));
     MW.calendar.mount($('#page-calendar-body'));
     MW.ledger.mount($('#page-ledger-body'));

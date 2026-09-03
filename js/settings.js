@@ -550,8 +550,8 @@ window.MW = window.MW || {};
 
   /* ------------------------------------------------- 홈 대시보드 (테마 탭) */
 
-  var HOME_KEYS_FALLBACK = ['calendar', 'inbox', 'habits', 'money'];
-  var HOME_LABELS_FALLBACK = { calendar: '오늘의 일정', inbox: '인박스', habits: '해빗 트래커', money: '금전 요약' };
+  var HOME_KEYS_FALLBACK = ['calendar', 'habits', 'money'];
+  var HOME_LABELS_FALLBACK = { calendar: '오늘의 일정', habits: '해빗 트래커', money: '금전 요약' };
 
   /** 홈 카드 순서 편집 — MW.app 의 헬퍼를 쓰되(부팅 후 존재) 없으면 폴백 */
   function homeOrderCard() {
