@@ -207,7 +207,7 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
    패널이 열려 #panelhost 가 넓어지면: 먼저 auto 여백이 줄고, 그래도 모자라면 flex-shrink 로 컨텐츠가 줄어듦. */
 #content {
   flex: 0 1 var(--content-max, 1100px);
-  margin-right: auto;
+  margin: 0 auto;             /* 사이드바와 패널 존 사이 공간에서 가운데 정렬 */
   align-self: stretch;
   min-width: 0;
   display: flex;
@@ -590,8 +590,9 @@ body.panel-instant #panelhost { transition: none !important; }
 .home-order-btns button:disabled { color: var(--border); cursor: default; }
 
 /* --------------------------------------------------------- 홈 꾸밈 이미지 (날짜 아래) */
-.home-image { margin-bottom: 14px; border-radius: var(--radius); overflow: hidden; }
-.home-image img { display: block; width: 100%; height: auto; }
+.home-image { margin-bottom: 14px; border-radius: var(--radius); overflow: hidden; height: 200px; }
+.home-image img { display: block; width: 100%; height: 100%; object-fit: cover; }
+@media (max-width: 640px) { .home-image { height: 140px; } }
 .home-image-preview {
   display: block; width: 100%; max-height: 220px; object-fit: cover;
   border-radius: var(--radius-sm); border: 1px solid var(--border);
