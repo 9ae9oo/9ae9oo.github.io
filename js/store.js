@@ -34,8 +34,9 @@ window.MW = window.MW || {};
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
            accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
-           bgImage: data URL (화면 전체 뒤 배경, 비우면 없음) */
-        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '' }
+           bgImage: data URL (화면 전체 뒤 배경, 비우면 없음)
+           contentWidth: 'narrow'|'normal'|'wide'|'full' — 가운데 컨텐츠 최대폭 */
+        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal' }
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       playlists: [],
@@ -122,7 +123,8 @@ window.MW = window.MW || {};
       accent: carryAccent ? th.accent : '',
       bg: HEX.test(th.bg || '') ? th.bg : '',
       card: HEX.test(th.card || '') ? th.card : '',
-      bgImage: typeof th.bgImage === 'string' ? th.bgImage : ''
+      bgImage: typeof th.bgImage === 'string' ? th.bgImage : '',
+      contentWidth: ['narrow', 'normal', 'wide', 'full'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal'
     };
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});

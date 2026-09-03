@@ -741,10 +741,27 @@ window.MW = window.MW || {};
     host.appendChild(bgImageCard());
 
     /* 4. 동작(애니메이션) 줄이기 */
+    host.appendChild(widthCard());
     host.appendChild(motionCard());
 
     host.appendChild(homeOrderCard());
     host.appendChild(homeImageCard());
+  }
+
+  function widthCard() {
+    var cur = (MW.store.state.settings.theme || {}).contentWidth || 'normal';
+    var opts = [['narrow', '좁게'], ['normal', '보통'], ['wide', '넓게'], ['full', '최대']];
+    var seg = el('div.seg', {}, opts.map(function (o) {
+      return el('button' + (cur === o[0] ? '.active' : ''), {
+        type: 'button', text: o[1],
+        onclick: function () { setTheme({ contentWidth: o[0] }); }
+      });
+    }));
+    return el('div.card', {}, [
+      el('h3', { text: '컨텐츠 폭' }),
+      el('div.small.dim', { text: '가운데 메인 영역의 최대 너비입니다. "최대"는 화면을 꽉 채웁니다.', style: { marginBottom: '10px' } }),
+      seg
+    ]);
   }
 
   function motionCard() {

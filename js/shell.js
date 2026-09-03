@@ -339,6 +339,7 @@ window.MW = window.MW || {};
   /* ----------------------------------------------------------------- 테마 */
 
   var PRESETS = ['base', 'mint', 'peach', 'lavender', 'butter'];
+  var CONTENT_WIDTHS = { narrow: '900px', normal: '1100px', wide: '1320px', full: '100%' };
 
   function validHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v || ''); }
 
@@ -379,6 +380,8 @@ window.MW = window.MW || {};
     setOrClear(root, '--surface-1', validHex(t.card) ? t.card : null);
     root.style.setProperty('--bg-image', t.bgImage ? 'url("' + t.bgImage + '")' : 'none');
     document.body.classList.toggle('bg-image', !!t.bgImage);
+
+    root.style.setProperty('--content-max', CONTENT_WIDTHS[t.contentWidth] || CONTENT_WIDTHS.normal);
   }
 
   /** 스토어는 건드리지 않고 화면만 임시로 바꿔봅니다 (색상 선택 중 실시간 미리보기) */
