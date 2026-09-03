@@ -75,6 +75,7 @@
 #toolrail {
   flex: 0 0 auto;
   align-self: center;
+  margin-left: 18px;                 /* 컨텐츠와 사이의 빈 채널 */
   margin-right: -1px;                /* 오른쪽(패널)에 살짝 겹쳐 이어지게 */
   display: flex;
   flex-direction: column;
@@ -209,7 +210,7 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
   position: relative;
   background: var(--bg);
   border: 1px solid var(--border);
-  border-radius: var(--radius) 0 0 var(--radius);   /* 오른쪽은 우측 레일·패널에 붙으므로 각지게 */
+  border-radius: var(--radius);   /* 네 모서리 다 둥글게 */
   box-shadow: var(--shadow);
   overflow: hidden;
   transition: max-width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -394,6 +395,9 @@ body.anypanel-open #content {
   transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
 .side-panel.open { transform: none; }
+/* 패널끼리 전환할 때는 슬라이드 없이 즉시 */
+body.panel-instant .side-panel,
+body.panel-instant #panelhost { transition: none !important; }
 
 .side-panel-head {
   flex: 0 0 auto;
@@ -493,6 +497,7 @@ body.anypanel-open #content {
     top: auto;
     align-self: auto;
     margin-left: 0;
+    margin-right: 0;
     left: 10px; right: 10px;
     bottom: calc(62px + env(safe-area-inset-bottom));
     transform: none;
@@ -543,7 +548,9 @@ body.anypanel-open #content {
     border: 1px solid var(--border-accent);
     border-radius: var(--radius);
   }
-  .float.open { max-height: 46vh; z-index: 250; }
+  /* 모바일: 뽀모도로 창이 최상단 레이어가 되지 않게 (도구줄·입력창이 위).
+     registerFloat 이 인라인 z-index 를 주므로 !important 필요. */
+  .float.open { max-height: 46vh; z-index: 250 !important; }
   .side-panel {
     display: flex !important;   /* 모바일은 opacity 로 여닫음 */
     max-height: 62vh;

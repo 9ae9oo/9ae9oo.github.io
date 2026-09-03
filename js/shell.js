@@ -146,7 +146,15 @@ window.MW = window.MW || {};
       id: id, node: node, body: body, head: head,
       isOpen: function () { return node.classList.contains('open'); },
       open: function () {
-        // 한 번에 하나만 — 다른 도구 패널은 닫음
+        // 한 번에 하나만 — 다른 도구 패널은 닫음. 이미 열린 패널이 있었으면
+        // 슬라이드 없이 즉시 교체 (메모장 ↔ BGM 전환)
+        var switching = Object.keys(panels).some(function (k) { return k !== id && panels[k].isOpen(); });
+        if (switching) {
+          document.body.classList.add('panel-instant');
+          requestAnimationFrame(function () {
+            requestAnimationFrame(function () { document.body.classList.remove('panel-instant'); });
+          });
+        }
         Object.keys(panels).forEach(function (k) { if (k !== id) panels[k].close(); });
         node.classList.add('open');
         handle.classList.add('open');
