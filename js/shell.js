@@ -360,7 +360,7 @@ window.MW = window.MW || {};
   /* ----------------------------------------------------------------- 테마 */
 
   var PRESETS = ['base', 'mint', 'peach', 'lavender', 'butter'];
-  var CONTENT_WIDTHS = { narrow: '900px', normal: '1100px', wide: '1320px', full: '100%' };
+  var CONTENT_WIDTHS = { narrow: '640px', normal: '1100px', wide: '1320px', full: '100%' };   // narrow 는 모바일 분기점(640)과 맞춤 — 큰 화면에서도 실제로 좁게 느껴지도록
 
   function validHex(v) { return /^#[0-9a-fA-F]{6}$/.test(v || ''); }
 
