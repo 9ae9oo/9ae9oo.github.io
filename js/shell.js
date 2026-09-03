@@ -95,6 +95,7 @@ window.MW = window.MW || {};
       setTitle: function (t) { titleEl.textContent = t; },
       isOpen: function () { return node.classList.contains('open'); },
       open: function () {
+        if (isNarrow()) closeAllPanels();   // 좁은 화면: 하단 시트 자리는 하나만
         node.classList.add('open');
         raise();
         syncButtons();
@@ -147,6 +148,7 @@ window.MW = window.MW || {};
       id: id, node: node, body: body, head: head,
       isOpen: function () { return node.classList.contains('open'); },
       open: function () {
+        if (isNarrow()) closeAllFloats();   // 좁은 화면: 하단 시트 자리는 하나만
         // 한 번에 하나만 — 다른 도구 패널은 닫음. 이미 열린 패널이 있었으면
         // 슬라이드 없이 즉시 교체 (메모장 ↔ BGM 전환)
         var switching = Object.keys(panels).some(function (k) { return k !== id && panels[k].isOpen(); });
@@ -191,6 +193,19 @@ window.MW = window.MW || {};
   }
 
   function isMobile() { return window.matchMedia('(max-width: 900px)').matches; }
+
+  /* 좁은 화면에서는 도구 패널(인박스·메모장·BGM)과 뽀모도로 창이 같은 하단 시트 자리를
+     쓰기 때문에, 둘이 동시에 열리면 하나가 다른 하나에 완전히 가려집니다.
+     그래서 그 폭에서는 시트 자리를 한 번에 하나만 쓰도록 서로 닫아줍니다.
+     CSS 분기점(640)과 맞춰야 하므로 isMobile(900) 을 쓰지 않습니다. */
+  function isNarrow() { return window.matchMedia('(max-width: 640px)').matches; }
+
+  /** 열려 있는 플로팅 창을 모두 닫습니다 (도킹 패널은 그대로) */
+  function closeAllFloats() {
+    Object.keys(floats).forEach(function (k) {
+      if (!panels[k] && floats[k].isOpen()) floats[k].close();
+    });
+  }
 
   function dragMove(handle, node, onEnd) {
     var sx = 0, sy = 0, ox = 0, oy = 0, active = false;

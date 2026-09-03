@@ -601,6 +601,9 @@ body.panel-instant #panelhost { transition: none !important; }
     box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
   }
   .tool-item .tp-time { margin-top: 2px; }
+  /* 세로 레일에서 뽀모도로를 메모장·BGM 위로 올리던 규칙은 가로 탭 줄에선 불필요합니다.
+     z-index 만 풀면 position:relative 때문에 여전히 형제 위에 그려지므로 둘 다 되돌립니다. */
+  #pomodoro-trigger.tool-item { position: static; z-index: auto; }
 
   /* 도구 패널 — 탭 바로 위에서 올라옵니다 */
   .float.open,
