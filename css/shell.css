@@ -329,62 +329,39 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .card h3 { font-size: 14px; font-weight: 600; margin-bottom: 10px; }
 .card h3 .muted { font-weight: 400; }
 
-/* --------------------------------------------------- 홈 미니 달력 */
-.mini-cal-head {
-  display: flex; align-items: center; justify-content: space-between;
-  margin-bottom: 12px;
+/* --------------------------------------------------- 대시보드 카드
+   기준은 "오늘 당장 봐야 할 것". 월 격자 같은 둘러보기용 뷰는 각자의 페이지에 둡니다. */
+.dash-subhead {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 12px; font-weight: 600; color: var(--text-dim);
+  margin: 14px 0 4px;
 }
-.mini-cal-title { font-size: 15px; font-weight: 700; letter-spacing: -0.01em; }
-.mini-cal-nav { display: flex; align-items: center; gap: 4px; }
-.mini-cal-nav button {
-  min-width: 26px; height: 26px; padding: 0 8px;
-  border-radius: 999px;
-  font-size: 12px; color: var(--text-muted);
+.dash-subhead:first-of-type { margin-top: 6px; }
+.dash-late-count {
+  font-size: 11px; font-weight: 700;
+  padding: 1px 7px; border-radius: 999px;
+  background: var(--red-dim); color: var(--red);
+}
+.today-time.late { color: var(--red); }
+
+/* 오늘 한 해빗 — 칩을 눌러 바로 체크합니다 */
+.dash-habits { display: flex; flex-wrap: wrap; gap: 6px; }
+.dash-habit {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 7px 11px;
+  background: var(--surface-0);
   border: 1px solid var(--border);
-  background: var(--surface-1);
+  border-radius: 999px;
+  color: var(--text);
+  font-size: 13px;
   cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
-.mini-cal-nav button:hover { background: var(--surface-2); color: var(--text); }
-
-.mini-cal-dow {
-  display: grid; grid-template-columns: repeat(7, 1fr);
-  margin-bottom: 4px;
-}
-.mini-cal-dow span {
-  text-align: center; font-size: 11px; font-weight: 600;
-  color: var(--text-dim); padding: 4px 0;
-}
-.mini-cal-dow .sun { color: var(--coral); }
-.mini-cal-dow .sat { color: var(--accent); }
-
-.mini-cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
-.mini-cal-day {
-  display: flex; flex-direction: column; align-items: center; gap: 3px;
-  padding: 5px 0 4px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  background: none; border: none;
-}
-.mini-cal-day:hover { background: var(--surface-2); }
-.mini-cal-day .n {
-  display: flex; align-items: center; justify-content: center;
-  width: 24px; height: 24px; border-radius: 50%;
-  font-size: 12.5px; color: var(--text); font-variant-numeric: tabular-nums;
-}
-.mini-cal-day.out .n { color: var(--text-dim); opacity: 0.6; }
-.mini-cal-day.selected { background: var(--accent-dim); }
-.mini-cal-day.today .n { background: var(--text); color: var(--surface-0); font-weight: 700; }
-
-.mini-cal-dots {
-  display: flex; gap: 2px; min-height: 5px; flex-wrap: wrap;
-  justify-content: center; max-width: 90%;
-}
-.mini-cal-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
-
-.mini-cal-dayhead {
-  font-size: 14px; font-weight: 700; letter-spacing: -0.01em;
-  margin: 16px 0 6px;
-}
+.dash-habit:hover { background: var(--surface-2); border-color: var(--border-accent); }
+.dash-habit.done { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); }
+.dash-habit-dot { flex: 0 0 8px; width: 8px; height: 8px; border-radius: 50%; }
+.dash-habit-count { font-size: 11px; color: var(--text-dim); font-variant-numeric: tabular-nums; }
+.dash-habit.done .dash-habit-count { color: var(--accent); }
 
 /* 오늘 일정 목록 — 캘린더 일간 목록과 같은 점 + 제목 스타일 */
 .today-list { display: flex; flex-direction: column; gap: 2px; }

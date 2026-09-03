@@ -28,7 +28,7 @@ window.MW = window.MW || {};
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
-        homeOrder: ['calendar', 'inbox', 'habits', 'money'],  // 홈 대시보드 카드 순서 (설정 → 테마에서 변경)
+        homeOrder: ['today', 'next', 'habits', 'money'],  // 대시보드 카드 순서 (설정 → 테마에서 변경)
         homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
         reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
