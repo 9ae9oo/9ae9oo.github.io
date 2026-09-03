@@ -117,6 +117,7 @@
 #panelhost {
   flex: 0 0 0px;
   align-self: stretch;
+  margin: -14px 0;         /* #app 세로 패딩 상쇄 — 패널이 화면 위·아래 끝까지 */
   position: relative;
   overflow: hidden;
   transition: flex-basis 0.28s cubic-bezier(0.4, 0, 0.2, 1);
@@ -385,6 +386,7 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
   width: var(--side-panel-w);
   background: var(--surface-1);
   border-left: 1px solid var(--border-accent);
+  border-radius: 0;                       /* 곡선 없음 — 화면 위·아래·오른쪽 끝에 각지게 */
   box-shadow: -6px 0 24px rgba(0, 0, 0, 0.08);
   display: none;
   flex-direction: column;
@@ -392,6 +394,7 @@ body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
   z-index: 500;
 }
 .side-panel.open { display: flex; }
+.side-panel-head, .side-panel-body { border-radius: 0; }
 /* 패널끼리 전환할 때는 슬라이드 없이 즉시 */
 body.panel-instant #panelhost { transition: none !important; }
 
