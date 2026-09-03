@@ -71,17 +71,22 @@
 /* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
 .pomo-item { flex-direction: column; gap: 2px; }
 
-/* ------ 우측 레일 (컨텐츠 오른쪽 가장자리 세로 가운데의 작은 탭들. flex 흐름 안, 컨텐츠와 함께 이동) */
+/* ===== 그룹 B (서브 도구) = 우측 레일 + 패널. #app flex 흐름 밖, 화면 오른쪽에 고정 =====
+   우측 레일 = 화면 오른쪽 세로 가운데의 작은 탭들. 패널 열리면 패널 왼쪽 가장자리로 이동. */
 #toolrail {
-  flex: 0 0 auto;
-  align-self: center;
-  margin-left: 18px;                 /* 컨텐츠와 사이의 빈 채널 */
-  margin-right: -1px;                /* 오른쪽(패널)에 살짝 겹쳐 이어지게 */
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 8px;
   z-index: 60;
+  transition: right 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (min-width: 641px) {
+  body.anypanel-open #toolrail { right: var(--side-panel-w); }
 }
 .tool-item {
   writing-mode: vertical-rl;
@@ -112,17 +117,19 @@
 #pomodoro-trigger.running { color: var(--accent); }
 #pomodoro-trigger.running .tp-time { display: block; }
 
-/* ---- 패널 존 — 화면 오른쪽 끝. 닫히면 폭 0, 열리면 --side-panel-w. .side-panel 이 이 안에 들어감.
-   #toolrail 이 바로 왼쪽 flex 항목이라 자동으로 이 존(=패널) 왼쪽 가장자리에 붙는다. */
+/* ---- 패널 존 — 화면 오른쪽 끝에 고정. 닫히면 폭 0, 열리면 --side-panel-w (왼쪽으로 wipe = 슬라이드).
+   화면 위·아래 끝까지 (그룹 A 컨텐츠 카드와 무관). */
 #panelhost {
-  flex: 0 0 0px;
-  align-self: stretch;
-  margin: -14px 0;         /* #app 세로 패딩 상쇄 — 패널이 화면 위·아래 끝까지 */
-  position: relative;
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 0;
   overflow: hidden;
-  transition: flex-basis 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 55;
+  transition: width 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 }
-body.anypanel-open #panelhost { flex-basis: var(--side-panel-w); }
+body.anypanel-open #panelhost { width: var(--side-panel-w); }
 
 /* 빠른 일정 입력 — #content 하단 가운데에 떠 있음 (바 배경 없음) */
 #quickbar {
