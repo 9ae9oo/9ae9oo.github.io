@@ -342,10 +342,18 @@ window.MW = window.MW || {};
     var t = currentTrack();
     var titleText = t ? (t.title || t.videoId) : '재생할 곡이 없습니다';
 
-    if (ui.play) ui.play.textContent = playing ? '❚❚' : '▶';
+    if (ui.panel) ui.panel.classList.toggle('is-playing', playing);
+    if (ui.statusText) ui.statusText.textContent = t ? (playing ? '재생 중' : '일시 정지') : '대기';
+    if (ui.statusDot) ui.statusDot.classList.toggle('paused', !playing);
+    if (ui.play) {
+      ui.play.textContent = playing ? '❚❚' : '▶';
+      ui.play.title = playing ? '일시 정지' : '재생';
+      ui.play.setAttribute('aria-label', ui.play.title);
+    }
     if (ui.mode) {
       ui.mode.textContent = st().player.mode === 'shuffle' ? '🔀' : '🔁';
       ui.mode.title = st().player.mode === 'shuffle' ? '셔플 재생 (클릭 시 순차)' : '순차 재생 (클릭 시 셔플)';
+      ui.mode.setAttribute('aria-label', ui.mode.title);
       ui.mode.classList.toggle('on', st().player.mode === 'shuffle');
     }
     if (ui.nowTitle) {
@@ -357,10 +365,20 @@ window.MW = window.MW || {};
         ? pl.name + ' · ' + (pl.tracks.length ? (U.clamp(st().player.index || 0, 0, pl.tracks.length - 1) + 1) + '/' + pl.tracks.length : '0곡')
         : '설정에서 재생목록을 만들어 주세요';
     }
+    if (ui.cover) {
+      ui.cover.classList.toggle('empty', !t);
+      ui.cover.style.backgroundImage = t
+        ? 'linear-gradient(145deg, rgba(107,138,253,.12), rgba(28,31,43,.2)), url("https://i.ytimg.com/vi/' + t.videoId + '/mqdefault.jpg")'
+        : '';
+    }
 
     // 미니바 — 재생할 곡이 없으면 통째로 숨김
     if (miniHost) miniHost.hidden = !t;
-    if (ui.miniPlay) ui.miniPlay.textContent = playing ? '❚❚' : '▶';
+    if (ui.miniPlay) {
+      ui.miniPlay.textContent = playing ? '❚❚' : '▶';
+      ui.miniPlay.title = playing ? '일시 정지' : '재생';
+      ui.miniPlay.setAttribute('aria-label', ui.miniPlay.title);
+    }
     if (ui.miniTitle) ui.miniTitle.textContent = titleText;
 
     renderList();
@@ -380,16 +398,19 @@ window.MW = window.MW || {};
   }
 
   function paintProgress(p) {
-    if (!ui.miniFill) return;
-    ui.miniFill.style.width = (p * 100) + '%';
-    ui.miniHead.style.left = (p * 100) + '%';
+    if (ui.miniFill) ui.miniFill.style.width = (p * 100) + '%';
+    if (ui.miniHead) ui.miniHead.style.left = (p * 100) + '%';
+    if (ui.panelFill) ui.panelFill.style.width = (p * 100) + '%';
+    if (ui.panelHead) ui.panelHead.style.left = (p * 100) + '%';
   }
 
   function tickProgress() {
-    if (!ui.miniTrack || seeking) return;
+    if (seeking) return;
     var dur = duration(), cur = currentTime();
     paintProgress(dur > 0 ? U.clamp(cur / dur, 0, 1) : 0);
     if (ui.miniTime) ui.miniTime.textContent = U.fmtClock(cur) + ' / ' + U.fmtClock(dur);
+    if (ui.panelCurrent) ui.panelCurrent.textContent = U.fmtClock(cur);
+    if (ui.panelDuration) ui.panelDuration.textContent = U.fmtClock(dur);
   }
 
   /** ◎ 플레이헤드를 끌거나 바를 눌러 구간 이동 */
@@ -454,32 +475,48 @@ window.MW = window.MW || {};
     U.clear(ui.list);
     var pl = currentPlaylist();
 
-    ui.list.appendChild(el('h4', { text: '재생목록 (' + playlists().length + '/' + MAX_PLAYLISTS + ')' }));
-    ui.list.appendChild(playlists().length
-      ? el('div', {}, playlists().map(function (p) {
-          return el('div.pl-item' + (pl && p.id === pl.id ? '.active' : ''), {
-            onclick: function () { selectPlaylist(p.id); }
-          }, [
-            el('span', { text: p.name, style: { flex: '1' } }),
-            el('span.small.dim', { text: p.tracks.length + '곡' })
-          ]);
-        }))
-      : el('div.empty', { text: '재생목록이 없습니다.' }));
+    if (playlists().length) {
+      var select = el('select.mus-playlist-select', {
+        'aria-label': '재생목록 선택',
+        onchange: function () { selectPlaylist(this.value); }
+      }, playlists().map(function (p) {
+        return el('option', { value: p.id, text: p.name + ' · ' + p.tracks.length + '곡' });
+      }));
+      if (pl) select.value = pl.id;
+      ui.list.appendChild(el('div.mus-playlist-select-wrap', {}, [
+        select,
+        el('span.mus-select-arrow', { text: '⌄', 'aria-hidden': 'true' })
+      ]));
+    }
 
-    ui.list.appendChild(el('h4', { text: pl ? '곡 목록 — ' + pl.name : '곡 목록' }));
+    ui.list.appendChild(el('div.mus-list-head', {}, [
+      el('strong', { text: pl ? pl.name : '재생목록' }),
+      el('span', { text: pl ? pl.tracks.length + '곡' : '0곡' })
+    ]));
+
     ui.list.appendChild(pl && pl.tracks.length
-      ? el('div', {}, pl.tracks.map(function (t, i) {
-          return el('div.track-item' + (i === st().player.index ? '.active' : ''), {
+      ? el('div.mus-track-list', {}, pl.tracks.map(function (track, i) {
+          var active = i === st().player.index;
+          var title = track.title || track.videoId;
+          return el('button.mus-track-row' + (active ? '.active' : ''), {
+            type: 'button', title: title,
+            'aria-label': (i + 1) + '번 ' + title + ' 재생',
             onclick: function () { playTrack(i, true); }
           }, [
-            el('span.t-idx', { text: String(i + 1) }),
-            el('span.t-title', { text: t.title || t.videoId })
+            el('span.mus-track-marker', {}, [
+              el('span.mus-track-number', { text: String(i + 1) }),
+              el('span.mus-playing-bars', { 'aria-hidden': 'true' }, [el('i'), el('i'), el('i')])
+            ]),
+            el('span.mus-track-copy', {}, [
+              el('span.mus-track-title', { text: title }),
+              el('span.mus-track-sub', { text: 'YouTube' })
+            ])
           ]);
         }))
-      : el('div.empty', { text: '곡이 없습니다.' }));
+      : el('div.empty.mus-empty', { text: playlists().length ? '이 재생목록에는 곡이 없습니다.' : '설정에서 재생목록을 만들어 주세요.' }));
 
-    ui.list.appendChild(el('button.btn.btn-sm', {
-      text: '⚙ 설정에서 곡 관리', style: { width: '100%', marginTop: '8px' },
+    ui.list.appendChild(el('button.mus-settings-link', {
+      type: 'button', text: '⚙  설정에서 재생목록 관리',
       onclick: function () { MW.shell.go('settings'); MW.settings.openTab('music'); }
     }));
   }
@@ -488,24 +525,40 @@ window.MW = window.MW || {};
     // 숨김 YouTube iframe — 패널을 닫아도 DOM 에 남아 재생 유지
     host.appendChild(el('div', { id: 'yt-host' }));
 
-    ui.play = el('button.mbar-btn.mbar-play', { title: '재생/일시정지', onclick: togglePlay });
-    ui.mode = el('button.mbar-btn', {
-      title: '재생 모드',
+    host.classList.add('music-panel-body');
+    ui.panel = panel.node;
+    ui.cover = el('div.mus-cover', { 'aria-hidden': 'true' });
+    ui.play = el('button.mus-control.mus-play', { type: 'button', title: '재생', 'aria-label': '재생', onclick: togglePlay });
+    ui.mode = el('button.mus-control.mus-mode', {
+      type: 'button', title: '재생 모드', 'aria-label': '재생 모드',
       onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
     });
     ui.nowTitle = el('div.mus-now-title');
-    ui.nowSub = el('div.mus-now-sub.small.dim');
+    ui.nowSub = el('div.mus-now-sub');
+    ui.panelFill = el('span.mus-progress-fill');
+    ui.panelHead = el('span.mus-progress-head');
+    ui.panelTrack = el('div.mus-progress', { title: '끌어서 재생 위치 이동' }, [ui.panelFill, ui.panelHead]);
+    ui.panelCurrent = el('span', { text: '00:00' });
+    ui.panelDuration = el('span', { text: '00:00' });
     ui.list = el('div.mus-list');
 
-    host.appendChild(el('div.mus-now', {}, [ui.nowTitle, ui.nowSub]));
-    host.appendChild(el('div.mbar', {}, [
-      el('button.mbar-btn', { text: '◀', title: '이전 곡', onclick: prevTrack }),
-      ui.play,
-      el('button.mbar-btn', { text: '▶', title: '다음 곡', onclick: function () { nextTrack(false); } }),
-      ui.mode
+    host.appendChild(el('section.mus-now-card', {}, [
+      el('div.mus-now-top', {}, [
+        ui.cover,
+        el('div.mus-now-copy', {}, [ui.nowTitle, ui.nowSub])
+      ]),
+      ui.panelTrack,
+      el('div.mus-time-row', {}, [ui.panelCurrent, ui.panelDuration]),
+      el('div.mus-transport', {}, [
+        ui.mode,
+        el('button.mus-control', { type: 'button', text: '◀', title: '이전 곡', 'aria-label': '이전 곡', onclick: prevTrack }),
+        ui.play,
+        el('button.mus-control', { type: 'button', text: '▶', title: '다음 곡', 'aria-label': '다음 곡', onclick: function () { nextTrack(false); } })
+      ])
     ]));
     host.appendChild(ui.list);
 
+    attachSeek(ui.panelTrack);
     renderBar();
     loadApi();
     // 새로고침 후에도 마지막 곡을 물려받되 자동 재생은 하지 않음
@@ -513,7 +566,13 @@ window.MW = window.MW || {};
   }
 
   function init() {
-    panel = MW.shell.registerPanel('music', { title: '🎵 BGM', onOpen: renderBar });
+    ui.statusText = el('span', { text: '대기' });
+    ui.statusDot = el('i.music-status-dot', { 'aria-hidden': 'true' });
+    ui.status = el('span.music-status', {}, [ui.statusDot, ui.statusText]);
+    panel = MW.shell.registerPanel('music', { title: 'BGM', headExtra: ui.status, onOpen: renderBar });
+    panel.node.classList.add('music-side-panel');
+    var closeButton = panel.head.querySelector('.btn-icon');
+    if (closeButton) closeButton.remove();
     mount(panel.body);
     mountMini(document.getElementById('musicmini'));
     renderBar();

@@ -2,6 +2,17 @@
    App Shell — 왼쪽사이드 / 상단바 / 메인 / 하단탭 / 플로팅창
    ========================================================================== */
 
+/* 빠른 수정 지도
+   - #app / #content / #main       앱 전체 배치와 가운데 메인 콘텐츠 폭
+   - #sidebar                     왼쪽의 페이지 이동 아이콘 메뉴
+   - #quickbar                    상단(모바일은 하단)의 빠른 일정 입력창
+   - #toolrail / #panelhost        오른쪽 Inbox·Memo·Music·Timer와 열린 패널 자리
+   - .page / .page-head            DASHBOARD·WORKFLOW·PLAN·MONEY·SETTINGS 공통 틀
+   - .tabs / .panel / .card        화면 안쪽 탭·탭 내용·일반 카드
+   - .float / .side-panel / .modal 떠 있는 창·도킹 패널·팝업
+   - @media (max-width: 640px)      모바일 전용 상단 메뉴·하단 도크·패널 배치
+   - .home-*                       대시보드 카드, 편집 도구, 이미지·달력 위젯 */
+
 /* 시안 A — 좌측 레일은 여백(테마 배경)에 떠 있고, 우측 레일은 컨텐츠 오른쪽에 붙음.
    도구 패널은 우측 레일의 오른쪽(여백)으로 펼쳐짐. */
 #app {
@@ -200,43 +211,169 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 .mm-track:hover .mm-head, .mm-track.dragging .mm-head { width: 15px; height: 15px; }
-/* BGM 패널 — 지금 재생 중 + 트랜스포트 + 목록 */
-.mus-now { padding: 4px 4px 10px; }
+/* BGM 패널 A형 — 현재 곡 카드 + 항상 보이는 재생목록 */
+#panel-music .side-panel-head {
+  min-height: 58px;
+  padding: 0 17px;
+  background: color-mix(in srgb, var(--surface-1) 94%, var(--surface-2));
+}
+#panel-music .side-panel-head h3 { font-size: 14px; letter-spacing: -0.015em; }
+.music-status {
+  display: inline-flex; align-items: center; gap: 7px;
+  min-height: 40px; color: var(--text-muted); font-size: 11px; white-space: nowrap;
+}
+.music-status-dot {
+  width: 7px; height: 7px; border-radius: 50%;
+  background: var(--accent); box-shadow: 0 0 0 4px var(--accent-dim);
+}
+.music-status-dot.paused { background: var(--text-dim); box-shadow: none; }
+
+.side-panel-body.music-panel-body { padding: 14px 13px 17px; }
+.mus-now-card {
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  background: var(--surface-2);
+  box-shadow: 0 10px 28px rgba(35, 39, 55, 0.08);
+}
+.mus-now-top {
+  display: grid; grid-template-columns: 78px minmax(0, 1fr);
+  align-items: center; gap: 12px;
+}
+.mus-cover {
+  position: relative;
+  width: 78px; height: 78px;
+  overflow: hidden; border-radius: 16px;
+  background-color: var(--accent-dim);
+  background-image: linear-gradient(145deg, var(--accent), var(--surface-3));
+  background-position: center; background-size: cover;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 10px 24px rgba(35, 39, 55, 0.14);
+}
+.mus-cover.empty::after {
+  content: '♪'; position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted); font-size: 26px;
+}
+.mus-now-copy { min-width: 0; }
 .mus-now-title {
-  font-size: 13.5px; font-weight: 600; color: var(--text);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  overflow: hidden; color: var(--text); font-size: 14px; font-weight: 600;
+  letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap;
 }
-.mus-now-sub { margin-top: 2px; }
+.mus-now-sub {
+  margin-top: 6px; overflow: hidden; color: var(--text-muted); font-size: 11px;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.mus-progress {
+  position: relative; height: 20px; margin-top: 10px;
+  cursor: pointer; touch-action: none;
+}
+.mus-progress::before {
+  content: ''; position: absolute; left: 0; right: 0; top: 8px; height: 5px;
+  border-radius: 999px; background: var(--surface-3);
+}
+.mus-progress-fill {
+  position: absolute; left: 0; top: 8px; width: 0; height: 5px;
+  border-radius: 999px; background: var(--accent);
+}
+.mus-progress-head {
+  position: absolute; top: 10.5px; left: 0;
+  width: 12px; height: 12px; border: 2px solid var(--surface-1); border-radius: 50%;
+  background: var(--accent); box-shadow: 0 1px 3px rgba(0, 0, 0, 0.24);
+  transform: translate(-50%, -50%); transition: width 0.12s, height 0.12s;
+}
+.mus-progress:hover .mus-progress-head, .mus-progress.dragging .mus-progress-head { width: 15px; height: 15px; }
+.mus-time-row {
+  display: flex; justify-content: space-between; margin-top: -1px;
+  color: var(--text-dim); font-size: 10px; font-variant-numeric: tabular-nums;
+}
+.mus-transport {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 7px;
+}
+.mus-control {
+  display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto;
+  width: 40px; height: 40px; border-radius: 50%;
+  color: var(--text-muted); font-size: 12px; cursor: pointer;
+  transition: color 0.12s, background 0.12s, transform 0.12s;
+}
+.mus-control:hover { color: var(--text); background: var(--surface-3); }
+.mus-control:active { transform: scale(0.94); }
+.mus-control.on { color: var(--accent); background: var(--accent-dim); }
+.mus-control.mus-mode { font-size: 15px; }
+.mus-play {
+  width: 52px; height: 52px; padding-left: 2px;
+  color: var(--on-accent); background: var(--accent); font-size: 15px;
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
+}
+.mus-play:hover { color: var(--on-accent); background: var(--accent-hover); }
 
-.mbar { display: flex; align-items: center; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
-.mbar-btn {
-  flex: 0 0 auto;
-  width: 32px; height: 32px;
-  display: inline-flex; align-items: center; justify-content: center;
-  color: var(--text-muted); border-radius: 50%;
-  font-size: 12px; cursor: pointer;
-  transition: background 0.12s, color 0.12s;
+.mus-list { margin-top: 13px; }
+.mus-playlist-select-wrap { position: relative; }
+.mus-playlist-select {
+  width: 100%; min-height: 44px; appearance: none;
+  padding: 0 42px 0 13px;
+  border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text); background: var(--surface-1);
+  cursor: pointer; font-size: 12px; font-weight: 600;
 }
-.mbar-btn:hover { background: var(--surface-2); color: var(--text); }
-.mbar-btn.on { color: var(--accent); }
-.mbar-play {
-  background: var(--accent); color: var(--on-accent);
-  width: 36px; height: 36px; font-size: 14px;
+.mus-playlist-select:focus { border-color: var(--accent); outline: none; }
+.mus-select-arrow {
+  position: absolute; top: 50%; right: 14px; color: var(--text-dim);
+  font-size: 17px; line-height: 1; pointer-events: none; transform: translateY(-58%);
 }
-.mbar-play:hover { background: var(--accent-hover); color: var(--on-accent); }
-
-.mus-list { margin-top: 10px; }
-.mus-list h4 { font-size: 12px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; padding: 8px 4px 4px; }
+.mus-list-head {
+  display: flex; align-items: baseline; gap: 7px;
+  min-height: 45px; padding: 13px 5px 7px;
+}
+.mus-list-head strong {
+  min-width: 0; overflow: hidden; color: var(--text); font-size: 12px;
+  text-overflow: ellipsis; white-space: nowrap;
+}
+.mus-list-head span { flex-shrink: 0; color: var(--text-dim); font-size: 10px; }
+.mus-track-list { display: flex; flex-direction: column; gap: 3px; }
+.mus-track-row {
+  display: grid; grid-template-columns: 26px minmax(0, 1fr); align-items: center; gap: 8px;
+  width: 100%; min-height: 48px; padding: 6px 10px;
+  border-radius: 11px; color: var(--text-muted); background: transparent;
+  text-align: left; cursor: pointer;
+}
+.mus-track-row:hover { color: var(--text); background: var(--surface-2); }
+.mus-track-row.active { color: var(--accent); background: var(--accent-dim); }
+.mus-track-marker { display: flex; align-items: center; justify-content: center; min-width: 0; }
+.mus-track-number { color: var(--text-dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+.mus-track-copy, .mus-track-title, .mus-track-sub {
+  display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.mus-track-title { color: var(--text); font-size: 11.5px; font-weight: 600; }
+.mus-track-sub { margin-top: 3px; color: var(--text-dim); font-size: 9.5px; }
+.mus-track-row.active .mus-track-title { color: var(--accent); }
+.mus-playing-bars { display: none; align-items: flex-end; justify-content: center; gap: 2px; height: 12px; }
+.mus-playing-bars i { width: 2px; border-radius: 2px; background: currentColor; animation: mus-bounce 700ms ease-in-out infinite alternate; }
+.mus-playing-bars i:nth-child(1) { height: 5px; }
+.mus-playing-bars i:nth-child(2) { height: 11px; animation-delay: -420ms; }
+.mus-playing-bars i:nth-child(3) { height: 7px; animation-delay: -230ms; }
+.music-side-panel.is-playing .mus-track-row.active .mus-track-number { display: none; }
+.music-side-panel.is-playing .mus-track-row.active .mus-playing-bars { display: inline-flex; }
+@keyframes mus-bounce { to { height: 3px; } }
+.mus-empty { margin-top: 2px; }
+.mus-settings-link {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; min-height: 44px; margin-top: 13px;
+  border: 1px solid var(--border); border-radius: 12px;
+  color: var(--text-muted); background: transparent;
+  cursor: pointer; font-size: 11px;
+}
+.mus-settings-link:hover { color: var(--text); background: var(--surface-2); }
 
 #yt-host { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; left: -9999px; top: 0; }
 
-.pl-item, .track-item {
+.track-item {
   display: flex; align-items: center; gap: 8px;
   padding: 7px 8px; border-radius: var(--radius-sm); cursor: pointer;
   font-size: 13px;
 }
-.pl-item:hover, .track-item:hover { background: var(--surface-2); }
-.pl-item.active, .track-item.active { background: var(--accent-dim); color: var(--accent); }
+.track-item:hover { background: var(--surface-2); }
+.track-item.active { background: var(--accent-dim); color: var(--accent); }
 .track-item .t-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-item .t-idx { font-size: 11px; color: var(--text-dim); width: 18px; text-align: right; flex-shrink: 0; }
 
@@ -292,6 +429,12 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .music-edit-toolbar { padding: 2px 0 7px; flex-wrap: wrap; }
 .btn:disabled { opacity: 0.42; cursor: not-allowed; }
 @media (max-width: 640px) {
+  #panel-music .side-panel-head { min-height: 62px; padding: 0 18px; }
+  .side-panel-body.music-panel-body { padding: 12px 12px 16px; }
+  .mus-now-card { padding: 13px; }
+  .mus-control { width: 42px; height: 42px; }
+  .mus-play { width: 52px; height: 52px; }
+  .mus-playlist-select { min-height: 46px; }
   .music-import-input { flex-basis: 100%; }
   .music-import-row > .btn { flex: 1; }
   .music-target-select { flex-basis: 100%; }
@@ -302,10 +445,12 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   .music-edit-toolbar .btn-danger { margin-left: auto; }
 }
 
-/* ------- 가운데 컨텐츠 — max-width 로 크기 고정, margin-right:auto 로 남는 폭을 오른쪽으로 밀어냄.
+/* ------- 메인 콘텐츠 바깥 카드 — 설정의 콘텐츠 폭 값이 적용되는 기준 상자.
+   max-width 로 크기를 제한하고 margin-right:auto 로 남는 폭을 오른쪽으로 밀어냄.
    패널이 열려 #panelhost 가 넓어지면: 먼저 auto 여백이 줄고, 그래도 모자라면 flex-shrink 로 컨텐츠가 줄어듦. */
 #content {
-  flex: 0 1 var(--content-max, 1100px);
+  flex: 0 1 var(--content-max, 720px);
+  max-width: 800px;
   /* 사이드바(왼쪽 18px)·도구영역(오른쪽 18px)이 양옆에 붙고, #app 이 이 덩어리를 화면 중앙에 둠 */
   align-self: stretch;
   min-width: 0;
@@ -319,6 +464,7 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   overflow: hidden;
 }
 
+/* 실제 페이지들이 스크롤되는 세로 영역. 위·아래 padding은 떠 있는 입력창 자리를 비웁니다. */
 #main {
   flex: 1;
   min-width: 0;
@@ -331,6 +477,7 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   padding-bottom: 76px;   /* 하단에 떠 있는 음악 미니바 자리 */
 }
 
+/* 각 메인 페이지의 공통 좌우 여백. WORKFLOW의 구분선·탭·카드는 이 안쪽 폭을 공유합니다. */
 .page {
   display: none;
   padding: 20px 24px 24px;
@@ -344,6 +491,7 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .page-head h1 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
 .page-head p { color: var(--text-muted); font-size: 13px; margin-top: 3px; }
 
+/* SETTINGS·MONEY 같은 화면 안에서 쓰는 가로 탭과 선택된 내용 */
 .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 18px; overflow-x: auto; }
 .tab {
   padding: 9px 14px; font-size: 13.5px; font-weight: 500; color: var(--text-muted);
@@ -355,6 +503,7 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .panel { display: none; }
 .panel.active { display: block; }
 
+/* 여러 페이지가 공유하는 기본 카드. 전체 둥근 정도는 tokens.css의 --radius에서 조절합니다. */
 .card {
   background: var(--surface-1);
   border: 1px solid var(--border);
@@ -568,7 +717,10 @@ body.panel-instant #panelhost { transition: none !important; }
   .sidebar-item { flex: 1; }
 
   /* 컨텐츠만 떠 있는 카드로 남습니다 */
-  #content { flex: 1; min-width: 0; min-height: 0; margin: 8px; }
+  #content {
+    flex: 1; width: calc(100% - 16px); max-width: calc(100% - 16px);
+    min-width: 0; min-height: 0; margin: 8px;
+  }
   #panelhost { flex-basis: 0 !important; overflow: visible; }
 
   #main { align-items: stretch; -webkit-overflow-scrolling: touch; }

@@ -19,7 +19,7 @@ window.MW = window.MW || {};
   'use strict';
   var U = MW.util, el = U.el;
 
-  var DEFAULT_PROCESSES = ['콘티', '선화', '밑색', '명암', '후보정'];
+  var DEFAULT_PROCESSES = ['콘티', '스케치', '선화', '밑색', '명암', '후보정'];
   var PER_ROW = 10;
 
   /** 3자리 0채움 — "017", "032". D-day·하루 할당량 숫자가 자릿수 바뀔 때마다 폭이 흔들리지
@@ -31,6 +31,7 @@ window.MW = window.MW || {};
 
   var root = null;
   var reorder = false;          // [순서 변경] 모드 (저장하지 않는 화면 상태)
+  var createOpen = false;       // 작품 추가 영역의 펼침 상태 (기본은 접힘, 저장하지 않음)
   var dragId = null;
 
   /* 컷을 드래그(마우스) · 길게 눌러 끌기(터치)로 여러 개 한 번에 칠하는 상태.
@@ -69,120 +70,697 @@ window.MW = window.MW || {};
     return ep.processes.slice().sort(function (a, b) { return (a.order || 0) - (b.order || 0); });
   }
 
+  function cleanProcessNames(names) {
+    var seen = {};
+    return (Array.isArray(names) ? names : []).map(function (name) {
+      return String(name || '').trim();
+    }).filter(function (name) {
+      if (!name || seen[name]) return false;
+      seen[name] = true;
+      return true;
+    });
+  }
+
+  function processNamesOf(ep) {
+    return ep ? cleanProcessNames(sortedProcesses(ep).map(function (p) { return p.name; })) : [];
+  }
+
+  function hasWorkTemplate(work) {
+    return !!(work && work.template && typeof work.template === 'object' &&
+      +work.template.cutCount >= 1 && cleanProcessNames(work.template.processes).length);
+  }
+
+  /** 예전 작품에는 template 필드가 없으므로 가장 마지막 회차를 임시 기본값으로 사용합니다. */
+  function templateOf(work) {
+    if (hasWorkTemplate(work)) {
+      return {
+        cutCount: U.clamp(parseInt(work.template.cutCount, 10) || 60, 1, 999),
+        processes: cleanProcessNames(work.template.processes),
+        inferred: false,
+        sourceNumber: null
+      };
+    }
+    var episodes = (work && Array.isArray(work.episodes) ? work.episodes : []).slice()
+      .sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); });
+    var source = episodes[episodes.length - 1] || null;
+    var names = processNamesOf(source);
+    return {
+      cutCount: source ? U.clamp(parseInt(source.cutCount, 10) || 60, 1, 999) : 60,
+      processes: names.length ? names : DEFAULT_PROCESSES.slice(),
+      inferred: true,
+      sourceNumber: source ? source.number : null
+    };
+  }
+
+  function cloneEpisode(ep) {
+    return JSON.parse(JSON.stringify(ep));
+  }
+
+  /** 공정 이름이 같은 항목은 체크 기록과 마감일을 보존하고, 새 공정만 빈 상태로 만듭니다. */
+  function setEpisodeProcesses(ep, names) {
+    var unused = ep.processes.slice();
+    ep.processes = names.map(function (name, order) {
+      var index = unused.findIndex(function (p) { return p.name === name; });
+      var process = index >= 0 ? unused.splice(index, 1)[0] : {
+        id: U.uid('pr'), name: name, collapsed: order !== 0, completedCuts: []
+      };
+      process.name = name;
+      process.order = order;
+      if (!Array.isArray(process.completedCuts)) process.completedCuts = [];
+      return process;
+    });
+  }
+
+  function bindProcessTagDrag(handle, tag, container, list, index, redraw, onChange) {
+    handle.addEventListener('pointerdown', function (e) {
+      if (e.button !== undefined && e.button !== 0) return;
+      e.preventDefault();
+      var targetIndex = index;
+      tag.classList.add('dragging');
+
+      function clearTargets() {
+        Array.prototype.forEach.call(container.querySelectorAll('.work-template-sort-tag'), function (node) {
+          node.classList.remove('drag-over');
+        });
+      }
+      function move(ev) {
+        ev.preventDefault();
+        var target = document.elementFromPoint(ev.clientX, ev.clientY);
+        target = target && target.closest ? target.closest('.work-template-sort-tag') : null;
+        if (!target || !container.contains(target)) return;
+        targetIndex = parseInt(target.dataset.processIndex, 10);
+        clearTargets();
+        if (targetIndex !== index) target.classList.add('drag-over');
+      }
+      function finish() {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', finish);
+        document.removeEventListener('pointercancel', finish);
+        clearTargets();
+        tag.classList.remove('dragging');
+        if (targetIndex === index || isNaN(targetIndex)) return;
+        list.splice(targetIndex, 0, list.splice(index, 1)[0]);
+        redraw();
+        if (onChange) onChange();
+      }
+      document.addEventListener('pointermove', move, { passive: false });
+      document.addEventListener('pointerup', finish);
+      document.addEventListener('pointercancel', finish);
+    });
+  }
+
   /* ------------------------------------------------------------ 작품 · 회차 */
 
-  function workDialog(w) {
-    var name = el('input.field', { value: w ? w.name : '', placeholder: '작품 이름' });
-
-    // 신규 생성일 때만: 회차 수 · 화별 컷수 · 공정 단계를 함께 받아 회차까지 한 번에 만듭니다.
-    // 비워두면(회차 수 0) 예전처럼 작품만 만들어집니다.
-    var epCount, cutsPerEp, stepsWrap, steps, stepInput;
-    if (!w) {
-      epCount = el('input.field', { type: 'number', min: '1', max: '999', placeholder: '1' });
-      cutsPerEp = el('input.field', { type: 'number', min: '1', max: '999', value: '60' });
-      steps = DEFAULT_PROCESSES.slice();
-      stepsWrap = el('div.row-wrap');
-      stepInput = el('input.field', {
-        placeholder: '공정 이름', style: { width: '110px' },
-        onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); addStep(); } }
+  function createWork(name, episodeCount, cutCount, steps) {
+    var newId = U.uid('work');
+    var episodes = [];
+    for (var i = 1; i <= episodeCount; i++) {
+      episodes.push({
+        id: U.uid('ep'), number: i, cutCount: cutCount,
+        processes: steps.map(function (stepName, k) {
+          return { id: U.uid('pr'), name: stepName, order: k, collapsed: k !== 0, completedCuts: [] };
+        })
       });
+    }
+    MW.store.update(function (s) {
+      s.works.push({
+        id: newId, name: name, archived: false,
+        template: { cutCount: cutCount, processes: steps.slice() },
+        episodes: episodes
+      });
+      s.settings.workSel = { workId: newId, epId: episodes.length ? episodes[0].id : '' };
+    });
+  }
 
-      var renderSteps = function () {
-        U.clear(stepsWrap);
-        steps.forEach(function (stepName, i) {
-          stepsWrap.appendChild(el('span.chip', { style: { display: 'inline-flex', alignItems: 'center', gap: '5px' } }, [
-            stepName,
-            el('button', {
-              text: '✕', style: { color: 'var(--text-dim)', fontSize: '10px' }, title: '삭제',
-              onclick: function () { steps.splice(i, 1); renderSteps(); }
-            })
-          ]));
+  function workCreatePanel() {
+    var steps = DEFAULT_PROCESSES.slice();
+    var name = el('input.field.work-create-name', {
+      id: 'work-create-name', type: 'text', placeholder: '작품 이름 입력', autocomplete: 'off'
+    });
+    var epCount = el('input.field.work-create-number', {
+      id: 'work-create-episodes', type: 'text', inputmode: 'numeric', value: '1', maxlength: '3',
+      oninput: function () { this.value = this.value.replace(/\D/g, '').slice(0, 3); }
+    });
+    var cutsPerEp = el('input.field.work-create-number', {
+      id: 'work-create-cuts', type: 'text', inputmode: 'numeric', value: '60', maxlength: '3',
+      oninput: function () { this.value = this.value.replace(/\D/g, '').slice(0, 3); }
+    });
+    var stepInput = el('input.field.work-create-step', {
+      id: 'work-create-step', type: 'text', placeholder: '공정 이름', autocomplete: 'off',
+      onkeydown: function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          addStep();
+        }
+      }
+    });
+    var tags = el('div.work-create-tags', { 'aria-label': '추가할 공정 단계' });
+
+    function renderSteps() {
+      U.clear(tags);
+      if (!steps.length) {
+        tags.appendChild(el('span.work-create-tags-empty', { text: '공정을 추가해 주세요.' }));
+        return;
+      }
+      steps.forEach(function (stepName, i) {
+        var dragHandle = el('button.work-template-drag-handle', {
+          type: 'button', text: '⠿', title: stepName + ' 순서 이동', 'aria-label': stepName + ' 순서 이동'
         });
-      };
-      var addStep = function () {
-        var v = stepInput.value.trim();
-        if (!v) return;
-        steps.push(v);
-        stepInput.value = '';
-        renderSteps();
-      };
-      renderSteps();
+        var tag = el('span.chip.work-create-tag.work-template-sort-tag', {
+          dataset: { processIndex: String(i) }
+        }, [
+          dragHandle,
+          el('span', { text: stepName }),
+          el('button.work-create-tag-remove', {
+            type: 'button', text: '✕', title: stepName + ' 삭제', 'aria-label': stepName + ' 삭제',
+            onclick: function () { steps.splice(i, 1); renderSteps(); }
+          })
+        ]);
+        bindProcessTagDrag(dragHandle, tag, tags, steps, i, renderSteps);
+        tags.appendChild(tag);
+      });
     }
 
-    MW.shell.modal({
-      title: w ? '작품 이름 수정' : '작품 추가',
-      body: [
-        el('div.form-row', {}, [el('label', { text: '작품 이름' }), name]),
-        w ? null : el('div.form-grid', {}, [
-          el('div.form-row', {}, [el('label', { text: '회차 수' }), epCount]),
-          el('div.form-row', {}, [el('label', { text: '화별 컷수' }), cutsPerEp])
+    function addStep() {
+      var value = stepInput.value.trim();
+      if (!value) return;
+      steps.push(value);
+      stepInput.value = '';
+      renderSteps();
+      stepInput.focus();
+    }
+
+    function submit() {
+      var workName = name.value.trim();
+      if (!workName) {
+        U.toast('작품 이름을 입력해 주세요.', 'warn');
+        name.focus();
+        return;
+      }
+      if (!steps.length) {
+        U.toast('공정을 하나 이상 넣어 주세요.', 'warn');
+        stepInput.focus();
+        return;
+      }
+      var episodeN = U.clamp(parseInt(epCount.value, 10) || 1, 1, 999);
+      var cutN = U.clamp(parseInt(cutsPerEp.value, 10) || 60, 1, 999);
+      createWork(workName, episodeN, cutN, steps);
+    }
+
+    var body = el('form.work-create-body', {
+      onsubmit: function (e) { e.preventDefault(); submit(); }
+    }, [
+      el('div.work-create-line.work-create-name-line', {}, [
+        el('label', { for: 'work-create-name', text: '작품 이름' }),
+        name,
+        el('button.btn.btn-primary.work-create-submit', { type: 'submit', text: '작품 추가하기' })
+      ]),
+      el('div.work-create-line.work-create-count-line', {}, [
+        el('label', { for: 'work-create-episodes', text: '회차수' }),
+        epCount,
+        el('label.work-create-cut-label', { for: 'work-create-cuts', text: '화별 기본 컷수' }),
+        cutsPerEp,
+        el('span.work-create-unit', { text: '컷' })
+      ]),
+      el('div.work-create-line.work-create-process-line', {}, [
+        el('label', { for: 'work-create-step', text: '공정 단계' }),
+        stepInput,
+        el('button.btn.work-create-step-add', { type: 'button', text: '추가', onclick: addStep })
+      ]),
+      tags
+    ]);
+    body.hidden = !createOpen;
+    var caret = el('span.work-create-caret', { text: createOpen ? '▼' : '▶', 'aria-hidden': 'true' });
+    var toggle = el('button.work-create-toggle', {
+      type: 'button', title: createOpen ? '접기' : '펼치기',
+      'aria-label': createOpen ? '작품 추가 영역 접기' : '작품 추가 영역 펼치기',
+      'aria-expanded': String(createOpen),
+      onclick: function () {
+        createOpen = !createOpen;
+        body.hidden = !createOpen;
+        caret.textContent = createOpen ? '▼' : '▶';
+        toggle.title = createOpen ? '접기' : '펼치기';
+        toggle.setAttribute('aria-label', createOpen ? '작품 추가 영역 접기' : '작품 추가 영역 펼치기');
+        toggle.setAttribute('aria-expanded', String(createOpen));
+      }
+    }, [caret]);
+    var heading = el('div.work-create-heading', {}, [
+      toggle,
+      el('h2', { text: '작품 추가하기' })
+    ]);
+
+    renderSteps();
+    return el('section.work-create-panel', {}, [heading, body]);
+  }
+
+  function processTagEditor(initialNames, onChange) {
+    var names = cleanProcessNames(initialNames);
+    var tags = el('div.work-template-tags', { 'aria-label': '공정 태그' });
+    var input = el('input.field.work-template-process-input', {
+      type: 'text', placeholder: '공정 이름', autocomplete: 'off',
+      onkeydown: function (e) {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          add();
+        }
+      }
+    });
+
+    function changed() { if (onChange) onChange(); }
+    function draw() {
+      U.clear(tags);
+      if (!names.length) {
+        tags.appendChild(el('span.work-create-tags-empty', { text: '공정을 추가해 주세요.' }));
+        return;
+      }
+      names.forEach(function (processName, index) {
+        var dragHandle = el('button.work-template-drag-handle', {
+          type: 'button', text: '⠿', title: processName + ' 순서 이동', 'aria-label': processName + ' 순서 이동'
+        });
+        var tag = el('span.chip.work-create-tag.work-template-sort-tag', {
+          dataset: { processIndex: String(index) }
+        }, [
+          dragHandle,
+          el('span', { text: processName }),
+          el('button.work-create-tag-remove', {
+            type: 'button', text: '✕', title: processName + ' 삭제', 'aria-label': processName + ' 삭제',
+            onclick: function () {
+              names.splice(index, 1);
+              draw();
+              changed();
+            }
+          })
+        ]);
+        bindProcessTagDrag(dragHandle, tag, tags, names, index, draw, changed);
+        tags.appendChild(tag);
+      });
+    }
+    function add() {
+      var value = input.value.trim();
+      if (!value) return;
+      if (names.indexOf(value) >= 0) {
+        U.toast('이미 들어 있는 공정입니다.', 'warn');
+        input.select();
+        return;
+      }
+      names.push(value);
+      input.value = '';
+      draw();
+      changed();
+      input.focus();
+    }
+
+    draw();
+    return {
+      node: el('div.work-template-process-editor', {}, [
+        el('div.work-template-process-add', {}, [
+          input,
+          el('button.btn.btn-sm', { type: 'button', text: '추가', onclick: add })
         ]),
-        w ? null : el('div.form-row', {}, [
-          el('label', { text: '공정 단계' }),
-          stepsWrap,
-          el('div.row', { style: { marginTop: '6px' } }, [stepInput, el('button.btn.btn-sm', { text: '추가', onclick: function () { addStep(); } })])
+        tags
+      ]),
+      getNames: function () { return names.slice(); }
+    };
+  }
+
+  function workTemplateDialog(work) {
+    var baseTemplate = templateOf(work);
+    var originalEpisodes = work.episodes.map(cloneEpisode);
+    var episodeDrafts = work.episodes.map(cloneEpisode);
+    var selected = {};
+    var approvedWarning = '';
+
+    var name = el('input.field', { type: 'text', value: work.name, placeholder: '작품 이름' });
+    var defaultCuts = el('input.field.work-template-cut-input', {
+      type: 'text', inputmode: 'numeric', value: String(baseTemplate.cutCount), maxlength: '3',
+      oninput: function () { this.value = this.value.replace(/\D/g, '').slice(0, 3); }
+    });
+    var templateProcesses = processTagEditor(baseTemplate.processes);
+    var episodeList = el('div.work-template-episode-list');
+    var selectedCount = el('span.work-template-selected-count', { text: '0개 선택' });
+    var selectAll = el('input.chk', { type: 'checkbox', 'aria-label': '전체 회차 선택' });
+    var editSelected = el('button.btn.btn-sm', { type: 'button', text: '선택 수정', disabled: true });
+    var deleteSelected = el('button.btn.btn-sm.btn-danger', { type: 'button', text: '선택 삭제', disabled: true });
+    var selectionArea = el('div.work-template-selection-area');
+    var deleteNotice = el('div.work-template-delete-note');
+    var warningBox = el('div.work-template-save-warning');
+    warningBox.hidden = true;
+    deleteNotice.hidden = true;
+
+    function sortedDrafts() {
+      return episodeDrafts.slice().sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); });
+    }
+    function selectedDrafts() {
+      return sortedDrafts().filter(function (ep) { return !!selected[ep.id]; });
+    }
+    function closeSelectionArea() { U.clear(selectionArea); }
+    function updateSelectionState() {
+      var count = selectedDrafts().length;
+      var total = episodeDrafts.length;
+      selectedCount.textContent = count + '개 선택';
+      selectAll.checked = total > 0 && count === total;
+      selectAll.indeterminate = count > 0 && count < total;
+      selectAll.disabled = total === 0;
+      editSelected.disabled = count === 0;
+      deleteSelected.disabled = count === 0;
+    }
+    function episodeProcessChips(ep) {
+      var names = processNamesOf(ep);
+      if (!names.length) return [el('span.small.dim', { text: '공정 없음' })];
+      return names.map(function (processName) {
+        return el('span.chip.work-template-mini-tag', { text: processName });
+      });
+    }
+    function drawEpisodeList() {
+      U.clear(episodeList);
+      Object.keys(selected).forEach(function (id) {
+        if (!episodeDrafts.some(function (ep) { return ep.id === id; })) delete selected[id];
+      });
+      var drafts = sortedDrafts();
+      if (!drafts.length) {
+        episodeList.appendChild(el('div.work-template-episodes-empty', { text: '남아 있는 회차가 없습니다.' }));
+      }
+      drafts.forEach(function (ep) {
+        var checkbox = el('input.chk', {
+          type: 'checkbox', checked: !!selected[ep.id], 'aria-label': ep.number + '화 선택',
+          onchange: function () {
+            if (this.checked) selected[ep.id] = true;
+            else delete selected[ep.id];
+            closeSelectionArea();
+            updateSelectionState();
+          }
+        });
+        episodeList.appendChild(el('div.work-template-episode-row', { dataset: { episodeId: ep.id } }, [
+          checkbox,
+          el('strong.work-template-episode-number', { text: ep.number + '화' }),
+          el('span.work-template-episode-cuts', { text: '총 ' + ep.cutCount + '컷' }),
+          el('div.work-template-episode-processes', {}, episodeProcessChips(ep))
+        ]));
+      });
+      updateSelectionState();
+      drawDeleteNotice();
+    }
+    function drawDeleteNotice() {
+      var alive = {};
+      episodeDrafts.forEach(function (ep) { alive[ep.id] = true; });
+      var deleted = originalEpisodes.filter(function (ep) { return !alive[ep.id]; })
+        .sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); });
+      U.clear(deleteNotice);
+      deleteNotice.hidden = !deleted.length;
+      if (!deleted.length) return;
+      deleteNotice.appendChild(el('span', {
+        text: deleted.map(function (ep) { return ep.number + '화'; }).join(', ') +
+          ' 삭제 예정 · 저장 전까지 취소할 수 있습니다.'
+      }));
+      deleteNotice.appendChild(el('button.btn.btn-sm', {
+        type: 'button', text: '삭제 취소',
+        onclick: function () {
+          var current = {};
+          episodeDrafts.forEach(function (ep) { current[ep.id] = true; });
+          originalEpisodes.forEach(function (ep) {
+            if (!current[ep.id]) episodeDrafts.push(cloneEpisode(ep));
+          });
+          approvedWarning = '';
+          closeSelectionArea();
+          drawEpisodeList();
+        }
+      }));
+    }
+
+    selectAll.addEventListener('change', function () {
+      selected = {};
+      if (selectAll.checked) episodeDrafts.forEach(function (ep) { selected[ep.id] = true; });
+      closeSelectionArea();
+      drawEpisodeList();
+    });
+
+    editSelected.addEventListener('click', function () {
+      var targets = selectedDrafts();
+      if (!targets.length) return;
+      U.clear(selectionArea);
+      var firstCuts = targets[0].cutCount;
+      var sameCuts = targets.every(function (ep) { return ep.cutCount === firstCuts; });
+      var firstNames = processNamesOf(targets[0]);
+      var sameProcesses = targets.every(function (ep) {
+        return JSON.stringify(processNamesOf(ep)) === JSON.stringify(firstNames);
+      });
+      var changeCuts = el('input.chk', { type: 'checkbox' });
+      var cutInput = el('input.field.work-template-cut-input', {
+        type: 'text', inputmode: 'numeric', value: sameCuts ? String(firstCuts) : '',
+        placeholder: sameCuts ? '' : '서로 다른 값', maxlength: '3',
+        oninput: function () {
+          this.value = this.value.replace(/\D/g, '').slice(0, 3);
+          changeCuts.checked = true;
+        }
+      });
+      var changeProcesses = el('input.chk', { type: 'checkbox' });
+      var processEditor = processTagEditor(sameProcesses ? firstNames : templateProcesses.getNames(), function () {
+        changeProcesses.checked = true;
+      });
+
+      selectionArea.appendChild(el('div.work-template-selection-editor', {}, [
+        el('div.work-template-selection-head', {}, [
+          el('strong', { text: targets.length + '개 회차 수정' }),
+          el('span.small.dim', { text: '체크한 항목만 바뀝니다.' })
         ]),
-        w ? null : el('div.small.dim', {
-          text: '비워두면 1화가 만들어집니다. 채우면 1화부터 그 수만큼, 위 컷수·공정 구성으로 한 번에 만들어집니다.'
-        })
-      ],
-      extra: w ? el('button.btn.btn-danger.btn-sm', {
-        text: '삭제',
+        el('label.work-template-change-row', {}, [
+          changeCuts,
+          el('span', { text: '컷수 변경' }),
+          cutInput,
+          el('span.small.dim', { text: '컷' })
+        ]),
+        el('div.work-template-change-processes', {}, [
+          el('label.work-template-change-row', {}, [changeProcesses, el('span', { text: '공정 변경' })]),
+          sameProcesses ? null : el('div.small.dim', {
+            text: '선택한 회차의 공정 구성이 서로 달라 기본 공정을 표시했습니다.'
+          }),
+          processEditor.node
+        ]),
+        el('div.work-template-selection-actions', {}, [
+          el('button.btn.btn-sm', { type: 'button', text: '닫기', onclick: closeSelectionArea }),
+          el('button.btn.btn-sm.btn-primary', {
+            type: 'button', text: '선택 항목에 적용',
+            onclick: function () {
+              if (!changeCuts.checked && !changeProcesses.checked) {
+                U.toast('바꿀 항목을 체크해 주세요.', 'warn');
+                return;
+              }
+              var cut = null;
+              if (changeCuts.checked) {
+                cut = parseInt(cutInput.value, 10);
+                if (!cut || cut < 1) {
+                  U.toast('컷수를 입력해 주세요.', 'warn');
+                  cutInput.focus();
+                  return;
+                }
+                cut = U.clamp(cut, 1, 999);
+              }
+              var names = processEditor.getNames();
+              if (changeProcesses.checked && !names.length) {
+                U.toast('공정을 하나 이상 넣어 주세요.', 'warn');
+                return;
+              }
+              targets.forEach(function (target) {
+                var draft = episodeDrafts.find(function (ep) { return ep.id === target.id; });
+                if (!draft) return;
+                if (changeCuts.checked && cut !== draft.cutCount) {
+                  draft.cutCount = cut;
+                  draft.processes.forEach(function (process) {
+                    process.completedCuts = process.completedCuts.filter(function (n) { return n <= cut; });
+                  });
+                }
+                if (changeProcesses.checked) setEpisodeProcesses(draft, names);
+              });
+              approvedWarning = '';
+              closeSelectionArea();
+              drawEpisodeList();
+              U.toast(targets.length + '개 회차의 수정 내용을 준비했습니다.');
+            }
+          })
+        ])
+      ]));
+    });
+
+    deleteSelected.addEventListener('click', function () {
+      var targets = selectedDrafts();
+      if (!targets.length) return;
+      U.clear(selectionArea);
+      var numbers = targets.map(function (ep) { return ep.number + '화'; }).join(', ');
+      selectionArea.appendChild(el('div.work-template-delete-confirm', {}, [
+        el('strong', { text: numbers + ' (' + targets.length + '개)를 삭제할까요?' }),
+        el('span.small.dim', { text: '아직 저장되지 않습니다. 아래 저장 버튼을 누르기 전에는 취소할 수 있습니다.' }),
+        el('div.work-template-selection-actions', {}, [
+          el('button.btn.btn-sm', { type: 'button', text: '취소', onclick: closeSelectionArea }),
+          el('button.btn.btn-sm.btn-danger', {
+            type: 'button', text: '삭제 예정으로 표시',
+            onclick: function () {
+              var removing = {};
+              targets.forEach(function (ep) { removing[ep.id] = true; });
+              episodeDrafts = episodeDrafts.filter(function (ep) { return !removing[ep.id]; });
+              selected = {};
+              approvedWarning = '';
+              closeSelectionArea();
+              drawEpisodeList();
+            }
+          })
+        ])
+      ]));
+    });
+
+    function destructiveMessages() {
+      var messages = [];
+      var draftsById = {};
+      episodeDrafts.forEach(function (ep) { draftsById[ep.id] = ep; });
+      var deleted = originalEpisodes.filter(function (ep) { return !draftsById[ep.id]; })
+        .sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); });
+      if (deleted.length) {
+        messages.push('회차 삭제: ' + deleted.map(function (ep) { return ep.number + '화'; }).join(', ') +
+          ' (' + deleted.length + '개, 체크 기록 포함)');
+      }
+      originalEpisodes.forEach(function (original) {
+        var draft = draftsById[original.id];
+        if (!draft) return;
+        if (draft.cutCount < original.cutCount) {
+          messages.push(original.number + '화 컷수 축소: ' + original.cutCount + '컷 → ' + draft.cutCount +
+            '컷 (초과한 컷의 체크 기록 삭제)');
+        }
+        var draftNames = processNamesOf(draft);
+        var removed = processNamesOf(original).filter(function (processName) {
+          return draftNames.indexOf(processName) < 0;
+        });
+        if (removed.length) {
+          messages.push(original.number + '화 공정 삭제: ' + removed.join(', ') + ' (체크·마감 기록 포함)');
+        }
+      });
+      return messages;
+    }
+
+    var body = [
+      baseTemplate.inferred ? el('div.work-template-inferred', {
+        text: baseTemplate.sourceNumber !== null
+          ? '이 작품에는 저장된 기본 템플릿이 없어 마지막 회차인 ' + baseTemplate.sourceNumber +
+            '화의 컷수와 공정을 불러왔습니다. 저장하면 앞으로 추가하는 회차의 기본값으로 사용됩니다.'
+          : '이 작품에는 저장된 기본 템플릿과 회차가 없어 기본값을 불러왔습니다.'
+      }) : null,
+      el('section.work-template-section', {}, [
+        el('div.work-template-section-head', {}, [
+          el('strong', { text: '기본 정보' }),
+          el('span.small.dim', { text: '새 회차를 만들 때 사용하는 기본값' })
+        ]),
+        el('div.form-row', {}, [el('label', { text: '작품 명' }), name]),
+        el('div.form-row.work-template-cuts-row', {}, [
+          el('label', { text: '화별 기본' }), defaultCuts, el('span', { text: '컷' })
+        ]),
+        el('div.form-row', {}, [el('label', { text: '기본 공정 태그' }), templateProcesses.node])
+      ]),
+      el('div.work-divider', { 'aria-hidden': 'true' }),
+      el('section.work-template-section', {}, [
+        el('div.work-template-section-head', {}, [
+          el('strong', { text: '작품 회차별 정보' }),
+          el('span.small.dim', { text: '기존 회차에서 고칠 항목을 선택' })
+        ]),
+        el('div.work-template-episode-toolbar', {}, [
+          el('label.work-template-select-all', {}, [selectAll, el('span', { text: '전체 선택' })]),
+          selectedCount,
+          el('span.spacer'),
+          editSelected,
+          deleteSelected
+        ]),
+        episodeList,
+        selectionArea,
+        deleteNotice
+      ]),
+      warningBox
+    ];
+
+    drawEpisodeList();
+    var dialog = MW.shell.modal({
+      title: '작품 관리',
+      body: body,
+      okText: '변경 내용 저장',
+      extra: el('button.btn.btn-danger.btn-sm', {
+        type: 'button', text: '작품 삭제',
         onclick: function () {
           MW.shell.closeModal();
           MW.shell.confirm(
-            '“' + w.name + '” 과 그 안의 회차 ' + w.episodes.length + '개를 모두 삭제할까요?\n되돌릴 수 없습니다.',
+            '“' + work.name + '”과 그 안의 회차 ' + work.episodes.length + '개를 모두 삭제할까요?\n되돌릴 수 없습니다.',
             function () {
               MW.store.update(function (s) {
-                s.works = s.works.filter(function (x) { return x.id !== w.id; });
+                s.works = s.works.filter(function (x) { return x.id !== work.id; });
                 s.settings.workSel = { workId: '', epId: '' };
               });
               U.toast('작품을 삭제했습니다.');
             }
           );
         }
-      }) : null,
+      }),
       onOk: function () {
-        var v = name.value.trim();
-        if (!v) { U.toast('작품 이름을 입력해 주세요.', 'warn'); return false; }
-        if (!w) {
-          var n = U.clamp(parseInt(epCount.value, 10) || 1, 1, 999);
-          if (!steps.length) { U.toast('공정을 하나 이상 넣어 주세요.', 'warn'); return false; }
+        var workName = name.value.trim();
+        var cutCount = U.clamp(parseInt(defaultCuts.value, 10) || 0, 1, 999);
+        var processNames = templateProcesses.getNames();
+        if (!workName) {
+          U.toast('작품 이름을 입력해 주세요.', 'warn');
+          name.focus();
+          return false;
         }
-        var newId = U.uid('work');
+        if (!parseInt(defaultCuts.value, 10)) {
+          U.toast('화별 기본 컷수를 입력해 주세요.', 'warn');
+          defaultCuts.focus();
+          return false;
+        }
+        if (!processNames.length) {
+          U.toast('기본 공정을 하나 이상 넣어 주세요.', 'warn');
+          return false;
+        }
+        var destructive = destructiveMessages();
+        var warning = destructive.join('\n');
+        if (warning && warning !== approvedWarning) {
+          approvedWarning = warning;
+          warningBox.hidden = false;
+          warningBox.textContent = '저장하면 다음 내용은 되돌릴 수 없습니다.\n• ' +
+            destructive.join('\n• ') + '\n한 번 더 누르면 적용합니다.';
+          if (saveButton) saveButton.textContent = '확인하고 적용';
+          warningBox.scrollIntoView({ block: 'nearest' });
+          return false;
+        }
         MW.store.update(function (s) {
-          if (w) {
-            var x = s.works.find(function (y) { return y.id === w.id; });
-            if (x) x.name = v;
-          } else {
-            var cutN = U.clamp(parseInt(cutsPerEp.value, 10) || 60, 1, 999);
-            var episodes = [];
-            for (var i = 1; i <= n; i++) {
-              episodes.push({
-                id: U.uid('ep'), number: i, cutCount: cutN,
-                processes: steps.map(function (stepName, k) {
-                  return { id: U.uid('pr'), name: stepName, order: k, collapsed: k !== 0, completedCuts: [] };
-                })
-              });
+          var target = s.works.find(function (item) { return item.id === work.id; });
+          if (!target) return;
+          target.name = workName;
+          target.template = { cutCount: cutCount, processes: processNames.slice() };
+          target.episodes = episodeDrafts.map(cloneEpisode);
+          if (s.settings.workSel && s.settings.workSel.workId === target.id) {
+            var selectedStillExists = target.episodes.some(function (ep) {
+              return ep.id === s.settings.workSel.epId;
+            });
+            if (!selectedStillExists) {
+              var first = target.episodes.slice().sort(function (a, b) {
+                return (+a.number || 0) - (+b.number || 0);
+              })[0];
+              s.settings.workSel.epId = first ? first.id : '';
             }
-            s.works.push({ id: newId, name: v, archived: false, episodes: episodes });
-            s.settings.workSel = { workId: newId, epId: episodes.length ? episodes[0].id : '' };
           }
         });
+        U.toast('작품 템플릿을 저장했습니다.');
       }
     });
+    dialog.box.classList.add('work-template-modal');
+    var saveButton = dialog.box.querySelector('.modal-foot .btn-primary');
   }
 
   /** 신규 회차 생성 전용 (기존 회차 편집·삭제는 episodeHeaderControl 로 옮겼습니다) */
   function episodeDialog(work) {
-    var last = work.episodes[work.episodes.length - 1];
+    var baseTemplate = templateOf(work);
+    var last = work.episodes.slice().sort(function (a, b) {
+      return (+a.number || 0) - (+b.number || 0);
+    }).pop();
     var number = el('input.field', {
       type: 'number', min: '0',
       value: last ? (+last.number || 0) + 1 : 1
     });
     var cuts = el('input.field', {
       type: 'number', min: '1', max: '999',
-      value: last ? last.cutCount : 60
+      value: baseTemplate.cutCount
     });
 
     MW.shell.modal({
@@ -193,7 +771,7 @@ window.MW = window.MW || {};
           el('div.form-row', {}, [el('label', { text: '전체 컷 수' }), cuts])
         ]),
         el('div.small.dim', {
-          text: '기본 공정 ' + DEFAULT_PROCESSES.join(' · ') + ' 가 함께 만들어집니다. 이름은 나중에 바꿀 수 있습니다.'
+          text: '기본 공정 ' + baseTemplate.processes.join(' · ') + '이(가) 함께 만들어집니다.'
         })
       ],
       onOk: function () {
@@ -203,9 +781,12 @@ window.MW = window.MW || {};
         MW.store.update(function (s) {
           var w = s.works.find(function (x) { return x.id === work.id; });
           if (!w) return;
+          if (!hasWorkTemplate(w)) {
+            w.template = { cutCount: baseTemplate.cutCount, processes: baseTemplate.processes.slice() };
+          }
           w.episodes.push({
             id: newId, number: num, cutCount: cut,
-            processes: DEFAULT_PROCESSES.map(function (n, i) {
+            processes: baseTemplate.processes.map(function (n, i) {
               return { id: U.uid('pr'), name: n, order: i, collapsed: i !== 0, completedCuts: [] };
             })
           });
@@ -387,17 +968,19 @@ window.MW = window.MW || {};
 
     var nodes = [el('span.ep-due', {}, dueGroupChildren)];
 
-    if (remain > 0) {
-      nodes.push(el('span.ep-header-sep', { text: '|' }));
-      if (due && diff >= 0) {
-        var daily = Math.ceil(remain / (diff + 1));
-        nodes.push(el('span.proc-quota', { text: '하루 할당량 ' + pad3(daily) + '컷 남음' }));
-      }
-      nodes.push(el('button.btn.btn-sm', {
-        type: 'button', text: '전체 완료', title: '전체 체크',
-        onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
-      }));
+    // "전체 완료" ↔ "전체 취소" — remain 이 0 이 됐다고 버튼 자체를 없애면 실수로 전체
+    // 체크했을 때 되돌릴 자리가 이 줄에서 사라져 버립니다. 자리는 그대로 두고 라벨·동작만 뒤집습니다.
+    nodes.push(el('span.ep-header-sep', { text: '|' }));
+    if (remain > 0 && due && diff >= 0) {
+      var daily = Math.ceil(remain / (diff + 1));
+      nodes.push(el('span.proc-quota', { text: '하루 할당량 ' + pad3(daily) + '컷 남음' }));
     }
+    nodes.push(el('button.btn.btn-sm', {
+      type: 'button',
+      text: remain > 0 ? '전체 완료' : '전체 취소',
+      title: remain > 0 ? '전체 체크' : '전체 해제',
+      onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
+    }));
 
     return nodes;
   }
@@ -690,15 +1273,14 @@ window.MW = window.MW || {};
     if (!root) return;
     U.clear(root);
 
+    root.appendChild(workCreatePanel());
+    root.appendChild(el('div.work-divider', { 'aria-hidden': 'true' }));
+
     var list = works();
     if (!list.length) {
       root.appendChild(el('div.empty.work-empty', {}, [
         el('div', { text: '아직 작품이 없습니다.' }),
-        el('div.small.dim', { text: '작품을 만들고 회차를 추가하면 컷 단위 공정 체크보드가 열립니다.' }),
-        el('button.btn.btn-primary', {
-          text: '＋ 작품 추가', style: { marginTop: '12px' },
-          onclick: function () { workDialog(null); }
-        })
+        el('div.small.dim', { text: '위 입력칸에서 첫 작품을 추가해 주세요.' })
       ]));
       return;
     }
@@ -706,30 +1288,61 @@ window.MW = window.MW || {};
     var cur = current();
     var work = cur.work, ep = cur.ep;
 
+    var workPicker = el('select.field.work-list-select', {
+      'aria-label': '작품 리스트',
+      onchange: function () {
+        if (this.value) select(this.value, '');
+      }
+    }, [
+      el('option', { value: '', text: '작품 리스트', disabled: true, selected: !work })
+    ].concat(list.map(function (w) {
+      return el('option', { value: w.id, text: w.name, selected: w.id === work.id });
+    })));
     root.appendChild(el('div.work-toolbar', {}, [
-      el('select.field', {
-        style: { width: 'auto' },
-        onchange: function () { select(this.value, ''); }
-      }, list.map(function (w) {
-        return el('option', { value: w.id, text: w.name, selected: w.id === work.id });
-      })),
-      el('button.btn.btn-ghost.btn-icon.btn-sm', {
-        text: '✎', title: '작품 이름 수정 · 삭제', onclick: function () { workDialog(work); }
-      }),
-      el('button.btn.btn-sm', { text: '＋ 작품', onclick: function () { workDialog(null); } })
+      workPicker,
+      el('button.btn.btn-sm', {
+        type: 'button', text: '작품 관리', onclick: function () { workTemplateDialog(work); }
+      })
     ]));
 
     // 회차 칩
-    var chips = work.episodes.slice().sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); })
-      .map(function (e) {
+    var sortedEpisodes = work.episodes.slice().sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); });
+    function episodeGroup(number, groupSize) {
+      return Math.floor((Math.max(1, Math.floor(+number || 1)) - 1) / groupSize);
+    }
+    var previousDesktopGroup = null;
+    var previousMobileGroup = null;
+    var chips = sortedEpisodes
+      .map(function (e, index) {
+        var desktopGroup = episodeGroup(e.number, 15);
+        var mobileGroup = episodeGroup(e.number, 10);
+        var rowBreaks = {
+          pcRowStart: index > 0 && desktopGroup !== previousDesktopGroup ? 'true' : 'false',
+          mobileRowStart: index > 0 && mobileGroup !== previousMobileGroup ? 'true' : 'false'
+        };
+        previousDesktopGroup = desktopGroup;
+        previousMobileGroup = mobileGroup;
         return el('button.ep-chip' + (ep && e.id === ep.id ? '.active' : ''), {
+          dataset: rowBreaks,
           onclick: function () { select(work.id, e.id); }
         }, [
           el('b', { text: e.number + '화' })
         ]);
       });
+    var lastEpisode = sortedEpisodes[sortedEpisodes.length - 1];
+    var lastDesktopCount = lastEpisode ? sortedEpisodes.filter(function (item) {
+      return episodeGroup(item.number, 15) === episodeGroup(lastEpisode.number, 15);
+    }).length : 0;
+    var lastMobileCount = lastEpisode ? sortedEpisodes.filter(function (item) {
+      return episodeGroup(item.number, 10) === episodeGroup(lastEpisode.number, 10);
+    }).length : 0;
     chips.push(el('button.ep-chip.add', {
-      text: '＋ 회차', onclick: function () { episodeDialog(work); }
+      text: '＋ 회차',
+      dataset: {
+        pcRowStart: lastDesktopCount >= 15 ? 'true' : 'false',
+        mobileRowStart: lastMobileCount >= 10 ? 'true' : 'false'
+      },
+      onclick: function () { episodeDialog(work); }
     }));
     root.appendChild(el('div.ep-bar', {}, chips));
 

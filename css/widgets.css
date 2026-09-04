@@ -2,6 +2,16 @@
    위젯 — 뽀모도로 / 오늘의 목표 / 메모(포스트잇) / 투두
    ========================================================================== */
 
+/* 빠른 수정 지도
+   - .pomo-* / .timer-*            뽀모도로 링·버튼·알람·작은 타이머 창
+   - .chk                          투두와 목록에서 쓰는 공통 체크박스
+   - .todo-* / .inbox-*            투두 목록과 Inbox 빠른 날짜 지정
+   - .memo-headbar / .memo-compose 메모 검색·작성 영역
+   - .memo-card / .memo-view       저장된 메모 카드와 본문
+   - .md                           메모 안의 마크다운 제목·목록·코드 모양
+   - .habit-edit / .time-chip      설정 화면의 해빗 편집 카드
+   - 파일 아래쪽 @media            작은 화면의 뽀모도로 크기 */
+
 /* --------------------------------------------------------------- 뽀모도로
    --pomo-scale (기본 1) 로 링·글자·버튼이 함께 커집니다. 모서리 드래그로 조절. */
 .pomo { --s: var(--pomo-scale, 1); display: flex; flex-direction: column; align-items: center; gap: calc(10px * var(--s)); }
@@ -158,6 +168,7 @@
   .float.timer-compact .float-resize { background: transparent; }
 }
 
+/* 여러 목록에서 공유하는 직접 그린 체크박스 */
 input[type="checkbox"].chk {
   appearance: none; -webkit-appearance: none;
   width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;

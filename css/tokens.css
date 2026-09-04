@@ -3,6 +3,14 @@
    기획서 v2.0(docs/spec-v2.0.html)의 색 팔레트를 그대로 사용합니다.
    ========================================================================== */
 
+/* 빠른 수정 지도
+   - :root                         앱 전체 색상·글꼴·모서리·컨트롤 높이·메인 최대 폭
+   - :root[data-preset="..."]      화이트·민트·피치·라벤더·버터 테마 색상
+   - .field / .btn                 모든 화면이 공유하는 입력창과 버튼
+   - .row / .empty / .chip         자주 재사용하는 정렬·빈 상태·작은 태그
+   - #toast-wrap / .toast          화면 아래에 뜨는 저장·경고 알림
+   - .theme-* / .content-width-*   설정 → 테마 화면의 색상·콘텐츠 폭 조절 UI */
+
 /* Pretendard — 저장소에 포함된 로컬 폰트 (외부 CDN 의존 없음) */
 @font-face {
   font-family: 'Pretendard';
@@ -63,12 +71,15 @@
   --coral-dim: rgba(251, 113, 133, 0.12);
 
   --font: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
-  --radius: 12px;
-  --radius-sm: 8px;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --control-h: 36px;
+  --control-inline-h: 32px;
+  --control-sm-h: 30px;
   --topbar-h: 56px;
   --sidebar-w: 56px;   /* 좌·우 아이콘 레일 */
   --tabbar-h: 60px;
-  --content-max: 1100px;   /* 가운데 컨텐츠 최대폭 (설정 → 테마에서 변경, #6 3단계) */
+  --content-max: 720px;   /* 가운데 컨텐츠 최대폭 (설정 → 테마에서 변경, 최대 800px) */
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
 
   /* 테마 시스템 정적 폴백 — 아래 프리셋 / applyTheme() 이 덮어씁니다 */
@@ -222,16 +233,20 @@ button, input, select, textarea { font-family: inherit; font-size: inherit; colo
 button { cursor: pointer; background: none; border: none; }
 a { color: var(--accent); }
 
-/* --- 공통 폼 --- */
+/* --- 공통 폼: 입력창(.field)과 일반 버튼(.btn)의 높이·글자·모서리 --- */
 .field {
   background: var(--surface-0);
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
-  padding: 8px 10px;
+  min-height: var(--control-h);
+  padding: 7px 10px;
+  font-size: 14px;
+  line-height: 1.4;
   width: 100%;
   outline: none;
 }
+input.field, select.field { height: var(--control-h); }
 .field:focus { border-color: var(--accent); }
 .field::placeholder { color: var(--text-dim); }
 select.field { cursor: pointer; }
@@ -242,10 +257,14 @@ textarea.field { resize: vertical; line-height: 1.6; }
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   color: var(--text);
+  min-height: var(--control-h);
   padding: 7px 14px;
+  font-size: 14px;
+  line-height: 1.4;
   font-weight: 500;
   transition: background 0.15s, border-color 0.15s;
   white-space: nowrap;
+  height: var(--control-h);
 }
 .btn:hover { background: var(--surface-3); border-color: var(--border-accent); }
 .btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
@@ -254,10 +273,16 @@ textarea.field { resize: vertical; line-height: 1.6; }
 .btn-ghost:hover { background: var(--surface-2); color: var(--text); }
 .btn-danger { color: var(--red); }
 .btn-danger:hover { background: var(--red-dim); border-color: var(--red); }
-.btn-sm { padding: 4px 9px; font-size: 12px; }
-.btn-icon { padding: 6px; width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center; }
+.btn-sm {
+  min-height: var(--control-sm-h); height: var(--control-sm-h);
+  padding: 4px 9px; font-size: 12px; line-height: 1.4;
+}
+.btn-icon {
+  min-height: var(--control-sm-h); width: var(--control-sm-h); height: var(--control-sm-h);
+  padding: 6px; display: inline-flex; align-items: center; justify-content: center;
+}
 
-/* --- 유틸 --- */
+/* --- 유틸: 여러 화면에서 짧게 조합해서 쓰는 정렬·글자·숨김 규칙 --- */
 .row { display: flex; align-items: center; gap: 8px; }
 .row-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .spacer { flex: 1; }
@@ -285,13 +310,13 @@ textarea.field { resize: vertical; line-height: 1.6; }
   color: var(--text-muted);
 }
 
-/* 스크롤바 */
+/* --- 브라우저 스크롤바 모양 --- */
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--surface-3); border-radius: 5px; border: 3px solid var(--bg); }
 ::-webkit-scrollbar-thumb:hover { background: var(--border-accent); }
 
-/* 토스트 */
+/* --- 저장·경고 뒤에 잠깐 나타나는 토스트 알림 --- */
 #toast-wrap {
   position: fixed; bottom: 88px; left: 50%; transform: translateX(-50%);
   display: flex; flex-direction: column; gap: 8px; z-index: 9000; pointer-events: none;
@@ -359,7 +384,12 @@ textarea.field { resize: vertical; line-height: 1.6; }
 .preset-chip-dot { width: 18px; height: 18px; border-radius: 50%; }
 .preset-chip-name { font-size: 12px; font-weight: 600; color: var(--text-muted); }
 
-/* --- 세부 조정 노브 --- */
+/* --- 설정 → 테마: 세부 색상과 콘텐츠 폭 조절 --- */
 .knob-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 8px; }
 .knob-label { min-width: 52px; font-size: 13px; font-weight: 600; }
 .knob-state { min-width: 70px; }
+/* [좁게·보통·넓게·최대]와 [숫자 입력·직접 입력] 묶음 */
+.content-width-controls { display: flex; align-items: stretch; gap: 8px; flex-wrap: wrap; }
+.content-width-controls .seg button { min-height: var(--control-h); }
+.content-width-custom { display: flex; align-items: stretch; gap: 6px; }
+.content-width-custom .field { width: 86px; text-align: right; font-variant-numeric: tabular-nums; }

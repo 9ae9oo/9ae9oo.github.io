@@ -2,24 +2,170 @@
    작업 관리 — 작품 → 회차 → 컷 공정 체크보드
    ========================================================================== */
 
-.work-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+/* 빠른 수정 지도
+   - .work-page-head               WORKFLOW 제목 아래 구분선
+   - .work-create-*                접히는 작품 추가 영역과 기본 공정 태그
+   - .work-divider                 작품 추가·작품 선택 사이의 구분선
+   - .work-toolbar                 작품 목록과 작품 관리 버튼
+   - .work-template-*              작품 관리 팝업의 기본값·회차 일괄 수정
+   - .ep-bar / .ep-chip            회차 탭: PC 15칸, 모바일 10칸
+   - .ep-head / .ep-header-*       선택한 회차 제목·컷수·편집·순서 변경
+   - .ep-due-*                     공정별 마감일 입력과 남은 기간
+   - .board / .proc-*              공정 카드·접기·진행 상태·컷 목록
+   - .cuts / .cut                  한 컷씩 누르는 번호 격자
+   - @media 900px / 640px / 480px  태블릿·모바일용 크기와 줄 배치 */
+
+/* WORKFLOW 제목 바로 아래의 첫 번째 구분선 */
+.work-page-head {
+  margin-bottom: 0;
+  padding-bottom: 15px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* 접힌 상태가 기본인 작품 추가 영역 */
+.work-create-panel { max-width: 760px; padding: 14px 0 16px; }
+.work-create-heading {
+  display: flex; align-items: center; gap: 5px;
+  padding: 4px 2px; color: var(--text); font-size: 14px; font-weight: 700;
+}
+.work-create-heading h2 { font: inherit; }
+.work-create-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 24px; height: 24px; border-radius: 5px; color: var(--text-dim);
+}
+.work-create-toggle:hover { background: var(--surface-2); color: var(--accent); }
+.work-create-caret { font-size: 10px; }
+.work-create-body { display: grid; gap: 10px; padding: 11px 0 0 20px; }
+.work-create-body[hidden] { display: none; }
+.work-create-line { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.work-create-line > label:first-child {
+  flex: 0 0 72px; color: var(--text-muted); font-size: 12px; font-weight: 600;
+}
+.work-create-name { flex: 1 1 420px; min-width: 160px; }
+.work-create-number { flex: 0 0 72px; width: 72px; text-align: center; font-variant-numeric: tabular-nums; }
+.work-create-cut-label { margin-left: 12px; color: var(--text-muted); font-size: 12px; font-weight: 600; }
+.work-create-unit { color: var(--text-muted); font-size: 12px; }
+.work-create-step { flex: 0 1 240px; min-width: 140px; }
+.work-create-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  min-height: 48px; padding: 10px 12px;
+  background: var(--surface-0); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.work-create-tag { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; }
+.work-create-tag-remove {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; color: var(--text-dim); font-size: 9px; border-radius: 50%;
+}
+.work-create-tag-remove:hover { background: var(--red-dim); color: var(--red); }
+.work-template-drag-handle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 17px; height: 17px; margin-left: -3px; border-radius: 4px;
+  color: var(--text-dim); font-size: 13px; line-height: 1;
+  cursor: grab; touch-action: none;
+}
+.work-template-drag-handle:hover { background: var(--accent-dim); color: var(--accent); }
+.work-template-sort-tag.dragging { opacity: 0.45; }
+.work-template-sort-tag.drag-over { outline: 2px solid var(--accent); outline-offset: 2px; }
+.work-create-tags-empty { color: var(--text-dim); font-size: 12px; }
+/* 페이지 공통 좌우 여백 안에서 탭·공정 카드와 같은 폭을 쓰는 구분선 */
+.work-divider { width: 100%; border-top: 1px solid var(--border); }
+
+/* 작품 선택 드롭다운과 작품 관리 버튼 */
+.work-toolbar { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 14px 0 12px; }
+.work-list-select { width: auto; min-width: 150px; }
+.work-toolbar > .btn,
+.work-template-process-add > .btn,
+.ep-header-edit-row .btn-sm {
+  min-height: var(--control-h); height: var(--control-h);
+  padding: 7px 10px; font-size: 14px; line-height: 1.4;
+}
 .work-toolbar .btn.active,
 .ep-head .btn.active { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
 .work-empty { padding: 48px 20px; text-align: center; }
 
-/* ------------------------------------------------ 회차 = 브라우저 탭 모양 */
+/* ------------------------------------------------ 작품 템플릿 수정 */
+.modal.work-template-modal { width: min(780px, 100%); }
+.work-template-modal .modal-body { gap: 16px; }
+.work-template-section { display: grid; gap: 11px; }
+.work-template-section-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.work-template-section-head > strong { font-size: 14px; }
+.work-template-inferred {
+  padding: 10px 12px; border: 1px solid var(--border-accent); border-radius: var(--radius-sm);
+  background: var(--accent-dim); color: var(--text-muted); font-size: 12px; line-height: 1.55;
+}
+.work-template-cuts-row {
+  display: grid; grid-template-columns: auto 74px auto; align-items: center;
+  justify-content: start; column-gap: 7px;
+}
+.work-template-cuts-row > label { color: var(--text-muted); font-size: 12px; font-weight: 500; }
+.work-template-cut-input { width: 74px; text-align: center; font-variant-numeric: tabular-nums; }
+.work-template-process-editor { display: grid; gap: 7px; }
+.work-template-process-add { display: flex; align-items: center; gap: 6px; }
+.work-template-process-input { width: min(240px, 100%); }
+.work-template-tags {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 7px;
+  min-height: 46px; padding: 9px 10px;
+  background: var(--surface-0); border: 1px solid var(--border); border-radius: var(--radius-sm);
+}
+.work-template-episode-toolbar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.work-template-select-all { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+.work-template-selected-count { color: var(--text-dim); font-size: 12px; }
+.work-template-episode-list {
+  max-height: 300px; overflow: auto;
+  border: 1px solid var(--border); border-radius: var(--radius-sm); background: var(--surface-0);
+}
+.work-template-episode-row {
+  display: grid; grid-template-columns: auto 50px 82px minmax(0, 1fr);
+  align-items: center; gap: 9px; min-height: 47px; padding: 8px 10px;
+  border-bottom: 1px solid var(--border);
+}
+.work-template-episode-row:last-child { border-bottom: none; }
+.work-template-episode-number { font-size: 13px; }
+.work-template-episode-cuts { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.work-template-episode-processes { display: flex; flex-wrap: wrap; gap: 5px; min-width: 0; }
+.work-template-mini-tag { padding: 3px 7px; font-size: 11px; }
+.work-template-episodes-empty { padding: 22px; color: var(--text-dim); font-size: 12px; text-align: center; }
+.work-template-selection-area:empty { display: none; }
+.work-template-selection-editor,
+.work-template-delete-confirm {
+  display: grid; gap: 10px; padding: 12px;
+  border: 1px solid var(--border-accent); border-radius: var(--radius-sm); background: var(--surface-2);
+}
+.work-template-selection-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.work-template-change-row { display: flex; align-items: center; gap: 7px; font-size: 12px; }
+.work-template-change-processes { display: grid; gap: 7px; }
+.work-template-selection-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.work-template-delete-note {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 9px 10px; border-radius: var(--radius-sm); background: var(--red-dim);
+  color: var(--red); font-size: 12px;
+}
+.work-template-delete-note[hidden],
+.work-template-save-warning[hidden] { display: none; }
+.work-template-save-warning {
+  padding: 11px 12px; border: 1px solid var(--red); border-radius: var(--radius-sm);
+  background: var(--red-dim); color: var(--red); font-size: 12px; line-height: 1.6; white-space: pre-line;
+}
+
+/* ------------------------------------------------ 회차 탭
+   - 전체 탭 영역은 .work-divider와 .board처럼 페이지 안쪽 폭 100%를 사용합니다.
+   - PC는 한 줄을 15칸, 640px 이하 모바일은 10칸으로 같은 비율로 나눕니다.
+   - 각 칸은 고정 픽셀이 아니라 현재 메인 폭에 맞춰 함께 늘고 줄어듭니다.
+   - 15화(모바일 10화)를 넘으면 work.js가 다음 줄의 첫 칸으로 보냅니다. */
 .ep-bar {
-  display: flex; gap: 2px; flex-wrap: wrap; align-items: flex-end;
-  margin-bottom: 12px; border-bottom: 1px solid var(--border);
+  display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 0; align-items: stretch;
+  width: 100%; min-width: 0;
+  margin-bottom: 12px; background: var(--surface-2); border: 1px solid var(--border);
 }
 .ep-chip {
-  display: inline-flex; align-items: baseline; gap: 6px;
-  background: var(--surface-2); border: 1px solid var(--border); border-bottom: none;
-  border-radius: 8px 8px 0 0;
-  padding: 7px 14px; font-size: 12.5px; color: var(--text-muted); cursor: pointer;
+  display: inline-flex; align-items: baseline; justify-content: center; gap: 6px; min-width: 0;
+  background: var(--surface-2); border: 1px solid var(--border); border-left: 0; border-bottom: none;
+  border-radius: 0;
+  padding: 7px 2px; font-size: 12px; color: var(--text-muted); cursor: pointer;
   position: relative; top: 1px;
 }
+.ep-chip[data-pc-row-start="true"] { grid-column-start: 1; border-left: 1px solid var(--border); }
 .ep-chip:hover { background: var(--surface-1); color: var(--text); }
 .ep-chip b { font-weight: 700; }
 .ep-chip.active {
@@ -27,12 +173,13 @@
   border-bottom: 1px solid var(--surface-1); color: var(--accent);
 }
 .ep-chip.add {
-  top: 0; align-self: center; border: 1px dashed var(--border); border-radius: 999px;
-  padding: 5px 12px;
+  background: var(--accent-dim); border-color: var(--border-accent);
+  color: var(--accent); font-weight: 700;
 }
+.ep-chip.add:hover { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
 
-.ep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-.ep-head h3 { font-size: 16px; font-weight: 700; }
+.ep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 16px 0 12px; }
+.ep-head h3 { font-size: 22px; font-weight: 750; letter-spacing: -0.02em; }
 
 /* 회차 번호·컷수 통합 편집 (episodeHeaderControl) — 텍스트는 클릭 대상이 아니고,
    옆의 [편집] 버튼(.btn.btn-sm 재사용)을 눌러야만 편집 줄로 바뀝니다 */
@@ -42,18 +189,18 @@
 .ep-header-sep { color: var(--text-dim); font-weight: 400; font-size: 14px; }
 .ep-header-edit-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
 .ep-num-input {
-  width: 52px; padding: 4px 6px; font-size: 13px;
+  width: 54px; height: 36px; min-height: 36px; padding: 7px 6px; font-size: 14px; line-height: 1.4;
   border: 1px solid var(--accent); border-radius: 4px;
   background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
 }
 
 .ep-cuts-input {
-  width: 54px; padding: 2px 5px; font-size: 11.5px;
+  width: 54px; height: 36px; min-height: 36px; padding: 7px 6px; font-size: 14px; line-height: 1.4;
   border: 1px solid var(--accent); border-radius: 4px;
   background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
 }
 /* 회차 헤더 편집 줄 안에서는 다른 입력과 크기·글꼴을 맞춥니다 */
-.ep-header-edit-row .ep-cuts-input { width: 52px; padding: 4px 6px; font-size: 13px; }
+.ep-header-edit-row .ep-cuts-input { width: 54px; }
 
 /* 숫자 입력의 네이티브 스피너 제거 — 자리만 차지하고 안 씀 */
 .ep-cuts-input::-webkit-inner-spin-button, .ep-cuts-input::-webkit-outer-spin-button,
@@ -72,19 +219,20 @@
 .ep-due-text.active { color: var(--accent); }
 .ep-due-text.late { color: var(--red); }
 .ep-due-input {
-  width: 132px; padding: 3px 6px; font-size: 13px;
+  width: 136px; height: var(--control-inline-h); min-height: var(--control-inline-h);
+  padding: 5px 7px; font-size: 13px; line-height: 1.4;
   border: 1px solid var(--accent); border-radius: 4px;
   background: var(--surface-0); color: var(--text);
 }
 
-/* ----------------------------------------------------------------- 공정 */
-.board { display: grid; gap: 8px; max-width: 640px; }
+/* ----------------------------------------------------------------- 공정 카드
+   .board·.proc·.proc-add는 모두 폭 100%라 위의 탭 영역과 좌우선이 같습니다. */
+.board { display: grid; gap: 8px; width: 100%; min-width: 0; }
 
 .proc {
   background: var(--surface-1); border: 1px solid var(--border);
   border-radius: var(--radius-sm); overflow: hidden;
-  max-width: 640px;   /* 칸이 이제 유동폭이라(.cuts) 카드가 넓어져도 칸이 같이 넓어짐 — 상한은
-                          지나치게 커지지 않을 정도로만 */
+  width: 100%; min-width: 0;
 }
 .proc.dragging { opacity: 0.45; }
 .proc.drag-over { border-color: var(--accent); box-shadow: inset 0 2px 0 var(--accent); }
@@ -129,6 +277,10 @@
 
 /* 하루 할당량 — 마감 표시(.ep-due-text)보다 낮은 톤 */
 .proc-quota { font-size: 13px; font-weight: 400; color: var(--text-dim); flex: none; font-variant-numeric: tabular-nums; }
+.proc-head > .btn.btn-sm {
+  min-height: var(--control-inline-h); height: var(--control-inline-h);
+  padding: 5px 9px; font-size: 13px; line-height: 1.4;
+}
 
 .proc-tools { display: flex; gap: 1px; }
 .proc-tools .danger:hover { color: var(--red); }
@@ -159,14 +311,14 @@
 /* 공정 추가 — .proc 카드와 같은 폭·틀, 점선 테두리 (.ep-chip.add 와 같은 문법) */
 .proc-add {
   display: flex; align-items: center; justify-content: center;
-  width: 100%; max-width: 640px; padding: 12px;
+  width: 100%; padding: 12px;
   background: none; border: 1px dashed var(--border); border-radius: var(--radius-sm);
   color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
 }
 .proc-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
-/* 모바일: 손가락으로 누르기 쉽게 칸의 최소 크기를 크게 (약 2배). 폭이 남으면 그 이상 커짐 */
+/* 태블릿 이하: 손가락으로 누르기 쉽게 컷 칸의 최소 크기를 키움 */
 @media (max-width: 900px) {
   .cut { font-size: 14px; border-radius: 9px; }
   .cuts { grid-template-columns: repeat(10, minmax(48px, 1fr)); gap: 7px; }
@@ -175,6 +327,42 @@
     .cuts { grid-template-columns: repeat(5, minmax(48px, 1fr)); }
   }
 }
+/* 모바일: 작품 입력 줄을 재배치하고 회차 탭을 한 줄 10칸으로 변경 */
+@media (max-width: 640px) {
+  .work-create-panel { padding-bottom: 18px; }
+  .work-create-body { padding-left: 0; }
+  .work-create-name-line {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .work-create-name-line > label:first-child { grid-column: 1 / -1; }
+  .work-create-name { min-width: 0; }
+  .work-create-count-line { display: grid; grid-template-columns: auto minmax(56px, 1fr) auto minmax(56px, 1fr) auto; }
+  .work-create-count-line > label:first-child { flex-basis: auto; }
+  .work-create-cut-label { margin-left: 4px; }
+  .work-create-number { width: 100%; }
+  .work-create-process-line { display: grid; grid-template-columns: minmax(0, 1fr) auto; }
+  .work-create-process-line > label:first-child { grid-column: 1 / -1; }
+  .work-create-step { min-width: 0; width: 100%; }
+  .work-toolbar {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto;
+    margin-top: 18px; margin-bottom: 20px;
+  }
+  .work-list-select { width: 100%; min-width: 0; }
+  .ep-bar { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+  .ep-chip[data-pc-row-start="true"] { grid-column-start: auto; border-left: 0; }
+  .ep-chip[data-mobile-row-start="true"] { grid-column-start: 1; border-left: 1px solid var(--border); }
+  .ep-chip.add { border-color: var(--border-accent); }
+  .work-template-modal .modal-body { padding: 13px; }
+  .work-template-episode-toolbar .spacer { display: none; }
+  .work-template-episode-row {
+    grid-template-columns: auto 48px minmax(70px, 1fr);
+    gap: 7px; padding: 9px;
+  }
+  .work-template-episode-processes { grid-column: 2 / -1; }
+  .work-template-selection-actions { flex-wrap: wrap; }
+  .work-template-delete-note { align-items: flex-start; flex-direction: column; }
+}
+/* 작은 휴대폰: 컷 버튼이 너무 작아지지 않도록 5칸 단위로 줄바꿈 */
 @media (max-width: 480px) {
   .cuts { grid-template-columns: repeat(10, minmax(44px, 1fr)); gap: 6px; }
   @container (max-width: 500px) {

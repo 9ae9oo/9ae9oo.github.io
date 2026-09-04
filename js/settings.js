@@ -1044,35 +1044,37 @@ window.MW = window.MW || {};
   function widthCard() {
     var t = MW.store.state.settings.theme || {};
     var cur = t.contentWidth || 'normal';
-    var opts = [['narrow', '좁게'], ['normal', '보통'], ['wide', '넓게'], ['full', '최대'], ['custom', '직접 입력']];
+    var opts = [['narrow', '좁게'], ['normal', '보통'], ['wide', '넓게'], ['full', '최대']];
     var seg = el('div.seg', {}, opts.map(function (o) {
       return el('button' + (cur === o[0] ? '.active' : ''), {
         type: 'button', text: o[1],
         onclick: function () { setTheme({ contentWidth: o[0] }); }
       });
     }));
-    var pxInput = el('input.input', {
-      type: 'number', min: '320', max: '2000', step: '10',
-      value: t.contentWidthPx || 1100,
-      style: { width: '90px', marginTop: '10px', display: cur === 'custom' ? '' : 'none' },
-      oninput: function () {
-        var n = parseInt(this.value, 10);
-        if (isFinite(n)) MW.shell.previewTheme({ contentWidth: 'custom', contentWidthPx: n });
-      },
-      onchange: function () {
-        var n = Math.min(2000, Math.max(320, parseInt(this.value, 10) || 1100));
-        this.value = n;
-        setTheme({ contentWidth: 'custom', contentWidthPx: n });
+    function applyCustomWidth() {
+      var n = Math.min(800, Math.max(320, parseInt(pxInput.value, 10) || 760));
+      pxInput.value = n;
+      setTheme({ contentWidth: 'custom', contentWidthPx: n });
+    }
+    var pxInput = el('input.field', {
+      type: 'number', min: '320', max: '800', step: '10',
+      value: t.contentWidthPx || 760, 'aria-label': '직접 입력할 콘텐츠 폭',
+      onkeydown: function (e) {
+        if (e.key === 'Enter') applyCustomWidth();
       }
     });
-    var pxRow = el('div', { style: { display: cur === 'custom' ? '' : 'none' } }, [
-      pxInput, el('span.small.dim', { text: 'px (320~2000)', style: { marginLeft: '6px' } })
+    var pxRow = el('div.content-width-custom', {}, [
+      pxInput,
+      el('button.btn' + (cur === 'custom' ? '.btn-primary' : ''), {
+        type: 'button', text: '직접 입력', onclick: applyCustomWidth
+      })
     ]);
     return el('div.card', {}, [
       el('h3', { text: '컨텐츠 폭' }),
-      el('div.small.dim', { text: '가운데 메인 영역의 최대 너비입니다. "최대"는 화면을 꽉 채웁니다. "직접 입력"으로 픽셀 값을 지정할 수 있습니다.', style: { marginBottom: '10px' } }),
-      seg,
-      pxRow
+      el('div.small.dim', { text: '화면이 넓어도 메인 영역은 선택한 너비까지만 넓어집니다. 모바일에서는 화면 너비에 맞춰 자동으로 줄어듭니다.', style: { marginBottom: '10px' } }),
+      el('div.content-width-controls', {}, [seg, pxRow]),
+      el('div.small.dim', { text: '좁게 640px · 보통 720px · 넓게 760px · 최대 800px', style: { marginTop: '8px' } }),
+      el('div.small.dim', { text: '직접 입력은 320~800px 사이에서 지정할 수 있습니다.', style: { marginTop: '3px' } })
     ]);
   }
 

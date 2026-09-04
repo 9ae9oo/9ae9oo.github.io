@@ -1,0 +1,618 @@
+<!doctype html>
+<html lang="ko" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Creator Workspace · BGM 플레이어 A형 레퍼런스</title>
+  <style>
+    @font-face {
+      font-family: Pretendard;
+      src: url('../assets/fonts/Pretendard-Regular.otf') format('opentype');
+      font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: Pretendard;
+      src: url('../assets/fonts/Pretendard-SemiBold.otf') format('opentype');
+      font-weight: 600;
+      font-display: swap;
+    }
+
+    :root {
+      --page: #eef0f6;
+      --grid: rgba(83, 94, 122, 0.075);
+      --panel: #ffffff;
+      --surface: #f7f8fc;
+      --surface-2: #edf0f7;
+      --line: #e1e5ef;
+      --line-strong: #cbd2e2;
+      --text: #252936;
+      --muted: #697186;
+      --dim: #9ba3b5;
+      --accent: #7895e8;
+      --accent-strong: #607ed5;
+      --accent-soft: #eaf0ff;
+      --on-accent: #ffffff;
+      --shadow: 0 26px 72px rgba(43, 51, 75, 0.2);
+      --soft-shadow: 0 10px 30px rgba(43, 51, 75, 0.09);
+    }
+    html[data-theme="dark"] {
+      --page: #0d0f15;
+      --grid: rgba(255, 255, 255, 0.035);
+      --panel: #171a23;
+      --surface: #1e222e;
+      --surface-2: #282d3d;
+      --line: #2c3141;
+      --line-strong: #3a4155;
+      --text: #eef0f7;
+      --muted: #a0a7ba;
+      --dim: #687087;
+      --accent: #7f9cf4;
+      --accent-strong: #9ab0f5;
+      --accent-soft: rgba(127, 156, 244, 0.14);
+      --on-accent: #11131a;
+      --shadow: 0 26px 72px rgba(0, 0, 0, 0.48);
+      --soft-shadow: 0 10px 30px rgba(0, 0, 0, 0.24);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-width: 320px;
+      color: var(--text);
+      background-color: var(--page);
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 32px 32px;
+      font-family: Pretendard, -apple-system, BlinkMacSystemFont, 'Malgun Gothic', sans-serif;
+      transition: color 180ms ease, background-color 180ms ease;
+    }
+    button, select { font: inherit; }
+    button { color: inherit; }
+    button:focus-visible, select:focus-visible {
+      outline: 3px solid color-mix(in srgb, var(--accent) 34%, transparent);
+      outline-offset: 2px;
+    }
+    svg.icon { display: block; width: 18px; height: 18px; fill: currentColor; }
+
+    .page-bar {
+      position: sticky;
+      top: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      min-height: 74px;
+      padding: 14px clamp(18px, 4vw, 54px);
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--page) 88%, transparent);
+      backdrop-filter: blur(20px);
+    }
+    .page-title { flex: 1; }
+    .eyebrow { margin-bottom: 4px; color: var(--accent-strong); font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+    .page-title h1 { margin: 0; font-size: 19px; letter-spacing: -0.035em; }
+    .toolbar { display: flex; gap: 9px; flex-wrap: wrap; }
+    .segmented {
+      display: inline-flex;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      background: var(--panel);
+    }
+    .toolbar-button {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 9px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .toolbar-button:hover { color: var(--text); background: var(--surface); }
+    .toolbar-button.active { color: var(--on-accent); background: var(--accent); font-weight: 600; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(280px, 430px) 380px;
+      justify-content: center;
+      align-items: start;
+      gap: clamp(40px, 7vw, 92px);
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 58px 24px 80px;
+    }
+    .brief { padding-top: 30px; }
+    .brief-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      font-size: 10px;
+      font-weight: 600;
+    }
+    .brief h2 { margin: 17px 0 12px; font-size: clamp(27px, 4vw, 42px); line-height: 1.13; letter-spacing: -0.055em; }
+    .brief > p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.75; }
+    .decision-list { display: grid; gap: 10px; margin-top: 30px; }
+    .decision {
+      display: grid;
+      grid-template-columns: 28px minmax(0, 1fr);
+      gap: 10px;
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: color-mix(in srgb, var(--panel) 86%, transparent);
+      box-shadow: var(--soft-shadow);
+    }
+    .decision-num {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      color: var(--accent-strong);
+      background: var(--accent-soft);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .decision strong { display: block; margin: 1px 0 4px; font-size: 12px; }
+    .decision span { display: block; color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .removed-note { margin-top: 18px; padding: 13px 14px; border-left: 3px solid var(--accent); color: var(--muted); background: var(--surface); font-size: 11px; line-height: 1.65; }
+    .removed-note strong { color: var(--text); }
+
+    .preview-wrap { text-align: center; }
+    .size-label { display: inline-block; margin-bottom: 10px; color: var(--dim); font-size: 10px; letter-spacing: 0.05em; }
+    .stage {
+      position: relative;
+      width: 380px;
+      height: 760px;
+      overflow: hidden;
+      border: 1px solid var(--line-strong);
+      border-radius: 20px;
+      background: var(--page);
+      box-shadow: var(--shadow);
+      text-align: left;
+      transition: width 220ms ease, height 220ms ease, border-radius 220ms ease;
+    }
+    .mobile-backdrop { display: none; }
+    .player {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--panel);
+      transition: height 220ms ease, border-radius 220ms ease;
+    }
+    .player-head {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      min-height: 58px;
+      padding: 0 17px;
+      border-bottom: 1px solid var(--line);
+      background: color-mix(in srgb, var(--panel) 94%, var(--surface));
+    }
+    .player-head h3 { flex: 1; margin: 0; font-size: 14px; font-weight: 600; letter-spacing: -0.015em; }
+    .playing-state { display: inline-flex; align-items: center; gap: 7px; min-height: 40px; color: var(--muted); font-size: 10px; }
+    .playing-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+    .player-body { flex: 1; min-height: 0; overflow: auto; padding: 14px 13px 17px; scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+    .player-body::-webkit-scrollbar { width: 7px; }
+    .player-body::-webkit-scrollbar-thumb { border: 2px solid transparent; border-radius: 8px; background: var(--line-strong); background-clip: content-box; }
+
+    .now-card {
+      padding: 14px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: var(--surface);
+      box-shadow: var(--soft-shadow);
+    }
+    .now-top { display: grid; grid-template-columns: 78px minmax(0, 1fr); align-items: center; gap: 12px; }
+    .cover {
+      position: relative;
+      width: 78px;
+      height: 78px;
+      overflow: hidden;
+      border-radius: 16px;
+      background: linear-gradient(145deg, #859fef, #b8a4ed 55%, #edb2c6);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.3), 0 12px 28px rgba(81, 99, 154, 0.19);
+    }
+    .cover::before {
+      content: '';
+      position: absolute;
+      width: 76%;
+      height: 76%;
+      left: -22%;
+      top: -22%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.25);
+    }
+    .cover::after {
+      content: '';
+      position: absolute;
+      right: 12%;
+      bottom: 12%;
+      width: 46%;
+      height: 46%;
+      border: 9px solid rgba(255, 255, 255, 0.42);
+      border-radius: 50%;
+    }
+    .now-copy { min-width: 0; }
+    .now-title { overflow: hidden; color: var(--text); font-size: 14px; font-weight: 600; letter-spacing: -0.025em; text-overflow: ellipsis; white-space: nowrap; }
+    .now-artist { margin-top: 5px; overflow: hidden; color: var(--muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+    .now-meta { margin-top: 4px; color: var(--dim); font-size: 10px; }
+    .progress { position: relative; height: 5px; margin-top: 16px; border-radius: 999px; background: var(--surface-2); cursor: pointer; }
+    .progress-fill { position: absolute; inset: 0 auto 0 0; width: var(--progress, 37%); border-radius: inherit; background: var(--accent); }
+    .progress-fill::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: 0;
+      width: 11px;
+      height: 11px;
+      border: 2px solid var(--panel);
+      border-radius: 50%;
+      background: var(--accent);
+      transform: translate(50%, -50%);
+      opacity: 0;
+      transition: opacity 120ms ease;
+    }
+    .progress:hover .progress-fill::after { opacity: 1; }
+    .time-row { display: flex; justify-content: space-between; margin-top: 7px; color: var(--dim); font-size: 10px; font-variant-numeric: tabular-nums; }
+    .transport { display: flex; align-items: center; justify-content: center; gap: 11px; margin-top: 12px; }
+    .round-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 40px;
+      height: 40px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+    }
+    .round-button:hover { color: var(--text); background: var(--surface-2); }
+    .round-button.small { width: 36px; height: 36px; color: var(--dim); }
+    .round-button.small.active { color: var(--accent-strong); background: var(--accent-soft); }
+    .play-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 52px;
+      height: 52px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      color: var(--on-accent);
+      background: var(--accent);
+      box-shadow: 0 9px 22px color-mix(in srgb, var(--accent) 34%, transparent);
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease;
+    }
+    .play-button:hover { background: var(--accent-strong); transform: translateY(-1px); }
+    .play-button:active { transform: scale(0.96); }
+    .play-button svg { width: 21px; height: 21px; }
+
+    .select-wrap { position: relative; margin-top: 14px; }
+    .playlist-select {
+      width: 100%;
+      height: 46px;
+      appearance: none;
+      padding: 0 42px 0 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--text);
+      background: var(--panel);
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .select-wrap > svg { position: absolute; top: 50%; right: 13px; width: 15px; height: 15px; color: var(--dim); pointer-events: none; transform: translateY(-50%); }
+    .list-head { display: flex; align-items: center; gap: 7px; min-height: 46px; padding: 10px 5px 6px; }
+    .list-head strong { font-size: 12px; }
+    .list-head span { color: var(--dim); font-size: 10px; }
+    .always-label { margin-left: auto; color: var(--muted) !important; }
+    .track-list { display: flex; flex-direction: column; gap: 3px; margin: 0; padding: 0; list-style: none; }
+    .track-row {
+      display: grid;
+      grid-template-columns: 26px minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 8px;
+      width: 100%;
+      min-height: 48px;
+      padding: 6px 10px;
+      border: 0;
+      border-radius: 11px;
+      color: var(--muted);
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+    .track-row:hover { color: var(--text); background: var(--surface); }
+    .track-row.active { color: var(--accent-strong); background: var(--accent-soft); }
+    .track-number { color: var(--dim); font-size: 10px; text-align: center; font-variant-numeric: tabular-nums; }
+    .row-title, .row-artist { display: block; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .row-title { color: var(--text); font-size: 11.5px; font-weight: 600; }
+    .row-artist { margin-top: 3px; color: var(--dim); font-size: 9.5px; }
+    .row-time { color: var(--dim); font-size: 9.5px; font-variant-numeric: tabular-nums; }
+    .track-row.active .row-title { color: var(--accent-strong); }
+    .playing-bars { display: none; align-items: flex-end; justify-content: center; gap: 2px; height: 12px; }
+    .playing-bars i { width: 2px; border-radius: 2px; background: currentColor; animation: bounce 700ms ease-in-out infinite alternate; }
+    .playing-bars i:nth-child(1) { height: 5px; }
+    .playing-bars i:nth-child(2) { height: 11px; animation-delay: -420ms; }
+    .playing-bars i:nth-child(3) { height: 7px; animation-delay: -230ms; }
+    .is-playing .track-row.active .track-number { display: none; }
+    .is-playing .track-row.active .playing-bars { display: inline-flex; }
+    @keyframes bounce { to { height: 3px; } }
+
+    .settings-link {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      width: 100%;
+      min-height: 44px;
+      margin-top: 13px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      color: var(--muted);
+      background: transparent;
+      cursor: pointer;
+      font-size: 11px;
+    }
+    .settings-link:hover { color: var(--text); background: var(--surface); }
+    .settings-link svg { width: 14px; height: 14px; }
+
+    body.mobile-preview .workspace { grid-template-columns: minmax(280px, 430px) 390px; }
+    body.mobile-preview .stage { width: 390px; height: 780px; border-radius: 34px; background: var(--surface-2); }
+    body.mobile-preview .mobile-backdrop {
+      display: block;
+      position: absolute;
+      inset: 0;
+      padding: 26px 17px;
+      background: linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 72%, var(--page)), var(--page) 55%);
+    }
+    .fake-title { width: 54%; height: 14px; margin: 12px 0 24px; border-radius: 8px; background: var(--line-strong); }
+    .fake-card { height: 88px; margin-top: 11px; border: 1px solid var(--line); border-radius: 16px; background: color-mix(in srgb, var(--panel) 82%, transparent); }
+    body.mobile-preview .player {
+      inset: auto 0 0;
+      height: 62%;
+      border-top: 1px solid var(--line-strong);
+      border-radius: 23px 23px 0 0;
+      box-shadow: 0 -14px 45px rgba(34, 40, 59, 0.18);
+    }
+    body.mobile-preview .player-head { min-height: 62px; padding: 0 18px; }
+    body.mobile-preview .playing-state { min-width: 84px; justify-content: flex-end; }
+
+    #self-test {
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      z-index: 100;
+      padding: 7px 10px;
+      border-radius: 9px;
+      color: #fff;
+      background: #18201b;
+      box-shadow: var(--soft-shadow);
+      font-size: 11px;
+      font-weight: 600;
+    }
+    #self-test.fail { background: #6d252b; }
+
+    @media (max-width: 920px) {
+      .page-bar { position: relative; align-items: flex-start; flex-direction: column; }
+      .workspace, body.mobile-preview .workspace { grid-template-columns: 1fr; justify-items: center; }
+      .brief { max-width: 560px; padding-top: 0; }
+    }
+    @media (max-width: 440px) {
+      .page-bar { padding: 15px 16px; }
+      .toolbar-button { padding: 0 10px; }
+      .workspace { padding: 36px 10px 60px; }
+      .stage, body.mobile-preview .stage { width: min(390px, calc(100vw - 20px)); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute">
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.4v13.2c0 .9 1 1.4 1.8.9l9.2-6.6c.6-.4.6-1.3 0-1.8L9.8 4.5C9 4 8 4.5 8 5.4Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M7 5.5c0-.6.4-1 1-1h2c.6 0 1 .4 1 1v13c0 .6-.4 1-1 1H8c-.6 0-1-.4-1-1v-13Zm6 0c0-.6.4-1 1-1h2c.6 0 1 .4 1 1v13c0 .6-.4 1-1 1h-2c-.6 0-1-.4-1-1v-13Z"/></symbol>
+    <symbol id="i-prev" viewBox="0 0 24 24"><path d="M6 5a1 1 0 0 1 1 1v5.1l9-6c.7-.5 1.7 0 1.7.9v12c0 .9-1 1.4-1.7.9l-9-6V18a1 1 0 1 1-2 0V6a1 1 0 0 1 1-1Z"/></symbol>
+    <symbol id="i-next" viewBox="0 0 24 24"><path d="M18 5a1 1 0 0 0-1 1v5.1l-9-6c-.7-.5-1.7 0-1.7.9v12c0 .9 1 1.4 1.7.9l9-6V18a1 1 0 1 0 2 0V6a1 1 0 0 0-1-1Z"/></symbol>
+    <symbol id="i-shuffle" viewBox="0 0 24 24"><path d="M17.3 4.3a1 1 0 0 0 0 1.4l.8.8h-1.6c-2.4 0-4.1 1-5.5 3.2l-3.2 4.9c-.9 1.4-1.8 1.9-3.3 1.9H3a1 1 0 1 0 0 2h1.5c2.3 0 4-1 5-2.7l3.2-4.9c1-1.6 2.1-2.4 3.8-2.4h1.6l-.8.8a1 1 0 1 0 1.4 1.4l2.5-2.5a1 1 0 0 0 0-1.4l-2.5-2.5a1 1 0 0 0-1.4 0ZM3 6.5a1 1 0 1 0 0 2h1.5c1.4 0 2.3.5 3.1 1.7l1.2-1.9C7.7 7.1 6.3 6.5 4.5 6.5H3Zm14.3 7.8a1 1 0 0 0 0 1.4l.8.8h-1.6c-1.2 0-2.1-.4-2.9-1.3l-1.1 1.8c1.1 1 2.4 1.5 4 1.5h1.6l-.8.8a1 1 0 1 0 1.4 1.4l2.5-2.5a1 1 0 0 0 0-1.4l-2.5-2.5a1 1 0 0 0-1.4 0Z"/></symbol>
+    <symbol id="i-repeat" viewBox="0 0 24 24"><path d="m16.7 3.3 3 3a1 1 0 0 1 0 1.4l-3 3a1 1 0 0 1-1.4-1.4l1.3-1.3H8a4 4 0 0 0-4 4 1 1 0 1 1-2 0 6 6 0 0 1 6-6h8.6l-1.3-1.3a1 1 0 1 1 1.4-1.4ZM22 12a1 1 0 1 0-2 0 4 4 0 0 1-4 4H7.4l1.3-1.3a1 1 0 0 0-1.4-1.4l-3 3a1 1 0 0 0 0 1.4l3 3a1 1 0 0 0 1.4-1.4L7.4 18H16a6 6 0 0 0 6-6Z"/></symbol>
+    <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6.3 9.3a1 1 0 0 1 1.4 0l4.3 4.3 4.3-4.3a1 1 0 1 1 1.4 1.4l-5 5a1 1 0 0 1-1.4 0l-5-5a1 1 0 0 1 0-1.4Z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><path d="M10.8 2.5h2.4l.6 2.1c.5.2 1 .4 1.4.8l2-.6 1.7 1.7-.6 2c.3.4.6.9.8 1.4l2.1.6v2.4l-2.1.6c-.2.5-.4 1-.8 1.4l.6 2-1.7 1.7-2-.6c-.4.3-.9.6-1.4.8l-.6 2.1h-2.4l-.6-2.1c-.5-.2-1-.4-1.4-.8l-2 .6-1.7-1.7.6-2c-.3-.4-.6-.9-.8-1.4l-2.1-.6v-2.4l2.1-.6c.2-.5.4-1 .8-1.4l-.6-2 1.7-1.7 2 .6c.4-.3.9-.6 1.4-.8l.6-2.1ZM12 8.2a3.8 3.8 0 1 0 0 7.6 3.8 3.8 0 0 0 0-7.6Z"/></symbol>
+  </svg>
+
+  <header class="page-bar">
+    <div class="page-title">
+      <div class="eyebrow">Final reference · A type</div>
+      <h1>BGM 사이드바 정리안</h1>
+    </div>
+    <div class="toolbar">
+      <div class="segmented" aria-label="화면 크기">
+        <button class="toolbar-button active" type="button" data-device="desktop">데스크톱 380</button>
+        <button class="toolbar-button" type="button" data-device="mobile">모바일 패널</button>
+      </div>
+      <div class="segmented"><button class="toolbar-button" type="button" id="theme-toggle">다크로 보기</button></div>
+    </div>
+  </header>
+
+  <main class="workspace">
+    <section class="brief">
+      <span class="brief-badge">A형 최종 정리</span>
+      <h2>조작은 크게,<br>구조는 단순하게</h2>
+      <p>현재 곡 카드와 재생목록을 한 흐름으로 이어 붙였습니다. 패널을 닫는 동작은 기존 BGM 탭에 맡기고, 패널 안에는 음악을 듣는 데 필요한 정보만 남깁니다.</p>
+      <div class="decision-list">
+        <div class="decision"><span class="decision-num">1</span><div><strong>머리 영역 단순화</strong><span>`BGM`과 `재생 중`만 표시합니다. 닫기 버튼은 두지 않습니다.</span></div></div>
+        <div class="decision"><span class="decision-num">2</span><div><strong>A형 플레이어 유지</strong><span>작은 썸네일, 곡 정보, 진행 막대와 재생 조작을 하나의 카드로 묶습니다.</span></div></div>
+        <div class="decision"><span class="decision-num">3</span><div><strong>A형 재생목록 유지</strong><span>재생목록 선택 아래에 곡 목록을 항상 표시하고 현재 곡만 강조합니다.</span></div></div>
+        <div class="decision"><span class="decision-num">4</span><div><strong>모바일 터치 크기 확보</strong><span>주요 조작은 40px 이상, 재생 버튼은 52px, 곡 줄은 48px로 잡았습니다.</span></div></div>
+      </div>
+      <div class="removed-note"><strong>`펼치기/접기` 삭제</strong><br>목록은 이 패널의 핵심이고, BGM 탭으로 패널 전체를 닫을 수 있어 별도의 목록 접기 버튼은 필요하지 않습니다.</div>
+    </section>
+
+    <section class="preview-wrap">
+      <span class="size-label" id="size-label">DESKTOP · 380 × 760</span>
+      <div class="stage">
+        <div class="mobile-backdrop"><div class="fake-title"></div><div class="fake-card"></div><div class="fake-card"></div></div>
+        <aside class="player is-playing" data-player data-index="0">
+          <header class="player-head">
+            <h3>BGM</h3>
+            <span class="playing-state"><i class="playing-dot"></i>재생 중</span>
+          </header>
+          <div class="player-body">
+            <section class="now-card">
+              <div class="now-top">
+                <div class="cover"></div>
+                <div class="now-copy">
+                  <div class="now-title" data-now-title>Rainy Night Coffee Shop</div>
+                  <div class="now-artist" data-now-artist>Chillhop Music</div>
+                  <div class="now-meta"><span data-playlist-name>작업용 BGM</span> · <span data-position>1/35</span></div>
+                </div>
+              </div>
+              <div class="progress" title="재생 위치"><span class="progress-fill" data-progress></span></div>
+              <div class="time-row"><span data-current-time>01:24</span><span data-duration>03:48</span></div>
+              <div class="transport">
+                <button class="round-button small" type="button" data-mode title="셔플"><svg class="icon"><use href="#i-shuffle"></use></svg></button>
+                <button class="round-button" type="button" data-action="prev" title="이전 곡"><svg class="icon"><use href="#i-prev"></use></svg></button>
+                <button class="play-button" type="button" data-action="play" title="재생/일시정지"><svg class="icon"><use href="#i-pause"></use></svg></button>
+                <button class="round-button" type="button" data-action="next" title="다음 곡"><svg class="icon"><use href="#i-next"></use></svg></button>
+                <button class="round-button small" type="button" data-mode title="반복"><svg class="icon"><use href="#i-repeat"></use></svg></button>
+              </div>
+            </section>
+
+            <div class="select-wrap">
+              <select class="playlist-select" data-playlist-select aria-label="재생목록">
+                <option>작업용 BGM</option><option>집중 음악</option><option>새벽 작업</option><option>비 오는 날</option>
+              </select>
+              <svg class="icon"><use href="#i-chevron"></use></svg>
+            </div>
+
+            <div class="list-head"><strong>재생목록</strong><span>35곡</span><span class="always-label">항상 표시</span></div>
+            <ol class="track-list">
+              <li><button class="track-row active" type="button" data-track="0"><span><span class="track-number">1</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Rainy Night Coffee Shop</span><span class="row-artist">Chillhop Music</span></span><span class="row-time">3:48</span></button></li>
+              <li><button class="track-row" type="button" data-track="1"><span><span class="track-number">2</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Dreaming After Work</span><span class="row-artist">Lofi Lia</span></span><span class="row-time">4:12</span></button></li>
+              <li><button class="track-row" type="button" data-track="2"><span><span class="track-number">3</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Quiet Page</span><span class="row-artist">Studio Nine</span></span><span class="row-time">2:56</span></button></li>
+              <li><button class="track-row" type="button" data-track="3"><span><span class="track-number">4</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Blue Hour Sketch</span><span class="row-artist">Mellow Frames</span></span><span class="row-time">3:31</span></button></li>
+              <li><button class="track-row" type="button" data-track="4"><span><span class="track-number">5</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Last Cut of the Day</span><span class="row-artist">Paper Moon</span></span><span class="row-time">4:03</span></button></li>
+              <li><button class="track-row" type="button" data-track="5"><span><span class="track-number">6</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Slow Sunday Desk</span><span class="row-artist">Room Tone</span></span><span class="row-time">3:17</span></button></li>
+              <li><button class="track-row" type="button" data-track="6"><span><span class="track-number">7</span><span class="playing-bars"><i></i><i></i><i></i></span></span><span><span class="row-title">Window Light</span><span class="row-artist">Haru Note</span></span><span class="row-time">2:49</span></button></li>
+            </ol>
+            <button class="settings-link" type="button"><svg class="icon"><use href="#i-settings"></use></svg>설정에서 재생목록 관리</button>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <output id="self-test" hidden></output>
+
+  <script>
+    (function () {
+      'use strict';
+      var samples = [
+        { title: 'Rainy Night Coffee Shop', artist: 'Chillhop Music', current: '01:24', duration: '03:48', progress: '37%' },
+        { title: 'Dreaming After Work', artist: 'Lofi Lia', current: '02:09', duration: '04:12', progress: '51%' },
+        { title: 'Quiet Page', artist: 'Studio Nine', current: '00:48', duration: '02:56', progress: '27%' },
+        { title: 'Blue Hour Sketch', artist: 'Mellow Frames', current: '02:40', duration: '03:31', progress: '76%' },
+        { title: 'Last Cut of the Day', artist: 'Paper Moon', current: '01:03', duration: '04:03', progress: '26%' },
+        { title: 'Slow Sunday Desk', artist: 'Room Tone', current: '00:37', duration: '03:17', progress: '19%' },
+        { title: 'Window Light', artist: 'Haru Note', current: '01:32', duration: '02:49', progress: '54%' }
+      ];
+      var panel = document.querySelector('[data-player]');
+      var sizeLabel = document.getElementById('size-label');
+      function each(nodes, fn) { Array.prototype.forEach.call(nodes, fn); }
+      function setPlaying(playing) {
+        panel.classList.toggle('is-playing', playing);
+        panel.querySelector('[data-action="play"] use').setAttribute('href', playing ? '#i-pause' : '#i-play');
+      }
+      function paint(index) {
+        index = ((index % samples.length) + samples.length) % samples.length;
+        panel.dataset.index = String(index);
+        var item = samples[index];
+        panel.querySelector('[data-now-title]').textContent = item.title;
+        panel.querySelector('[data-now-artist]').textContent = item.artist;
+        panel.querySelector('[data-position]').textContent = (index + 1) + '/35';
+        panel.querySelector('[data-current-time]').textContent = item.current;
+        panel.querySelector('[data-duration]').textContent = item.duration;
+        panel.querySelector('[data-progress]').style.setProperty('--progress', item.progress);
+        each(panel.querySelectorAll('[data-track]'), function (row) { row.classList.toggle('active', Number(row.dataset.track) === index); });
+      }
+
+      each(panel.querySelectorAll('[data-action]'), function (button) {
+        button.addEventListener('click', function () {
+          if (button.dataset.action === 'play') {
+            setPlaying(!panel.classList.contains('is-playing'));
+          } else {
+            paint(Number(panel.dataset.index) + (button.dataset.action === 'prev' ? -1 : 1));
+            setPlaying(true);
+          }
+        });
+      });
+      each(panel.querySelectorAll('[data-track]'), function (row) {
+        row.addEventListener('click', function () { paint(Number(row.dataset.track)); setPlaying(true); });
+      });
+      each(panel.querySelectorAll('[data-mode]'), function (button) {
+        button.addEventListener('click', function () { button.classList.toggle('active'); });
+      });
+      panel.querySelector('[data-playlist-select]').addEventListener('change', function () {
+        panel.querySelector('[data-playlist-name]').textContent = this.value;
+      });
+
+      each(document.querySelectorAll('[data-device]'), function (button) {
+        button.addEventListener('click', function () {
+          each(document.querySelectorAll('[data-device]'), function (item) { item.classList.toggle('active', item === button); });
+          var mobile = button.dataset.device === 'mobile';
+          document.body.classList.toggle('mobile-preview', mobile);
+          sizeLabel.textContent = mobile ? 'MOBILE · 390 × 780 / BOTTOM 62%' : 'DESKTOP · 380 × 760';
+        });
+      });
+      var themeButton = document.getElementById('theme-toggle');
+      themeButton.addEventListener('click', function () {
+        var dark = document.documentElement.dataset.theme === 'dark';
+        document.documentElement.dataset.theme = dark ? 'light' : 'dark';
+        themeButton.textContent = dark ? '다크로 보기' : '라이트로 보기';
+      });
+
+      paint(0);
+      setPlaying(true);
+      var params = new URLSearchParams(location.search);
+      if (params.get('device') === 'mobile') document.querySelector('[data-device="mobile"]').click();
+      if (params.get('theme') === 'dark') themeButton.click();
+      if (params.get('test') === '1') {
+        var output = document.getElementById('self-test');
+        output.hidden = false;
+        try {
+          var originalTitle = panel.querySelector('[data-now-title]').textContent;
+          panel.querySelector('[data-action="next"]').click();
+          if (panel.querySelector('[data-now-title]').textContent === originalTitle) throw new Error('다음 곡 전환 실패');
+          panel.querySelector('[data-action="play"]').click();
+          if (panel.classList.contains('is-playing')) throw new Error('일시정지 전환 실패');
+          panel.querySelector('[data-track="2"]').click();
+          if (!panel.querySelector('[data-track="2"]').classList.contains('active')) throw new Error('곡 선택 실패');
+          var select = panel.querySelector('[data-playlist-select]');
+          select.value = '집중 음악';
+          select.dispatchEvent(new Event('change'));
+          if (panel.querySelector('[data-playlist-name]').textContent !== '집중 음악') throw new Error('재생목록 전환 실패');
+          if (document.body.textContent.indexOf('펼치기') !== -1 || document.body.textContent.indexOf('접기') !== -1) throw new Error('불필요한 펼치기 버튼이 남음');
+          output.textContent = 'INTERACTION PASS';
+        } catch (error) {
+          output.textContent = 'FAIL · ' + error.message;
+          output.classList.add('fail');
+        }
+      }
+    })();
+  </script>
+</body>
+</html>

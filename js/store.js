@@ -22,6 +22,7 @@ window.MW = window.MW || {};
       id: 'sample-work',
       name: '예시 작품',
       archived: false,
+      template: { cutCount: 12, processes: ['스케치'] },
       episodes: [{
         id: 'sample-ep-1',
         number: 1,
@@ -68,9 +69,9 @@ window.MW = window.MW || {};
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
            accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
            bgImage: data URL (화면 전체 뒤 배경, 비우면 없음)
-           contentWidth: 'narrow'|'normal'|'wide'|'full'|'custom' — 가운데 컨텐츠 최대폭
-           contentWidthPx: 'custom' 일 때 쓰는 사용자 지정 픽셀값 (320~2000) */
-        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal', contentWidthPx: 1100 }
+           contentWidth: 'narrow'|'normal'|'wide'|'full'|'custom' — 가운데 컨텐츠 최대폭 (최대 800px)
+           contentWidthPx: 'custom' 일 때 쓰는 사용자 지정 픽셀값 (320~800) */
+        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal', contentWidthPx: 760 }
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       playlists: [],
@@ -89,7 +90,7 @@ window.MW = window.MW || {};
       habitLog: {},         // 'YYYY-MM-DD' → { habitId: { done:['15:00'], pass:['18:00'] } }
       events: [],
       /* 작업 관리 — 작품 → 회차 → 컷 → 공정
-         {id, name, archived, episodes:[
+         {id, name, archived, template:{cutCount, processes:[name,…]}, episodes:[
            {id, number, cutCount, processes:[
              {id, name, order, collapsed, completedCuts:[1,2,3], dueDate} ]} ]}
          · dueDate 는 공정마다 따로 두고, 없으면 '' 취급 (마이그레이션 불필요, 옵셔널) —
@@ -249,7 +250,7 @@ window.MW = window.MW || {};
       card: HEX.test(th.card || '') ? th.card : '',
       bgImage: typeof th.bgImage === 'string' ? th.bgImage : '',
       contentWidth: ['narrow', 'normal', 'wide', 'full', 'custom'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal',
-      contentWidthPx: (function (n) { return (typeof n === 'number' && isFinite(n)) ? Math.min(2000, Math.max(320, Math.round(n))) : 1100; })(th.contentWidthPx)
+      contentWidthPx: (function (n) { return (typeof n === 'number' && isFinite(n)) ? Math.min(800, Math.max(320, Math.round(n))) : 760; })(th.contentWidthPx)
     };
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
@@ -321,6 +322,22 @@ window.MW = window.MW || {};
     out.works = out.works.map(function (w) {
       if (!w || typeof w !== 'object') return w;
       if (!Array.isArray(w.episodes)) w.episodes = [];
+      if (w.template && typeof w.template === 'object') {
+        w.template.cutCount = Math.min(999, Math.max(1, parseInt(w.template.cutCount, 10) || 60));
+        if (Array.isArray(w.template.processes)) {
+          var seenProcess = {};
+          w.template.processes = w.template.processes.map(function (name) {
+            return String(name || '').trim();
+          }).filter(function (name) {
+            if (!name || seenProcess[name]) return false;
+            seenProcess[name] = true;
+            return true;
+          });
+        }
+        if (!Array.isArray(w.template.processes) || !w.template.processes.length) delete w.template;
+      } else {
+        delete w.template;
+      }
       w.episodes.forEach(function (ep) {
         if (!ep || typeof ep !== 'object') return;
         if (!Array.isArray(ep.processes)) ep.processes = [];

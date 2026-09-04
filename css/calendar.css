@@ -2,6 +2,17 @@
    캘린더 — 월 / 주 / 일 뷰 + 해빗 트래커
    ========================================================================== */
 
+/* 빠른 수정 지도
+   - .cal-toolbar / .cal-views     이전·다음 이동, 날짜 제목, 월·주·일 선택
+   - .cal-grid / .cal-cell         월간 달력의 7열 격자와 날짜 한 칸
+   - .cal-side / .ev-*             선택한 날짜의 오른쪽 상세 목록
+   - .week-*                       주간 보기의 날짜별 카드
+   - .timeline / .tl-*             일간 시간표와 일정 블록
+   - .hb-* / .hg-*                 접을 수 있는 해빗 패널과 날짜×해빗 표
+   - .alarm-*                      화면 위에 뜨는 일정 알림 카드
+   - @media 1000px / 560px         좁은 화면에서 2단을 1단으로 바꾸는 기준 */
+
+/* 월·주·일 화면이 공유하는 상단 이동 도구와 기본 2단 배치 */
 .cal-toolbar {
   display: flex; align-items: center; gap: 8px;
   margin-bottom: 14px; flex-wrap: wrap;
@@ -157,6 +168,7 @@
 .hb-item.on .hb-name { color: var(--text-muted); }
 .hb-streak { font-size: 11px; color: var(--amber); font-weight: 600; }
 
+/* 태블릿 이하: 오른쪽 상세 패널을 아래로 내리고 주간을 2열로 줄임 */
 @media (max-width: 1000px) {
   .cal-layout, .day-layout { grid-template-columns: minmax(0, 1fr); }
   .cal-side { position: static; }
@@ -164,6 +176,7 @@
   .cal-cell { min-height: 62px; padding: 4px; }
   .cal-pill { font-size: 10px; padding: 1px 4px; }
 }
+/* 작은 휴대폰: 주간 카드를 한 줄에 하나씩 표시 */
 @media (max-width: 560px) {
   .week-grid { grid-template-columns: minmax(0, 1fr); }
   .cal-weeks { grid-template-rows: repeat(6, minmax(62px, auto)); }

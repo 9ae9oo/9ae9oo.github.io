@@ -1,27 +1,37 @@
 <!DOCTYPE html>
 <html lang="ko" data-preset="base">
 <head>
+<!-- 브라우저 기본 정보: 글자 인코딩·모바일 화면 크기·검색 설명·탭 제목 -->
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="description" content="개인 창작자용 워크스페이스 — 작업 관리, 일정, 정산과 세무 참고자료를 한 탭에서.">
 <meta name="color-scheme" content="light">
 <title>Creator Workspace</title>
+
+<!-- 화면 모양을 정하는 CSS. 공통값 → 화면 골격 → 기능별 화면 순서로 불러옵니다. -->
+<!-- tokens.css: 공통 색상·글꼴·모서리·입력창·버튼 -->
 <link rel="stylesheet" href="./css/tokens.css">
+<!-- shell.css: 좌우 메뉴·메인 콘텐츠·팝업·모바일 전체 배치 -->
 <link rel="stylesheet" href="./css/shell.css">
+<!-- widgets.css: 타이머·투두·Inbox·메모·해빗 편집 -->
 <link rel="stylesheet" href="./css/widgets.css">
+<!-- calendar.css: 월·주·일 캘린더·해빗 표·알림 -->
 <link rel="stylesheet" href="./css/calendar.css">
+<!-- ledger.css: 정산·거래 표·어시스턴트·세무 -->
 <link rel="stylesheet" href="./css/ledger.css">
+<!-- work.css: WORKFLOW의 작품·회차 탭·공정 카드·컷 버튼 -->
 <link rel="stylesheet" href="./css/work.css">
 </head>
 <body data-route="home">
 
+<!-- 앱 전체 골격: [왼쪽 페이지 메뉴] [메인 콘텐츠] [오른쪽 도구 메뉴] [열린 도구 패널] -->
 <div id="app">
 
   <!-- 좌측 레일 — 메인 페이지 이동 (아이콘만) -->
   <aside id="sidebar" class="sidebar">
     <nav class="sidebar-nav">
       <button class="sidebar-item" data-nav="home" title="대시보드"><span class="icon">🏠</span><span class="label">대시보드</span></button>
-      <button class="sidebar-item" data-nav="work" title="작업"><span class="icon">🎬</span><span class="label">작업</span></button>
+      <button class="sidebar-item" data-nav="work" title="WORKFLOW"><span class="icon">🎬</span><span class="label">작업</span></button>
       <button class="sidebar-item" data-nav="calendar" title="캘린더"><span class="icon">📅</span><span class="label">캘린더</span></button>
       <button class="sidebar-item" data-nav="ledger" title="정산"><span class="icon">💰</span><span class="label">정산</span></button>
       <button class="sidebar-item" data-nav="settings" title="설정"><span class="icon">⚙️</span><span class="label">설정</span></button>
@@ -36,41 +46,45 @@
 
     <main id="main">
 
+      <!-- DASHBOARD: app.js가 사용자가 고른 대시보드 카드를 #page-home-body에 채웁니다. -->
       <section class="page active" data-page="home">
         <div class="page-head page-head-flex">
-          <h1 id="home-title">대시보드</h1>
+          <h1 id="home-title">DASHBOARD</h1>
           <div id="home-edit-bar"></div>
         </div>
         <div id="page-home-body"></div>
       </section>
 
+      <!-- WORKFLOW: work.js가 작품 추가·작품 선택·회차 탭·공정 카드를 채웁니다. 모양은 work.css에서 조절합니다. -->
       <section class="page" data-page="work">
-        <div class="page-head">
+        <div class="page-head work-page-head">
           <h1>WORKFLOW</h1>
-          <p>작품 → 회차 → 컷 단위로 공정을 체크합니다.</p>
         </div>
         <div id="page-work-body"></div>
       </section>
 
+      <!-- PLAN: calendar.js가 월·주·일 캘린더와 해빗 표를 채웁니다. -->
       <section class="page" data-page="calendar">
         <div class="page-head">
-          <h1>캘린더</h1>
+          <h1>PLAN</h1>
           <p>월 · 주 · 일 뷰. 날짜를 붙인 할 일도 함께 표시됩니다.</p>
         </div>
         <div id="page-calendar-body"></div>
       </section>
 
+      <!-- MONEY: ledger.js·assistants.js·tax.js가 장부·어시스턴트·세무 화면을 채웁니다. -->
       <section class="page" data-page="ledger">
         <div class="page-head">
-          <h1>정산</h1>
+          <h1>MONEY</h1>
           <p>가계부 · 어시스턴트 · 세무 참고자료. 같은 금액을 두 번 입력하지 않습니다.</p>
         </div>
         <div id="page-ledger-body"></div>
       </section>
 
+      <!-- SETTINGS: settings.js가 시간·음악·카테고리·테마·데이터 관리 화면을 채웁니다. -->
       <section class="page" data-page="settings">
         <div class="page-head">
-          <h1>설정</h1>
+          <h1>SETTINGS</h1>
           <p>재생목록, 장부 카테고리, 해빗과 그룹처럼 가끔 손대는 관리는 모두 여기에서.</p>
         </div>
         <div id="page-settings-body"></div>
@@ -95,12 +109,16 @@
 
 </div>
 
+<!-- 저장 완료·경고 같은 짧은 알림이 들어가는 자리 -->
 <div id="toast-wrap"></div>
 
 <!-- 번들러 없이 순서대로 로드합니다 (file:// 로 열어도 동작하도록 ES module 을 쓰지 않습니다) -->
+<!-- 1. 공통 도구·저장소·화면 골격: 뒤의 모든 기능이 먼저 불러온 MW 기능을 사용합니다. -->
 <script src="./js/util.js"></script>
 <script src="./js/store.js"></script>
 <script src="./js/shell.js"></script>
+
+<!-- 2. 일정 입력과 각 기능 화면의 동작 -->
 <script src="./js/quick-add.js"></script>
 <script src="./js/markdown.js"></script>
 <script src="./js/timer.js"></script>
@@ -115,6 +133,8 @@
 <script src="./js/assistants.js"></script>
 <script src="./js/tax.js"></script>
 <script src="./js/settings.js"></script>
+
+<!-- 3. 마지막에 앱을 시작하고 현재 주소의 화면을 엽니다. -->
 <script src="./js/app.js"></script>
 
 </body>
