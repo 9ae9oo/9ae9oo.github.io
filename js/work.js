@@ -646,20 +646,22 @@ window.MW = window.MW || {};
     return node;
   }
 
-  /** "N화 · 전체 NN컷" — 라벨↔입력 토글(cutCountControl 과 같은 패턴). h3 와 회차정보 팝업을
-      대신합니다: 회차 번호·컷수를 함께 고치고, 삭제도 여기서 합니다. 팝업 없음 */
+  /** "N화 | 전체 NN컷" — 텍스트는 클릭 대상이 아니고, 옆의 [편집] 버튼을 눌러야만
+      편집 모드로 들어갑니다 (예전엔 텍스트 전체가 버튼이라 실수로 눌리기 쉬웠음).
+      회차 번호·컷수를 함께 고치고, 삭제도 여기서 합니다. 팝업 없음 */
   function episodeHeaderControl(work, ep) {
     var wrap = el('div.ep-header-ctl');
 
     function showLabel() {
       U.clear(wrap);
-      wrap.appendChild(el('button.ep-header-edit', {
-        type: 'button', title: '회차 번호 · 컷수 수정', onclick: showInput
-      }, [
-        el('span.ep-header-icon', { text: '✎' }),
+      wrap.appendChild(el('span.ep-header-text', {}, [
         el('h3', { text: ep.number + '화' }),
-        el('span.ep-header-cuts', { text: '· 전체 ' + ep.cutCount + '컷' })
+        el('span.ep-header-sep', { text: '|' }),
+        el('span.ep-header-cuts', { text: '전체 ' + ep.cutCount + '컷' })
       ]));
+      wrap.appendChild(el('button.btn.btn-sm', {
+        type: 'button', text: '편집', title: '회차 번호 · 컷수 수정', onclick: showInput
+      }));
     }
 
     function showInput() {
@@ -693,6 +695,7 @@ window.MW = window.MW || {};
       }
       // blur 는 두 입력 사이를 오갈 때도 생기므로, 포커스가 이 컨트롤 밖으로
       // 완전히 나갔을 때만(다음 tick 에 activeElement 로 확인) 커밋합니다.
+      // [편집 확인] 버튼도 같은 commit 을 호출하는 명시적 경로입니다.
       function onBlur() {
         setTimeout(function () {
           if (!wrap.contains(document.activeElement)) commit();
@@ -705,11 +708,16 @@ window.MW = window.MW || {};
 
       wrap.appendChild(el('div.ep-header-edit-row', {}, [
         numInp,
-        el('span', { text: '화 · 전체' }),
+        el('span', { text: '화' }),
+        el('span.ep-header-sep', { text: '|' }),
+        el('span', { text: '전체' }),
         cutInp,
         el('span', { text: '컷' }),
-        el('button.btn.btn-ghost.btn-icon.btn-sm.danger', {
-          type: 'button', text: '✕', title: '회차 삭제',
+        el('button.btn.btn-sm.btn-primary', {
+          type: 'button', text: '편집 확인', onclick: function () { commit(); }
+        }),
+        el('button.btn.btn-sm.btn-danger', {
+          type: 'button', text: '회차 삭제',
           onclick: function () {
             doneOnce = true;
             MW.shell.confirm(ep.number + '화를 삭제할까요?\n체크한 내용도 함께 사라집니다.', function () {
@@ -773,8 +781,7 @@ window.MW = window.MW || {};
         return el('button.ep-chip' + (ep && e.id === ep.id ? '.active' : ''), {
           onclick: function () { select(work.id, e.id); }
         }, [
-          el('b', { text: e.number + '화' }),
-          el('span.cut-n', { text: e.cutCount + '컷' })
+          el('b', { text: e.number + '화' })
         ]);
       });
     chips.push(el('button.ep-chip.add', {

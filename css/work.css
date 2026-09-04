@@ -22,12 +22,10 @@
 }
 .ep-chip:hover { background: var(--surface-1); color: var(--text); }
 .ep-chip b { font-weight: 700; }
-.ep-chip .cut-n { font-size: 10.5px; color: var(--text-dim); }
 .ep-chip.active {
   background: var(--surface-1); border-color: var(--border);
   border-bottom: 1px solid var(--surface-1); color: var(--accent);
 }
-.ep-chip.active .cut-n { color: var(--accent); opacity: 0.7; }
 .ep-chip.add {
   top: 0; align-self: center; border: 1px dashed var(--border); border-radius: 999px;
   padding: 5px 12px;
@@ -36,16 +34,12 @@
 .ep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .ep-head h3 { font-size: 16px; font-weight: 700; }
 
-/* 회차 번호·컷수 통합 편집 (episodeHeaderControl) — h3 를 감싸는 라벨 버튼과 편집 줄 */
-.ep-header-edit {
-  display: flex; align-items: center; gap: 6px;
-  background: none; border: none; cursor: pointer;
-  padding: 2px 6px; border-radius: var(--radius-sm);
-}
-.ep-header-edit:hover { background: var(--surface-2); }
-.ep-header-icon { font-size: 12px; color: var(--text-dim); }
-.ep-header-edit:hover .ep-header-icon { color: var(--accent); }
-.ep-header-cuts { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+/* 회차 번호·컷수 통합 편집 (episodeHeaderControl) — 텍스트는 클릭 대상이 아니고,
+   옆의 [편집] 버튼(.btn.btn-sm 재사용)을 눌러야만 편집 줄로 바뀝니다 */
+.ep-header-ctl { display: flex; align-items: center; gap: 8px; }
+.ep-header-text { display: flex; align-items: baseline; gap: 6px; }
+.ep-header-cuts { font-size: 16px; font-weight: 700; color: var(--text); }
+.ep-header-sep { color: var(--text-dim); font-weight: 400; font-size: 14px; }
 .ep-header-edit-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
 .ep-num-input {
   width: 52px; padding: 4px 6px; font-size: 13px;
