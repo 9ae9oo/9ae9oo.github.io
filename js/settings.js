@@ -20,7 +20,8 @@ window.MW = window.MW || {};
     host.appendChild(el('div.callout', {}, [
       el('strong', { text: '곡 관리는 여기에서만 합니다. ' }),
       '상단바에서는 재생과 목록 전환만 하고, 추가·삭제·순서변경은 이 페이지에서 처리합니다. ',
-      '유튜브 주소를 붙여넣으면 제목을 자동으로 가져오고, 실패하면 재생할 때 자동으로 채워집니다.'
+      '유튜브 영상은 한 곡씩 추가하고, 공개 재생목록은 주소 하나로 전체 곡을 가져올 수 있습니다. '
+      + '제목을 가져오지 못한 곡은 재생할 때 자동으로 채워집니다.'
     ]));
 
     host.appendChild(el('div.lg-toolbar', {}, [
@@ -48,11 +49,43 @@ window.MW = window.MW || {};
     }
 
     pls.forEach(function (pl) {
-      var addTrack = function () { if (MW.music.addTrack(pl.id, urlInput.value)) urlInput.value = ''; };
+      var addTrack = function () {
+        var value = urlInput.value;
+        if (MW.music.playlistId(value) && !MW.music.videoId(value)) { importPlaylist(); return; }
+        if (MW.music.addTrack(pl.id, value)) urlInput.value = '';
+      };
+      var addButton, importButton;
+      var setImportBusy = function (busy) {
+        urlInput.disabled = busy;
+        addButton.disabled = busy;
+        importButton.disabled = busy;
+        importButton.textContent = busy ? '가져오는 중…' : '목록 가져오기';
+      };
+      var importPlaylist = function () {
+        if (!urlInput.value.trim()) { U.toast('YouTube 재생목록 주소를 붙여넣어 주세요.', 'warn'); return; }
+        setImportBusy(true);
+        MW.music.importPlaylist(pl.id, urlInput.value).then(function (result) {
+          setImportBusy(false);
+          urlInput.value = '';
+          if (!result.added) {
+            U.toast('추가할 새 곡이 없습니다. 이미 들어 있는 곡은 건너뛰었습니다.', 'warn');
+            return;
+          }
+          var message = result.added + '곡을 가져왔습니다.';
+          if (result.skipped) message += ' 이미 있던 ' + result.skipped + '곡은 건너뛰었습니다.';
+          U.toast(message);
+        }).catch(function (err) {
+          setImportBusy(false);
+          U.toast(err && err.message ? err.message : '재생목록을 가져오지 못했습니다.', 'err');
+        });
+      };
       var urlInput = el('input.field', {
-        placeholder: 'https://www.youtube.com/watch?v=...',
+        placeholder: 'YouTube 영상 또는 재생목록 주소',
+        style: { flex: '1 1 360px', minWidth: '180px', width: 'auto' },
         onkeydown: function (e) { if (e.key === 'Enter') addTrack(); }
       });
+      addButton = el('button.btn.btn-primary.btn-sm', { text: '곡 추가', onclick: addTrack });
+      importButton = el('button.btn.btn-sm', { text: '목록 가져오기', onclick: importPlaylist });
 
       var tracks = el('div', {}, pl.tracks.length ? pl.tracks.map(function (tr, i) {
         return el('div.track-item', {}, [
@@ -118,9 +151,9 @@ window.MW = window.MW || {};
             }
           })
         ]),
-        el('div.row', { style: { marginTop: '10px' } }, [
+        el('div.row', { style: { marginTop: '10px', flexWrap: 'wrap' } }, [
           urlInput,
-          el('button.btn.btn-primary.btn-sm', { text: '곡 추가', onclick: addTrack })
+          el('div.row', {}, [addButton, importButton])
         ]),
         el('div', { style: { marginTop: '10px' } }, [tracks])
       ]));

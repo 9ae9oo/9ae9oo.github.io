@@ -22,6 +22,7 @@ window.MW = window.MW || {};
   var miniHost = null;
   var seeking = false;         // 미니바 플레이헤드 드래그 중
   var seekPct = 0;
+  var playlistImporting = false;
 
   /* ------------------------------------------------------------ 데이터 */
 
@@ -46,6 +47,17 @@ window.MW = window.MW || {};
     return m ? m[1] : null;
   }
 
+  /** 유튜브 재생목록 URL/ID 에서 목록 ID 추출 */
+  function playlistId(url) {
+    var s = String(url || '').trim();
+    if (/^[\w-]{10,}$/.test(s)) return s;
+    var m = s.match(/[?&]list=([^&#]+)/i);
+    if (!m) return null;
+    var id;
+    try { id = decodeURIComponent(m[1]); } catch (e) { id = m[1]; }
+    return /^[\w-]{10,}$/.test(id) ? id : null;
+  }
+
   /** oEmbed 로 제목 조회. CORS 로 막히면 null 을 돌려주고 재생 시 자동 보정합니다. */
   function fetchTitle(id) {
     var url = 'https://www.youtube.com/oembed?format=json&url=' +
@@ -54,6 +66,34 @@ window.MW = window.MW || {};
       .then(function (r) { return r.ok ? r.json() : null; })
       .then(function (j) { return j && j.title ? j.title : null; })
       .catch(function () { return null; });
+  }
+
+  /** 여러 곡의 제목을 동시에 너무 많이 요청하지 않고, 모아서 한 번에 저장 */
+  function fetchImportedTitles(tracks) {
+    var cursor = 0;
+    var titles = {};
+
+    function worker() {
+      var track = tracks[cursor++];
+      if (!track) return Promise.resolve();
+      return fetchTitle(track.videoId).then(function (title) {
+        if (title) titles[track.id] = title;
+        return worker();
+      });
+    }
+
+    var workers = [];
+    for (var i = 0; i < Math.min(4, tracks.length); i++) workers.push(worker());
+    Promise.all(workers).then(function () {
+      if (!Object.keys(titles).length) return;
+      MW.store.update(function (s) {
+        s.playlists.forEach(function (pl) {
+          pl.tracks.forEach(function (tr) {
+            if (titles[tr.id]) tr.title = titles[tr.id];
+          });
+        });
+      });
+    });
   }
 
   /* ------------------------------------------------------ YouTube IFrame API */
@@ -113,6 +153,113 @@ window.MW = window.MW || {};
           nextTrack(true);
         }
       }
+    });
+  }
+
+  function waitForApi() {
+    return new Promise(function (resolve, reject) {
+      if (window.YT && window.YT.Player) { resolve(); return; }
+      if (apiFailed) { reject(new Error('YouTube 연결이 막혀 있어 재생목록을 가져올 수 없습니다.')); return; }
+
+      var started = Date.now();
+      var timer = setInterval(function () {
+        if (window.YT && window.YT.Player) {
+          clearInterval(timer);
+          resolve();
+        } else if (apiFailed || Date.now() - started > 10000) {
+          clearInterval(timer);
+          reject(new Error('YouTube 플레이어를 불러오지 못했습니다. 인터넷 연결을 확인해 주세요.'));
+        }
+      }, 100);
+    });
+  }
+
+  /** 재생 중인 플레이어와 분리된 임시 플레이어로 재생목록의 영상 ID를 읽습니다. */
+  function readPlaylistVideoIds(id) {
+    return waitForApi().then(function () {
+      return new Promise(function (resolve, reject) {
+        var wrap = document.createElement('div');
+        var host = document.createElement('div');
+        var hostId = U.uid('yt-import-host');
+        var importer = null;
+        var best = [];
+        var settled = false;
+        var poll = null;
+        var timeout = null;
+
+        host.id = hostId;
+        wrap.style.cssText = 'position:absolute;width:1px;height:1px;opacity:0;pointer-events:none;left:-9999px;top:0;overflow:hidden';
+        wrap.appendChild(host);
+        document.body.appendChild(wrap);
+
+        function cleanup() {
+          clearInterval(poll);
+          clearTimeout(timeout);
+          if (importer && importer.destroy) {
+            try { importer.destroy(); } catch (e) { /* 이미 정리됨 */ }
+          }
+          if (wrap.parentNode) wrap.parentNode.removeChild(wrap);
+        }
+
+        function finish(ids) {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          resolve(ids);
+        }
+
+        function fail() {
+          if (settled) return;
+          settled = true;
+          cleanup();
+          reject(new Error('재생목록을 읽지 못했습니다. 공개된 YouTube 재생목록 주소인지 확인해 주세요.'));
+        }
+
+        function read() {
+          if (!importer || !importer.getPlaylist) return [];
+          var ids = [];
+          try { ids = importer.getPlaylist() || []; } catch (e) { return []; }
+          ids = ids.filter(function (video) { return /^[\w-]{11}$/.test(video); });
+          if (ids.length > best.length) best = ids.slice();
+          return ids;
+        }
+
+        try {
+          importer = new YT.Player(hostId, {
+            height: '1', width: '1',
+            playerVars: { playsinline: 1 },
+            events: {
+              onReady: function () {
+                try {
+                  importer.cuePlaylist({ listType: 'playlist', list: id, index: 0, startSeconds: 0 });
+                } catch (e) { fail(); }
+              },
+              onStateChange: function (e) {
+                if (e.data === YT.PlayerState.CUED) {
+                  var ids = read();
+                  if (ids.length) finish(ids);
+                }
+              },
+              onError: function () {
+                setTimeout(function () {
+                  if (!read().length) fail();
+                  else finish(best);
+                }, 500);
+              }
+            }
+          });
+        } catch (e) {
+          fail();
+          return;
+        }
+
+        poll = setInterval(read, 250);
+        timeout = setTimeout(function () {
+          read();
+          if (best.length) finish(best);
+          else fail();
+        }, 15000);
+      });
     });
   }
 
@@ -410,12 +557,55 @@ window.MW = window.MW || {};
     return true;
   }
 
+  /** 공개 YouTube 재생목록의 곡을 현재 목록 끝에 한꺼번에 추가 */
+  function importPlaylist(targetPlaylistId, url) {
+    var id = playlistId(url);
+    if (!id) return Promise.reject(new Error('YouTube 재생목록 주소를 확인해 주세요.'));
+    if (playlistImporting) return Promise.reject(new Error('다른 재생목록을 가져오는 중입니다. 잠시만 기다려 주세요.'));
+
+    playlistImporting = true;
+    return readPlaylistVideoIds(id).then(function (ids) {
+      var target = playlists().find(function (pl) { return pl.id === targetPlaylistId; });
+      if (!target) throw new Error('곡을 넣을 재생목록을 찾지 못했습니다.');
+
+      var seen = {};
+      target.tracks.forEach(function (tr) { seen[tr.videoId] = true; });
+      var freshIds = ids.filter(function (video) {
+        if (seen[video]) return false;
+        seen[video] = true;
+        return true;
+      });
+      var addedTracks = freshIds.map(function (video) {
+        return {
+          id: U.uid('tr'),
+          videoId: video,
+          title: '유튜브 영상 ' + video,
+          url: 'https://www.youtube.com/watch?v=' + video
+        };
+      });
+
+      if (addedTracks.length) {
+        MW.store.update(function (s) {
+          var pl = s.playlists.find(function (item) { return item.id === targetPlaylistId; });
+          if (pl) Array.prototype.push.apply(pl.tracks, addedTracks);
+        });
+        fetchImportedTitles(addedTracks);
+      }
+
+      return { total: ids.length, added: addedTracks.length, skipped: ids.length - addedTracks.length };
+    }).finally(function () {
+      playlistImporting = false;
+    });
+  }
+
   MW.music = {
     init: init,
     render: renderBar,
     addPlaylist: addPlaylist,
     addTrack: addTrack,
+    importPlaylist: importPlaylist,
     videoId: videoId,
+    playlistId: playlistId,
     playTrack: playTrack,
     selectPlaylist: selectPlaylist,
     MAX_PLAYLISTS: MAX_PLAYLISTS,
