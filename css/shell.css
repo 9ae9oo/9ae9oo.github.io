@@ -646,3 +646,51 @@ body.panel-instant #panelhost { transition: none !important; }
   font-variant-numeric: tabular-nums; margin-right: auto;
 }
 .home-money .value.minus { color: var(--red); }
+
+/* ------------------------------------------------ 홈: 2칸 그리드 + 카드 드래그 재배치 + 크기 조절 */
+#page-home-body {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-items: start;
+  gap: 14px;
+}
+@media (max-width: 640px) {
+  #page-home-body { grid-template-columns: 1fr; }
+  #page-home-body .home-card-wrap { grid-column: span 1 !important; }
+}
+
+.home-card-wrap { position: relative; }
+.home-card-wrap > .card { margin: 0; height: 100%; box-sizing: border-box; }
+.home-card-wrap > .home-image { margin: 0; height: 100%; }
+.home-card-wrap.resized { overflow: hidden; }
+.home-card-wrap.resized > .card { overflow: auto; }
+.home-card-wrap.dragging { opacity: 0.45; }
+.home-card-wrap.drag-over { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius); }
+
+.home-card-grip {
+  position: absolute; top: 4px; right: 6px; z-index: 2;
+  padding: 2px 6px; color: var(--text-dim); cursor: grab;
+  font-size: 13px; line-height: 1; user-select: none;
+}
+.home-card-resize {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
+  cursor: ns-resize; z-index: 2; touch-action: none;
+}
+.home-card-resize::after {
+  content: ''; position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%);
+  width: 32px; height: 3px; border-radius: 2px; background: var(--border);
+}
+.home-card-wrap.resizing .home-card-resize::after { background: var(--accent); }
+
+.home-card-resize-x {
+  position: absolute; top: 0; bottom: 0; right: -8px; width: 16px;
+  cursor: ew-resize; z-index: 2; touch-action: none;
+}
+.home-card-resize-x::after {
+  content: ''; position: absolute; top: 50%; right: 6px; transform: translateY(-50%);
+  width: 3px; height: 28px; border-radius: 2px; background: var(--border);
+}
+.home-card-wrap.resizing-x .home-card-resize-x::after { background: var(--accent); }
+@media (max-width: 640px) {
+  .home-card-resize-x { display: none; }   /* 모바일은 항상 1칸 폭 고정 */
+}

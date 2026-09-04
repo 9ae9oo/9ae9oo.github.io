@@ -28,15 +28,18 @@ window.MW = window.MW || {};
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
-        homeOrder: ['image', 'today', 'next', 'habits', 'money'],  // 대시보드 카드 순서 (설정 → 테마에서 변경)
+        homeOrder: ['image', 'today', 'next', 'habits', 'money'],  // 대시보드 카드 순서 (설정 → 테마에서 변경, 또는 홈에서 직접 드래그)
+        homeCardHeights: {},   // 홈 카드별 사용자 지정 높이 { [카드키]: px } — 홈에서 카드 아래쪽을 드래그해 조절. 없으면 기본 높이
+        homeCardSpans: {},     // 홈 카드별 가로 폭 { [카드키]: 1|2 } — 2칸 그리드에서 몇 칸을 차지할지. 없으면 2(전체 폭)
         homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
         reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
            accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
            bgImage: data URL (화면 전체 뒤 배경, 비우면 없음)
-           contentWidth: 'narrow'|'normal'|'wide'|'full' — 가운데 컨텐츠 최대폭 */
-        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal' }
+           contentWidth: 'narrow'|'normal'|'wide'|'full'|'custom' — 가운데 컨텐츠 최대폭
+           contentWidthPx: 'custom' 일 때 쓰는 사용자 지정 픽셀값 (320~2000) */
+        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal', contentWidthPx: 1100 }
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       playlists: [],
@@ -111,6 +114,23 @@ window.MW = window.MW || {};
     if (!Array.isArray(out.settings.homeOrder)) out.settings.homeOrder = base.settings.homeOrder.slice();
     if (typeof out.settings.homeImage !== 'string') out.settings.homeImage = '';
     if (['auto', 'on', 'off'].indexOf(out.settings.reduceMotion) < 0) out.settings.reduceMotion = 'auto';
+    (function () {
+      var raw = (out.settings.homeCardHeights && typeof out.settings.homeCardHeights === 'object') ? out.settings.homeCardHeights : {};
+      var clean = {};
+      Object.keys(raw).forEach(function (k) {
+        var n = raw[k];
+        if (typeof n === 'number' && isFinite(n)) clean[k] = Math.min(800, Math.max(80, Math.round(n)));
+      });
+      out.settings.homeCardHeights = clean;
+    })();
+    (function () {
+      var raw = (out.settings.homeCardSpans && typeof out.settings.homeCardSpans === 'object') ? out.settings.homeCardSpans : {};
+      var clean = {};
+      Object.keys(raw).forEach(function (k) {
+        if (raw[k] === 1 || raw[k] === 2) clean[k] = raw[k];
+      });
+      out.settings.homeCardSpans = clean;
+    })();
     delete out.settings.pomoScale;   // 구버전 필드 — 이제 창 크기(settings.floats.pomodoro)로 대체
     // theme: 프리셋 + 세부 오버라이드 구조로 정규화. 구버전( { mode, accent } )도 여기서 흡수합니다.
     var th = (out.settings.theme && typeof out.settings.theme === 'object') ? out.settings.theme : {};
@@ -124,7 +144,8 @@ window.MW = window.MW || {};
       bg: HEX.test(th.bg || '') ? th.bg : '',
       card: HEX.test(th.card || '') ? th.card : '',
       bgImage: typeof th.bgImage === 'string' ? th.bgImage : '',
-      contentWidth: ['narrow', 'normal', 'wide', 'full'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal'
+      contentWidth: ['narrow', 'normal', 'wide', 'full', 'custom'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal',
+      contentWidthPx: (function (n) { return (typeof n === 'number' && isFinite(n)) ? Math.min(2000, Math.max(320, Math.round(n))) : 1100; })(th.contentWidthPx)
     };
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});

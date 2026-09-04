@@ -414,7 +414,10 @@ window.MW = window.MW || {};
     root.style.setProperty('--bg-image', t.bgImage ? 'url("' + t.bgImage + '")' : 'none');
     document.body.classList.toggle('bg-image', !!t.bgImage);
 
-    root.style.setProperty('--content-max', CONTENT_WIDTHS[t.contentWidth] || CONTENT_WIDTHS.normal);
+    var contentMax = t.contentWidth === 'custom'
+      ? Math.min(2000, Math.max(320, Math.round(t.contentWidthPx) || 1100)) + 'px'
+      : (CONTENT_WIDTHS[t.contentWidth] || CONTENT_WIDTHS.normal);
+    root.style.setProperty('--content-max', contentMax);
   }
 
   /** 스토어는 건드리지 않고 화면만 임시로 바꿔봅니다 (색상 선택 중 실시간 미리보기) */

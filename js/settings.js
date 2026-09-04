@@ -759,18 +759,37 @@ window.MW = window.MW || {};
   }
 
   function widthCard() {
-    var cur = (MW.store.state.settings.theme || {}).contentWidth || 'normal';
-    var opts = [['narrow', '좁게'], ['normal', '보통'], ['wide', '넓게'], ['full', '최대']];
+    var t = MW.store.state.settings.theme || {};
+    var cur = t.contentWidth || 'normal';
+    var opts = [['narrow', '좁게'], ['normal', '보통'], ['wide', '넓게'], ['full', '최대'], ['custom', '직접 입력']];
     var seg = el('div.seg', {}, opts.map(function (o) {
       return el('button' + (cur === o[0] ? '.active' : ''), {
         type: 'button', text: o[1],
         onclick: function () { setTheme({ contentWidth: o[0] }); }
       });
     }));
+    var pxInput = el('input.input', {
+      type: 'number', min: '320', max: '2000', step: '10',
+      value: t.contentWidthPx || 1100,
+      style: { width: '90px', marginTop: '10px', display: cur === 'custom' ? '' : 'none' },
+      oninput: function () {
+        var n = parseInt(this.value, 10);
+        if (isFinite(n)) MW.shell.previewTheme({ contentWidth: 'custom', contentWidthPx: n });
+      },
+      onchange: function () {
+        var n = Math.min(2000, Math.max(320, parseInt(this.value, 10) || 1100));
+        this.value = n;
+        setTheme({ contentWidth: 'custom', contentWidthPx: n });
+      }
+    });
+    var pxRow = el('div', { style: { display: cur === 'custom' ? '' : 'none' } }, [
+      pxInput, el('span.small.dim', { text: 'px (320~2000)', style: { marginLeft: '6px' } })
+    ]);
     return el('div.card', {}, [
       el('h3', { text: '컨텐츠 폭' }),
-      el('div.small.dim', { text: '가운데 메인 영역의 최대 너비입니다. "최대"는 화면을 꽉 채웁니다.', style: { marginBottom: '10px' } }),
-      seg
+      el('div.small.dim', { text: '가운데 메인 영역의 최대 너비입니다. "최대"는 화면을 꽉 채웁니다. "직접 입력"으로 픽셀 값을 지정할 수 있습니다.', style: { marginBottom: '10px' } }),
+      seg,
+      pxRow
     ]);
   }
 
