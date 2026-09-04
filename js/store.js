@@ -28,10 +28,22 @@ window.MW = window.MW || {};
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
-        homeOrder: ['image', 'today', 'next', 'habits', 'money'],  // 대시보드 카드 순서 (설정 → 테마에서 변경, 또는 홈에서 직접 드래그)
-        homeCardHeights: {},   // 홈 카드별 사용자 지정 높이 { [카드키]: px } — 홈에서 카드 아래쪽을 드래그해 조절. 없으면 기본 높이
-        homeCardSpans: {},     // 홈 카드별 가로 폭 { [카드키]: 1|2 } — 2칸 그리드에서 몇 칸을 차지할지. 없으면 2(전체 폭)
-        homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
+        /* 대시보드 위젯 목록. 홈 → "편집"에서 추가·삭제·켜기/끄기·순서 변경.
+           { id, type, enabled, config? }
+           type: 'today'|'next'|'habits'|'money' (고정 1개씩, 끄기만 가능)
+               | 'image'(갤러리)|'minical'(미니 달력)|'embed'(HTML 임베드) — 여러 개 추가 가능
+           image.config: { mode:'fixed'|'carousel'|'slideshow', images:[dataURL,…], intervalSec }
+           embed.config: { html: '사용자가 붙여넣은 HTML' } */
+        homeWidgets: [
+          { id: 'image', type: 'image', enabled: false, config: { mode: 'fixed', images: [], intervalSec: 5 } },
+          { id: 'today', type: 'today', enabled: true },
+          { id: 'next', type: 'next', enabled: true },
+          { id: 'habits', type: 'habits', enabled: true },
+          { id: 'money', type: 'money', enabled: true }
+        ],
+        homeCardHeights: {},   // 위젯별 사용자 지정 높이 { [위젯id]: px } — 편집 모드에서 카드 아래쪽을 드래그해 조절. 없으면 기본 높이
+        homeCardSpans: {},     // 위젯별 가로 칸수 { [위젯id]: 1~3 } — 3칸 그리드에서 몇 칸을 차지할지. 없으면 3(전체 폭)
+        homeCardRowSpans: {},  // 위젯별 세로 칸수 { [위젯id]: 1~3 } — 편집 모드에서 오른쪽 아래 모서리를 드래그. 없으면 1
         reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
@@ -111,8 +123,68 @@ window.MW = window.MW || {};
     var out = Object.assign({}, base, data);
     out.version = VERSION;
     out.settings = Object.assign({}, base.settings, data.settings || {});
-    if (!Array.isArray(out.settings.homeOrder)) out.settings.homeOrder = base.settings.homeOrder.slice();
-    if (typeof out.settings.homeImage !== 'string') out.settings.homeImage = '';
+    (function () {
+      var BUILTIN = ['today', 'next', 'habits', 'money'];
+      var MULTI = ['image', 'minical', 'embed'];
+      var KNOWN = BUILTIN.concat(MULTI);
+
+      // 구버전(homeOrder 배열 + homeImage 문자열)이면 새 위젯 목록으로 한 번만 변환
+      if (!Array.isArray(out.settings.homeWidgets) || !out.settings.homeWidgets.length) {
+        var legacyKey = { calendar: 'today', inbox: 'next' };
+        var order = Array.isArray(data.settings && data.settings.homeOrder) ? data.settings.homeOrder : BUILTIN;
+        var seen = {};
+        var widgets = [];
+        order.forEach(function (k) {
+          var key = legacyKey[k] || k;
+          if (BUILTIN.indexOf(key) < 0 || seen[key]) return;
+          seen[key] = true;
+          widgets.push({ id: key, type: key, enabled: true });
+        });
+        BUILTIN.forEach(function (key) {
+          if (!seen[key]) widgets.push({ id: key, type: key, enabled: true });
+        });
+        var legacyImg = (data.settings && typeof data.settings.homeImage === 'string') ? data.settings.homeImage : '';
+        widgets.unshift({
+          id: 'image', type: 'image', enabled: !!legacyImg,
+          config: { mode: 'fixed', images: legacyImg ? [legacyImg] : [], intervalSec: 5 }
+        });
+        out.settings.homeWidgets = widgets;
+      }
+      delete out.settings.homeOrder;
+      delete out.settings.homeImage;
+      delete out.settings.homeImageSize;
+
+      // 위젯 목록 정리: 알 수 없는 타입 제거, 고정 위젯(today/next/habits/money)은 하나씩만, id 중복 방지
+      var idsSeen = {}, builtinSeen = {};
+      out.settings.homeWidgets = out.settings.homeWidgets.filter(function (w) {
+        if (!w || typeof w !== 'object' || KNOWN.indexOf(w.type) < 0) return false;
+        if (BUILTIN.indexOf(w.type) >= 0) {
+          if (builtinSeen[w.type]) return false;
+          builtinSeen[w.type] = true;
+          w.id = w.type;
+        }
+        if (typeof w.id !== 'string' || !w.id || idsSeen[w.id]) w.id = U && U.uid ? U.uid(w.type) : (w.type + '-' + Math.random().toString(36).slice(2));
+        idsSeen[w.id] = true;
+        w.enabled = w.enabled !== false;
+        if (w.type === 'image') {
+          var c = (w.config && typeof w.config === 'object') ? w.config : {};
+          w.config = {
+            mode: ['fixed', 'carousel', 'slideshow'].indexOf(c.mode) >= 0 ? c.mode : 'fixed',
+            images: Array.isArray(c.images) ? c.images.filter(function (u) { return typeof u === 'string' && u; }).slice(0, 20) : [],
+            intervalSec: (typeof c.intervalSec === 'number' && isFinite(c.intervalSec)) ? Math.min(30, Math.max(2, Math.round(c.intervalSec))) : 5
+          };
+        } else if (w.type === 'embed') {
+          var ec = (w.config && typeof w.config === 'object') ? w.config : {};
+          w.config = { html: typeof ec.html === 'string' ? ec.html.slice(0, 20000) : '' };
+        } else {
+          delete w.config;
+        }
+        return true;
+      });
+      BUILTIN.forEach(function (key) {
+        if (!builtinSeen[key]) out.settings.homeWidgets.push({ id: key, type: key, enabled: true });
+      });
+    })();
     if (['auto', 'on', 'off'].indexOf(out.settings.reduceMotion) < 0) out.settings.reduceMotion = 'auto';
     (function () {
       var raw = (out.settings.homeCardHeights && typeof out.settings.homeCardHeights === 'object') ? out.settings.homeCardHeights : {};
@@ -127,9 +199,17 @@ window.MW = window.MW || {};
       var raw = (out.settings.homeCardSpans && typeof out.settings.homeCardSpans === 'object') ? out.settings.homeCardSpans : {};
       var clean = {};
       Object.keys(raw).forEach(function (k) {
-        if (raw[k] === 1 || raw[k] === 2) clean[k] = raw[k];
+        if (Number.isInteger(raw[k]) && raw[k] >= 1 && raw[k] <= 3) clean[k] = raw[k];
       });
       out.settings.homeCardSpans = clean;
+    })();
+    (function () {
+      var raw = (out.settings.homeCardRowSpans && typeof out.settings.homeCardRowSpans === 'object') ? out.settings.homeCardRowSpans : {};
+      var clean = {};
+      Object.keys(raw).forEach(function (k) {
+        if (Number.isInteger(raw[k]) && raw[k] >= 1 && raw[k] <= 3) clean[k] = raw[k];
+      });
+      out.settings.homeCardRowSpans = clean;
     })();
     delete out.settings.pomoScale;   // 구버전 필드 — 이제 창 크기(settings.floats.pomodoro)로 대체
     // theme: 프리셋 + 세부 오버라이드 구조로 정규화. 구버전( { mode, accent } )도 여기서 흡수합니다.

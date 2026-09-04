@@ -167,6 +167,27 @@ window.MW = window.MW || {};
 
   function clamp(v, lo, hi) { return Math.min(hi, Math.max(lo, v)); }
 
+  /** 이미지 파일을 캔버스로 축소해서 data URL(JPEG) 로 변환 — LocalStorage 용량 보호 */
+  function shrinkImage(file, maxW, cb) {
+    var reader = new FileReader();
+    reader.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var scale = Math.min(1, maxW / img.width);
+        var w = Math.round(img.width * scale), h = Math.round(img.height * scale);
+        var cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        cv.getContext('2d').drawImage(img, 0, 0, w, h);
+        try { cb(cv.toDataURL('image/jpeg', 0.82)); }
+        catch (e) { cb(String(reader.result)); }   // 변환 실패 시 원본 사용
+      };
+      img.onerror = function () { toast('이미지를 불러오지 못했습니다.', 'err'); };
+      img.src = String(reader.result);
+    };
+    reader.onerror = function () { toast('파일을 읽지 못했습니다.', 'err'); };
+    reader.readAsDataURL(file);
+  }
+
   function debounce(fn, ms) {
     var t;
     return function () {
@@ -244,7 +265,7 @@ window.MW = window.MW || {};
     daysBetween: daysBetween, fmtDate: fmtDate, fmtLongDate: fmtLongDate,
     fmtMin: fmtMin, parseMin: parseMin, fmtClock: fmtClock,
     won: won, num: num, parseNum: parseNum,
-    uid: uid, clamp: clamp, debounce: debounce, safeUrl: safeUrl, toast: toast,
+    uid: uid, clamp: clamp, debounce: debounce, safeUrl: safeUrl, toast: toast, shrinkImage: shrinkImage,
     hexToRgb: hexToRgb, rgbaOf: rgbaOf, lighten: lighten,
     mixHex: mixHex, luminance: luminance, onColor: onColor
   };
