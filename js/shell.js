@@ -44,6 +44,8 @@ window.MW = window.MW || {};
 
   function registerFloat(id, opts) {
     opts = opts || {};
+    var minW = Math.max(96, +opts.minW || 260);
+    var minH = Math.max(72, +opts.minH || 200);
     var node = el('div.float', { id: 'float-' + id });
     var titleEl = el('h3', { text: opts.title || '' });
     var head = el('div.float-head', {}, [
@@ -67,8 +69,10 @@ window.MW = window.MW || {};
     rect = {
       x: U.clamp(rect.x, 0, Math.max(0, window.innerWidth - 120)),
       y: U.clamp(rect.y, 0, Math.max(0, window.innerHeight - 80)),
-      w: Math.max(260, rect.w), h: Math.max(200, rect.h)
+      w: Math.max(minW, rect.w), h: Math.max(minH, rect.h)
     };
+    node.style.minWidth = minW + 'px';
+    node.style.minHeight = minH + 'px';
     node.style.left = rect.x + 'px';
     node.style.top = rect.y + 'px';
     node.style.width = rect.w + 'px';
@@ -85,7 +89,12 @@ window.MW = window.MW || {};
     }
 
     dragMove(head, node, remember);
-    dragResize(grip, node, remember);
+    if (opts.dragBodyWhen) {
+      dragMove(body, node, remember, function () { return opts.dragBodyWhen(node); });
+    }
+    dragResize(grip, node, remember, minW, minH, function () {
+      if (opts.onResize) opts.onResize(node);
+    });
     node.addEventListener('mousedown', raise);
     node.addEventListener('touchstart', raise, { passive: true });
     function raise() { zTop += 1; node.style.zIndex = zTop; }
@@ -100,6 +109,7 @@ window.MW = window.MW || {};
         raise();
         syncButtons();
         if (opts.onOpen) opts.onOpen(api);
+        if (opts.onResize) opts.onResize(node);
       },
       close: function () { node.classList.remove('open'); syncButtons(); },
       toggle: function () { api.isOpen() ? api.close() : api.open(); }
@@ -207,10 +217,11 @@ window.MW = window.MW || {};
     });
   }
 
-  function dragMove(handle, node, onEnd) {
+  function dragMove(handle, node, onEnd, canStart) {
     var sx = 0, sy = 0, ox = 0, oy = 0, active = false;
     function down(e) {
-      if (isMobile()) return;                       // 모바일은 전체화면 시트
+      if (isNarrow()) return;                       // 640px 이하는 화면 하단 고정 시트
+      if (canStart && !canStart()) return;
       if (e.target.closest('button, input, select, label, a')) return;   // 헤더 안 컨트롤은 드래그 아님
       var p = point(e);
       active = true; sx = p.x; sy = p.y;
@@ -240,10 +251,10 @@ window.MW = window.MW || {};
     handle.addEventListener('touchstart', down, { passive: false });
   }
 
-  function dragResize(grip, node, onEnd) {
+  function dragResize(grip, node, onEnd, minW, minH, onMove) {
     var sx = 0, sy = 0, ow = 0, oh = 0, active = false;
     function down(e) {
-      if (isMobile()) return;
+      if (isNarrow()) return;
       var p = point(e);
       active = true; sx = p.x; sy = p.y; ow = node.offsetWidth; oh = node.offsetHeight;
       document.addEventListener('mousemove', move);
@@ -253,8 +264,9 @@ window.MW = window.MW || {};
     function move(e) {
       if (!active) return;
       var p = point(e);
-      node.style.width = Math.max(260, ow + p.x - sx) + 'px';
-      node.style.height = Math.max(200, oh + p.y - sy) + 'px';
+      node.style.width = Math.max(minW, ow + p.x - sx) + 'px';
+      node.style.height = Math.max(minH, oh + p.y - sy) + 'px';
+      if (onMove) onMove();
     }
     function up() {
       if (active && onEnd) onEnd();

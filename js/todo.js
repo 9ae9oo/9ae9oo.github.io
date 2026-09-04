@@ -32,7 +32,7 @@ window.MW = window.MW || {};
       var max = s.todos.reduce(function (m, t) { return Math.max(m, t.order || 0); }, 0);
       s.todos.push({
         id: id, title: title, done: false,
-        groupId: groupId || (s.todoGroups[0] ? s.todoGroups[0].id : null),
+        groupId: groupId || null,
         date: date || null, color: null, order: max + 1
       });
     });
@@ -62,9 +62,11 @@ window.MW = window.MW || {};
 
   function editDialog(t) {
     var title = el('input.field', { value: t.title, maxlength: '200' });
-    var group = el('select.field', {}, groups().map(function (g) {
+    var group = el('select.field', {}, [
+      el('option', { value: '', text: '카테고리 없음', selected: !t.groupId })
+    ].concat(groups().map(function (g) {
       return el('option', { value: g.id, text: g.name, selected: g.id === t.groupId });
-    }));
+    })));
     var date = el('input.field', { type: 'date', value: t.date || '' });
     var useOwn = el('input', { type: 'checkbox', checked: !!t.color });
     var color = el('input', {
@@ -99,7 +101,7 @@ window.MW = window.MW || {};
           var x = s.todos.find(function (y) { return y.id === t.id; });
           if (!x) return;
           x.title = v;
-          x.groupId = group.value;
+          x.groupId = group.value || null;
           x.date = date.value || null;
           x.color = useOwn.checked ? color.value : null;
         });

@@ -38,6 +38,126 @@
 }
 .pomo-auto:hover { border-color: var(--border-accent); color: var(--text); }
 
+.timer-surface-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: 4px;
+}
+.timer-tabs { margin-bottom: 14px; }
+.timer-tabs .tab { padding: 8px 9px; font-size: 12.5px; }
+.timer-mode { min-height: 0; }
+.timer-tool {
+  min-height: 240px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.timer-tool-title { font-size: 12px; font-weight: 600; color: var(--text-dim); }
+.timer-display {
+  font-size: 32px;
+  line-height: 1;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+.timer-stopwatch-display { font-size: 29px; }
+.timer-status { min-height: 18px; font-size: 12px; color: var(--text-muted); text-align: center; }
+.timer-alarm-row, .timer-actions {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.timer-alarm-input { width: 130px; font-variant-numeric: tabular-nums; }
+.timer-duration-inputs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 6px;
+  width: 100%;
+}
+.timer-duration-inputs label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.timer-duration-inputs .field {
+  min-width: 0;
+  padding-left: 8px;
+  padding-right: 4px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.timer-main-btn { width: 40px; height: 40px; border-radius: 50%; }
+
+@media (min-width: 641px) {
+  .float.timer-compact .float-head,
+  .float.timer-compact .timer-surface-actions,
+  .float.timer-compact .timer-tabs,
+  .float.timer-compact .timer-tool-title,
+  .float.timer-compact .timer-status,
+  .float.timer-compact .timer-duration-inputs {
+    display: none;
+  }
+  .float.timer-compact .float-body {
+    padding: 6px;
+    overflow: hidden;
+    cursor: move;
+  }
+  .float.timer-compact .timer-mode,
+  .float.timer-compact .timer-tool,
+  .float.timer-compact .pomo {
+    height: 100%;
+    min-height: 0;
+  }
+  .float.timer-compact .timer-tool,
+  .float.timer-compact .pomo {
+    justify-content: center;
+    gap: 5px;
+  }
+  .float.timer-compact .pomo-ring {
+    width: auto;
+    height: auto;
+  }
+  .float.timer-compact .pomo-ring svg,
+  .float.timer-compact .pomo-session,
+  .float.timer-compact .pomo-count,
+  .float.timer-compact .pomo-auto,
+  .float.timer-compact .pomo-next,
+  .float.timer-compact .timer-alarm-input {
+    display: none;
+  }
+  .float.timer-compact .pomo-center { position: static; }
+  .float.timer-compact .pomo-time,
+  .float.timer-compact .timer-display {
+    font-size: 22px;
+    line-height: 1.05;
+    cursor: move;
+  }
+  .float.timer-compact .pomo-btns,
+  .float.timer-compact .timer-actions,
+  .float.timer-compact .timer-alarm-row {
+    gap: 5px;
+  }
+  .float.timer-compact .pomo-btns .btn-icon,
+  .float.timer-compact .timer-actions .btn-icon {
+    width: 29px;
+    height: 29px;
+    font-size: 12px;
+  }
+  .float.timer-compact .pomo-btns .main,
+  .float.timer-compact .timer-main-btn {
+    width: 33px;
+    height: 33px;
+    font-size: 13px;
+  }
+  .float.timer-compact button { cursor: pointer; }
+  .float.timer-compact .float-resize { background: transparent; }
+}
+
 input[type="checkbox"].chk {
   appearance: none; -webkit-appearance: none;
   width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px;

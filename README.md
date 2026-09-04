@@ -53,7 +53,7 @@ js/
   store.js            LocalStorage 단일 저장소 (구독 · 백업 · 스키마 마이그레이션)
   shell.js            해시 라우팅 · 플로팅 창 · 모달 · 알림 · 사운드
   markdown.js         자체 마크다운 렌더러 (이스케이프 후 변환)
-  pomodoro.js         타이머 — 플로팅 위젯 + 상단바 미니 표시 (legacy 파이썬 로직 이식)
+  timer.js            통합 타이머 — 뽀모도로 · 알람 · 카운트다운 · 스톱워치, 도킹/플로팅/미니 지원
   music.js            YouTube IFrame API 플레이어 (상단바 인라인)
   todo.js             인박스 할 일 (홈·캘린더에서 목록으로 재사용)
   memo.js             메모장 플로팅/도킹 패널

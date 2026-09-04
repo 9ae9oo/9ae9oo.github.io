@@ -68,9 +68,6 @@
 /* 라벨은 항상 숨김 — 아이콘 레일. 이름은 hover 툴팁(title)으로 확인 */
 .sidebar-item .label { display: none; }
 
-/* 뽀모도로 항목 — 아이콘 위, 남은시간 아래로 세로 배치 */
-.pomo-item { flex-direction: column; gap: 2px; }
-
 /* ===== 그룹 B (서브 도구) = 우측 레일 + 패널. #app flex 흐름 밖, 화면 오른쪽에 고정 =====
    우측 레일 = 화면 오른쪽 세로 가운데의 작은 탭들. 패널 열리면 패널 왼쪽 가장자리로 이동. */
 #toolrail {
@@ -106,16 +103,6 @@
 }
 .tool-item:hover { background: var(--surface-3); color: var(--text); }
 .tool-item.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
-#pomodoro-trigger.tool-item { position: relative; z-index: 2; }   /* 뽀모도로가 메모장·BGM 위 레이어 */
-.tool-item .tp-time {
-  writing-mode: horizontal-tb;
-  display: none;
-  margin-top: 6px;
-  font-size: 10px; font-weight: 600; color: var(--accent);
-  letter-spacing: 0; font-variant-numeric: tabular-nums;
-}
-#pomodoro-trigger.running { color: var(--accent); }
-#pomodoro-trigger.running .tp-time { display: block; }
 
 /* ---- 패널 존 — 화면 오른쪽 끝에 고정. 닫히면 폭 0, 열리면 --side-panel-w (왼쪽으로 wipe = 슬라이드).
    화면 위·아래 끝까지 (그룹 A 컨텐츠 카드와 무관). */
@@ -211,21 +198,6 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
 }
 .mm-track:hover .mm-head, .mm-track.dragging .mm-head { width: 15px; height: 15px; }
-#pomodoro-trigger .tp-time {
-  margin: 0;
-  font-size: 9.5px; font-weight: 600; color: var(--text-dim);
-  font-variant-numeric: tabular-nums;
-}
-#pomodoro-trigger.running { color: var(--accent); }
-#pomodoro-trigger.running .tp-time { color: var(--accent); }
-
-/* 뽀모도로 플로팅 창 헤더의 "자동 열기" 토글 */
-.float-pin {
-  display: flex; align-items: center; gap: 4px;
-  font-size: 11px; color: var(--text-muted); cursor: pointer; white-space: nowrap;
-}
-.float-pin input { cursor: pointer; }
-
 /* BGM 패널 — 지금 재생 중 + 트랜스포트 + 목록 */
 .mus-now { padding: 4px 4px 10px; }
 .mus-now-title {
@@ -592,11 +564,6 @@ body.panel-instant #panelhost { transition: none !important; }
   }
   /* 맞닿은 탭끼리 테두리가 2px 로 두꺼워지지 않게 1px 물립니다 */
   .tool-item + .tool-item { margin-left: -1px; }
-  .tool-item .tp-time { margin-top: 2px; }
-  /* 세로 레일에서 뽀모도로를 메모장·BGM 위로 올리던 규칙은 가로 탭 줄에선 불필요합니다.
-     z-index 만 풀면 position:relative 때문에 여전히 형제 위에 그려지므로 둘 다 되돌립니다. */
-  #pomodoro-trigger.tool-item { position: static; z-index: auto; }
-
   /* 도구 패널 — 탭 바로 위에서 올라옵니다 */
   .float.open,
   .side-panel {
