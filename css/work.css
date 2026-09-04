@@ -76,7 +76,10 @@
 .proc-tools { display: flex; gap: 1px; }
 .proc-tools .danger:hover { color: var(--red); }
 
-.proc-body { padding: 2px 12px 12px; display: grid; gap: 5px; }
+.proc-body {
+  padding: 2px 12px 12px; display: grid; gap: 5px;
+  container-type: inline-size;   /* .cuts 가 창 폭이 아니라 이 카드 자신의 남은 폭으로 줄 수를 정하게 */
+}
 
 .cut-row { display: flex; align-items: center; gap: 10px; }
 .cut-label {
@@ -87,7 +90,12 @@
 }
 .cut-label:hover { color: var(--accent); text-decoration: underline; }
 
-.cuts { display: flex; gap: 5px; flex-wrap: wrap; }
+/* 10칸이 못 들어가면 5칸으로 — flex-wrap 처럼 남는 픽셀만큼 아무데서나 끊지 않고,
+   항상 5의 배수(5+5)로만 두 줄이 됩니다 */
+.cuts { display: grid; grid-template-columns: repeat(10, 34px); gap: 5px; }
+@container (max-width: 500px) {
+  .cuts { grid-template-columns: repeat(5, 34px); }
+}
 .cut {
   width: 34px; height: 34px; flex: none;
   background: var(--surface-0); border: 1px solid var(--border); border-radius: 7px;
@@ -104,11 +112,17 @@
   .cut-row { align-items: flex-start; }
   .cut-label { width: 48px; padding-top: 14px; font-size: 12.5px; }
   .cut { width: 52px; height: 52px; font-size: 14px; border-radius: 9px; }
-  .cuts { gap: 7px; }
+  .cuts { grid-template-columns: repeat(10, 52px); gap: 7px; }
   .proc-body { padding: 4px 8px 12px; }
+  @container (max-width: 680px) {
+    .cuts { grid-template-columns: repeat(5, 52px); }
+  }
 }
 @media (max-width: 480px) {
   .cut { width: 48px; height: 48px; }
   .cut-label { width: 42px; }
-  .cuts { gap: 6px; }
+  .cuts { grid-template-columns: repeat(10, 48px); gap: 6px; }
+  @container (max-width: 620px) {
+    .cuts { grid-template-columns: repeat(5, 48px); }
+  }
 }
