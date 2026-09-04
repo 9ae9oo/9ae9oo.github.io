@@ -22,6 +22,13 @@ window.MW = window.MW || {};
   var DEFAULT_PROCESSES = ['콘티', '선화', '밑색', '명암', '후보정'];
   var PER_ROW = 10;
 
+  /** 3자리 0채움 — "017", "032". D-day·하루 할당량 숫자가 자릿수 바뀔 때마다 폭이 흔들리지
+      않게 고정폭으로 씁니다 (컷수 상한 999 와 같은 자리수). */
+  function pad3(n) {
+    n = Math.abs(n);
+    return (n < 10 ? '00' : n < 100 ? '0' : '') + n;
+  }
+
   var root = null;
   var reorder = false;          // [순서 변경] 모드 (저장하지 않는 화면 상태)
   var dragId = null;
@@ -385,88 +392,58 @@ window.MW = window.MW || {};
     return wrap;
   }
 
-  /** 공정 헤더 둘째 줄 — 마감 | 하루 할당량 [전체 완료]. 마감마다 별개로 둡니다.
-      마감 입력은 날짜 선택 뒤 [설정] 버튼을 눌러야 확실히 반영되는 걸 알 수 있게
-      (blur 로도 커밋되지만, 그것만으론 "입력만 하고 끝나는지" 헷갈린다는 피드백) 명시 버튼을 둡니다. */
-  function dueRow(work, ep, pr, remain) {
-    var wrap = el('div.proc-head-row2');
+  /** 공정 헤더의 마감·할당량 부분 — remainingControl 뒤에 이어 붙어 같은 한 줄을 이룹니다:
+      마감일 [입력칸] , D-017일 | 하루 할당량 032컷 남음 [전체 완료]
+      마감일 입력칸은 항상 보이고(따로 편집 모드로 안 들어가도 됨), 날짜를 고르면 change
+      이벤트로 바로 반영됩니다 — 네이티브 달력에서 날짜를 고르면 change 가 확실히 발생하므로,
+      blur 만 믿을 때와 달리 "입력만 하고 안 넘어간 것처럼 보이는" 문제가 없습니다. */
+  function dueQuotaNodes(work, ep, pr, remain) {
+    var due = pr.dueDate;
 
     function diffDays(dueStr) {
-      var due = new Date(dueStr + 'T00:00:00').getTime();
+      var d = new Date(dueStr + 'T00:00:00').getTime();
       var today = new Date(U.ymd(new Date()) + 'T00:00:00').getTime();
-      return Math.round((due - today) / 86400000);
+      return Math.round((d - today) / 86400000);
     }
 
-    function render() {
-      U.clear(wrap);
-      var due = pr.dueDate;
-      var dueWrap = el('span.ep-due');
+    var diff = due ? diffDays(due) : null;
+    var dueGroupChildren = [el('span.ep-due-label', { text: '마감일' })];
 
-      function showDueLabel() {
-        U.clear(dueWrap);
-        if (!due) {
-          dueWrap.appendChild(el('span.ep-due-text', { text: '마감 미설정' }));
-          dueWrap.appendChild(el('button.btn.btn-sm', { type: 'button', text: '설정', title: '마감일 설정', onclick: showDueInput }));
-        } else {
-          var diff = diffDays(due);
-          var dday = diff === 0 ? 'D-day' : diff > 0 ? 'D-' + diff : 'D+' + (-diff);
-          var text = diff < 0 ? ('마감 ' + dday + ' 지남') : ('마감 ' + dday);
-          dueWrap.appendChild(el('span.ep-due-text' + (diff < 0 ? '.late' : '.active'), { text: text }));
-          dueWrap.appendChild(el('button.btn.btn-ghost.btn-icon.btn-sm', { type: 'button', text: '✎', title: '마감일 수정', onclick: showDueInput }));
-        }
-      }
+    var inp = el('input.ep-due-input', { type: 'date', value: due || '' });
+    inp.addEventListener('change', function () {
+      var v = inp.value || '';
+      if (v === (pr.dueDate || '')) return;
+      MW.store.update(function (s) {
+        var e = findEp(s, work.id, ep.id);
+        if (!e) return;
+        var p = e.processes.find(function (x) { return x.id === pr.id; });
+        if (!p) return;
+        p.dueDate = v;
+      });
+    });
+    dueGroupChildren.push(inp);
 
-      function showDueInput() {
-        U.clear(dueWrap);
-        var inp = el('input.ep-due-input', { type: 'date', value: due || '' });
-        var doneOnce = false;
-        function commit() {
-          if (doneOnce) return;
-          doneOnce = true;
-          var v = inp.value || '';
-          if (v === (due || '')) { render(); return; }
-          MW.store.update(function (s) {
-            var e = findEp(s, work.id, ep.id);
-            if (!e) return;
-            var p = e.processes.find(function (x) { return x.id === pr.id; });
-            if (!p) return;
-            p.dueDate = v;
-          });
-        }
-        inp.addEventListener('keydown', function (e) {
-          if (e.key === 'Enter') { e.preventDefault(); commit(); }
-          else if (e.key === 'Escape') { doneOnce = true; render(); }
-        });
-        inp.addEventListener('blur', commit);
-        dueWrap.appendChild(el('span', { text: '마감 ' }));
-        dueWrap.appendChild(inp);
-        dueWrap.appendChild(el('button.btn.btn-sm', {
-          type: 'button', text: '설정', title: '마감일 반영', onclick: function () { commit(); }
-        }));
-        inp.focus();
-      }
-
-      showDueLabel();
-      wrap.appendChild(dueWrap);
-
-      if (remain > 0) {
-        wrap.appendChild(el('span.ep-header-sep', { text: '|' }));
-        if (due) {
-          var diff = diffDays(due);
-          if (diff >= 0) {
-            var daily = Math.ceil(remain / (diff + 1));
-            wrap.appendChild(el('span.proc-quota', { text: '하루 할당량 ' + daily + '컷 남음' }));
-          }
-        }
-        wrap.appendChild(el('button.btn.btn-sm', {
-          type: 'button', text: '전체 완료', title: '전체 체크',
-          onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
-        }));
-      }
+    if (due) {
+      var dday = diff === 0 ? 'D-day' : diff > 0 ? ('D-' + pad3(diff) + '일') : ('D+' + pad3(-diff) + '일');
+      var text = ', ' + dday + (diff < 0 ? ' 지남' : '');
+      dueGroupChildren.push(el('span.ep-due-text' + (diff < 0 ? '.late' : '.active'), { text: text }));
     }
 
-    render();
-    return wrap;
+    var nodes = [el('span.ep-due', {}, dueGroupChildren)];
+
+    if (remain > 0) {
+      nodes.push(el('span.ep-header-sep', { text: '|' }));
+      if (due && diff >= 0) {
+        var daily = Math.ceil(remain / (diff + 1));
+        nodes.push(el('span.proc-quota', { text: '하루 할당량 ' + pad3(daily) + '컷 남음' }));
+      }
+      nodes.push(el('button.btn.btn-sm', {
+        type: 'button', text: '전체 완료', title: '전체 체크',
+        onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
+      }));
+    }
+
+    return nodes;
   }
 
   /* ----------------------------------------------------------- 드래그로 여러 컷 칠하기
@@ -511,47 +488,45 @@ window.MW = window.MW || {};
     var done = progress.done, doneCount = progress.doneCount, remain = progress.remain;
 
     var head = el('div.proc-head', {}, [
-      el('div.proc-head-row1', {}, [
-        reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
-        el('button.proc-toggle', {
-          onclick: function () { toggleCollapse(work, ep, pr); }
-        }, [
-          el('span.caret', { text: pr.collapsed ? '▸' : '▾' }),
-          el('span.proc-name', { text: pr.name })
-        ]),
-        el('span.proc-dash', { text: '―' }),
-        remainingControl(work, ep, pr, doneCount, remain),
-        el('span.spacer'),
-        reorder ? el('div.proc-tools', {}, [
-        el('button.btn.btn-ghost.btn-icon.btn-sm', {
-          text: '↑', title: '위로', disabled: index === 0,
-          onclick: function () { moveProcess(work, ep, pr, -1); }
-        }),
-        el('button.btn.btn-ghost.btn-icon.btn-sm', {
-          text: '↓', title: '아래로', disabled: index === total - 1,
-          onclick: function () { moveProcess(work, ep, pr, 1); }
-        }),
-        el('button.btn.btn-ghost.btn-icon.btn-sm', {
-          text: '✎', title: '이름 수정',
-          onclick: function () { processDialog(work, ep, pr); }
-        }),
-        el('button.btn.btn-ghost.btn-icon.btn-sm.danger', {
-          text: '✕', title: '공정 삭제',
-          onclick: function () {
-            MW.shell.confirm('“' + pr.name + '” 공정을 삭제할까요?\n체크한 내용도 함께 사라집니다.', function () {
-              MW.store.update(function (s) {
-                var e = findEp(s, work.id, ep.id);
-                if (!e) return;
-                e.processes = e.processes.filter(function (x) { return x.id !== pr.id; });
-                e.processes.sort(function (a, b) { return (a.order || 0) - (b.order || 0); })
-                  .forEach(function (x, k) { x.order = k; });
-              });
-            });
-          }
-        })
-        ]) : null
+      reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
+      el('button.proc-toggle', {
+        onclick: function () { toggleCollapse(work, ep, pr); }
+      }, [
+        el('span.caret', { text: pr.collapsed ? '▸' : '▾' }),
+        el('span.proc-name', { text: pr.name })
       ]),
-      dueRow(work, ep, pr, remain)
+      el('span.proc-dash', { text: '―' }),
+      remainingControl(work, ep, pr, doneCount, remain),
+      dueQuotaNodes(work, ep, pr, remain),
+      el('span.spacer'),
+      reorder ? el('div.proc-tools', {}, [
+      el('button.btn.btn-ghost.btn-icon.btn-sm', {
+        text: '↑', title: '위로', disabled: index === 0,
+        onclick: function () { moveProcess(work, ep, pr, -1); }
+      }),
+      el('button.btn.btn-ghost.btn-icon.btn-sm', {
+        text: '↓', title: '아래로', disabled: index === total - 1,
+        onclick: function () { moveProcess(work, ep, pr, 1); }
+      }),
+      el('button.btn.btn-ghost.btn-icon.btn-sm', {
+        text: '✎', title: '이름 수정',
+        onclick: function () { processDialog(work, ep, pr); }
+      }),
+      el('button.btn.btn-ghost.btn-icon.btn-sm.danger', {
+        text: '✕', title: '공정 삭제',
+        onclick: function () {
+          MW.shell.confirm('“' + pr.name + '” 공정을 삭제할까요?\n체크한 내용도 함께 사라집니다.', function () {
+            MW.store.update(function (s) {
+              var e = findEp(s, work.id, ep.id);
+              if (!e) return;
+              e.processes = e.processes.filter(function (x) { return x.id !== pr.id; });
+              e.processes.sort(function (a, b) { return (a.order || 0) - (b.order || 0); })
+                .forEach(function (x, k) { x.order = k; });
+            });
+          });
+        }
+      })
+      ]) : null
     ]);
 
     var body = null;
