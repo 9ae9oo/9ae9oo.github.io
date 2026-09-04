@@ -10,10 +10,32 @@ window.MW = window.MW || {};
   var U = MW.util;
 
   var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
-  var VERSION = 5;
+  var VERSION = 6;
 
   function catsOf(names) {
     return names.map(function (n) { return { id: 'c-' + n, name: n }; });
+  }
+
+  /** 첫 화면에서 사용법을 바로 이해할 수 있도록 보여 주는 편집 가능한 예시 작품 */
+  function sampleWorks() {
+    return [{
+      id: 'sample-work',
+      name: '예시 작품 · 첫 번째 이야기',
+      archived: false,
+      episodes: [{
+        id: 'sample-ep-1',
+        number: 1,
+        title: '새로운 시작',
+        cutCount: 12,
+        processes: [
+          { id: 'sample-pr-storyboard', name: '콘티', order: 0, collapsed: false, completedCuts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+          { id: 'sample-pr-line', name: '선화', order: 1, collapsed: false, completedCuts: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
+          { id: 'sample-pr-base', name: '밑색', order: 2, collapsed: false, completedCuts: [1, 2, 3, 4, 5, 6] },
+          { id: 'sample-pr-shade', name: '명암', order: 3, collapsed: false, completedCuts: [1, 2, 3] },
+          { id: 'sample-pr-finish', name: '후보정', order: 4, collapsed: false, completedCuts: [] }
+        ]
+      }]
+    }];
   }
 
   function defaults() {
@@ -45,6 +67,7 @@ window.MW = window.MW || {};
         homeCardSpans: {},     // 위젯별 가로 칸수 { [위젯id]: 1~3 } — 3칸 그리드에서 몇 칸을 차지할지. 없으면 3(전체 폭)
         homeCardRowSpans: {},  // 위젯별 세로 칸수 { [위젯id]: 1~3 } — 편집 모드에서 오른쪽 아래 모서리를 드래그. 없으면 1
         reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
+        workSel: { workId: 'sample-work', epId: 'sample-ep-1' },   // 작업 페이지에서 마지막으로 보던 작품·회차
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
            accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
@@ -73,7 +96,7 @@ window.MW = window.MW || {};
          {id, name, archived, episodes:[
            {id, number, title, cutCount, processes:[
              {id, name, order, collapsed, completedCuts:[1,2,3]} ]} ]} */
-      works: [],
+      works: sampleWorks(),
       ledger: {
         types: [
           { id: 't-income', name: '수입', kind: 'income', categories: catsOf(['MG/RS', '주식', '예금/기타']) },
@@ -120,6 +143,7 @@ window.MW = window.MW || {};
   function migrate(data) {
     var base = defaults();
     if (!data || typeof data !== 'object') return base;
+    var fromV = parseInt(data.version, 10) || 0;
     var out = Object.assign({}, base, data);
     out.version = VERSION;
     out.settings = Object.assign({}, base.settings, data.settings || {});
@@ -128,8 +152,9 @@ window.MW = window.MW || {};
       var MULTI = ['image', 'minical', 'embed'];
       var KNOWN = BUILTIN.concat(MULTI);
 
-      // 구버전(homeOrder 배열 + homeImage 문자열)이면 새 위젯 목록으로 한 번만 변환
-      if (!Array.isArray(out.settings.homeWidgets) || !out.settings.homeWidgets.length) {
+      // 구버전(homeOrder 배열 + homeImage 문자열)이면 새 위젯 목록으로 한 번만 변환.
+      // out.settings 는 이미 base(기본 homeWidgets)와 병합된 뒤라, 반드시 원본 data 쪽을 봐야 합니다.
+      if (!data.settings || !Array.isArray(data.settings.homeWidgets) || !data.settings.homeWidgets.length) {
         var legacyKey = { calendar: 'today', inbox: 'next' };
         var order = Array.isArray(data.settings && data.settings.homeOrder) ? data.settings.homeOrder : BUILTIN;
         var seen = {};
@@ -233,6 +258,13 @@ window.MW = window.MW || {};
     ['playlists', 'todoGroups', 'todos', 'memos', 'habits', 'events', 'works'].forEach(function (k) {
       if (!Array.isArray(out[k])) out[k] = base[k];
     });
+    /* v5 → v6 -------------------------------------------------------------
+       작업 페이지를 한 번도 쓰지 않은 기존 사용자에게도 사용법이 보이는 예시를
+       한 번만 넣습니다. 실제 작품이 하나라도 있으면 아무것도 바꾸지 않습니다. */
+    if (fromV < 6 && out.works.length === 0) {
+      out.works = sampleWorks();
+      out.settings.workSel = { workId: 'sample-work', epId: 'sample-ep-1' };
+    }
     delete out.memoTags;   // v5: 메모 분류는 본문 #해시태그로 대체됨
     if (!out.habitLog || typeof out.habitLog !== 'object') out.habitLog = {};
 
@@ -321,7 +353,6 @@ window.MW = window.MW || {};
     /* v4 → v5 -----------------------------------------------------------------
        메모: 제목·카테고리·색 제거 → 본문(정제 HTML) + 작성일 + 잠금 + 북마크.
        분류는 본문 #해시태그로. 기존 memoTags·groupId·color 는 버립니다.       */
-    var fromV = parseInt(data.version, 10) || 0;
     out.memos = out.memos.map(function (m) {
       if (!m || typeof m !== 'object') return { id: 'memo-' + Math.random().toString(36).slice(2), body: '', createdAt: Date.now(), updatedAt: Date.now(), locked: false, bookmarked: false };
       var body = typeof m.body === 'string' ? m.body : '';
