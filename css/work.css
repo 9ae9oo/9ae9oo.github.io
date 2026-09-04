@@ -35,11 +35,24 @@
 
 .ep-head { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
 .ep-head h3 { font-size: 16px; font-weight: 700; }
-.ep-head .ep-cuts {
-  display: inline-flex; align-items: center; gap: 3px;
-  font-size: 11.5px; color: var(--text-dim); background: var(--surface-2);
-  border-radius: 999px; padding: 3px 6px 3px 10px;
+
+/* 회차 번호·컷수 통합 편집 (episodeHeaderControl) — h3 를 감싸는 라벨 버튼과 편집 줄 */
+.ep-header-edit {
+  display: flex; align-items: center; gap: 6px;
+  background: none; border: none; cursor: pointer;
+  padding: 2px 6px; border-radius: var(--radius-sm);
 }
+.ep-header-edit:hover { background: var(--surface-2); }
+.ep-header-icon { font-size: 12px; color: var(--text-dim); }
+.ep-header-edit:hover .ep-header-icon { color: var(--accent); }
+.ep-header-cuts { font-size: 13px; font-weight: 400; color: var(--text-muted); }
+.ep-header-edit-row { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-muted); }
+.ep-num-input {
+  width: 52px; padding: 4px 6px; font-size: 13px;
+  border: 1px solid var(--accent); border-radius: 4px;
+  background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
+}
+
 .ep-cuts-edit { font-size: 11px; color: var(--text-dim); padding: 2px 4px; border-radius: 4px; line-height: 1; }
 .ep-cuts-edit:hover { color: var(--accent); background: var(--surface-3); }
 .ep-cuts-input {
@@ -47,6 +60,15 @@
   border: 1px solid var(--accent); border-radius: 4px;
   background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
 }
+/* 회차 헤더 편집 줄 안에서는 다른 입력과 크기·글꼴을 맞춥니다 */
+.ep-header-edit-row .ep-cuts-input { width: 52px; padding: 4px 6px; font-size: 13px; }
+
+/* 숫자 입력의 네이티브 스피너 제거 — 자리만 차지하고 안 씀 */
+.ep-cuts-input::-webkit-inner-spin-button, .ep-cuts-input::-webkit-outer-spin-button,
+.ep-num-input::-webkit-inner-spin-button, .ep-num-input::-webkit-outer-spin-button {
+  -webkit-appearance: none; margin: 0;
+}
+.ep-cuts-input, .ep-num-input { -moz-appearance: textfield; }
 
 /* 마감 계산기 — cutCountControl(.ep-cuts)과 같은 자리·같은 문법의 인라인 위젯 */
 .ep-head .ep-due {
@@ -67,12 +89,12 @@
 }
 
 /* ----------------------------------------------------------------- 공정 */
-.board { display: grid; gap: 8px; max-width: 560px; }
+.board { display: grid; gap: 8px; max-width: 488px; }
 
 .proc {
   background: var(--surface-1); border: 1px solid var(--border);
   border-radius: var(--radius-sm); overflow: hidden;
-  max-width: 560px;   /* 체크칸이 고정폭이라, 카드가 이보다 넓어지면 오른쪽에 빈 공간만 늘어남 */
+  max-width: 488px;   /* 체크칸 10개가 필요한 실폭(483px)에 맞춤 — 우측에 빈 공간이 남지 않도록 */
 }
 .proc.dragging { opacity: 0.45; }
 .proc.drag-over { border-color: var(--accent); box-shadow: inset 0 2px 0 var(--accent); }
@@ -91,7 +113,8 @@
   background: var(--surface-2); border-radius: 999px; padding: 2px 9px;
   font-variant-numeric: tabular-nums;
 }
-.proc-remain.done { color: var(--accent); background: var(--accent-dim); }
+.proc-remain.done { color: var(--accent); background: var(--accent-dim); cursor: pointer; }
+.proc-remain.done:hover { background: var(--red-dim); color: var(--red); }
 
 /* 진행률 컨트롤 — 남은 칸이 있을 때 .proc-remain 자리를 대신합니다 */
 .proc-progress {
@@ -135,7 +158,8 @@
 /* 10칸이 못 들어가면 5칸으로 — flex-wrap 처럼 남는 픽셀만큼 아무데서나 끊지 않고,
    항상 5의 배수(5+5)로만 두 줄이 됩니다 */
 .cuts { display: grid; grid-template-columns: repeat(10, 34px); gap: 5px; }
-@container (max-width: 500px) {
+/* 10칸에 필요한 실폭(457px)보다 낮춰서, 카드를 483px 로 줄여도 10칸이 유지되게 */
+@container (max-width: 450px) {
   .cuts { grid-template-columns: repeat(5, 34px); }
 }
 .cut {
@@ -150,7 +174,7 @@
 /* 공정 추가 — .proc 카드와 같은 폭·틀, 점선 테두리 (.ep-chip.add 와 같은 문법) */
 .proc-add {
   display: flex; align-items: center; justify-content: center;
-  width: 100%; max-width: 560px; padding: 12px;
+  width: 100%; max-width: 488px; padding: 12px;
   background: none; border: 1px dashed var(--border); border-radius: var(--radius-sm);
   color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer;
   transition: border-color 0.12s, color 0.12s, background 0.12s;
