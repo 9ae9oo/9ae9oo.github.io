@@ -20,19 +20,15 @@ window.MW = window.MW || {};
   function sampleWorks() {
     return [{
       id: 'sample-work',
-      name: '예시 작품 · 첫 번째 이야기',
+      name: '예시 작품',
       archived: false,
       episodes: [{
         id: 'sample-ep-1',
         number: 1,
-        title: '새로운 시작',
+        title: '1화',
         cutCount: 12,
         processes: [
-          { id: 'sample-pr-storyboard', name: '콘티', order: 0, collapsed: false, completedCuts: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
-          { id: 'sample-pr-line', name: '선화', order: 1, collapsed: false, completedCuts: [1, 2, 3, 4, 5, 6, 7, 8, 9] },
-          { id: 'sample-pr-base', name: '밑색', order: 2, collapsed: false, completedCuts: [1, 2, 3, 4, 5, 6] },
-          { id: 'sample-pr-shade', name: '명암', order: 3, collapsed: false, completedCuts: [1, 2, 3] },
-          { id: 'sample-pr-finish', name: '후보정', order: 4, collapsed: false, completedCuts: [] }
+          { id: 'sample-pr-sketch', name: '스케치', order: 0, collapsed: false, completedCuts: [1, 2, 3] }
         ]
       }]
     }];
