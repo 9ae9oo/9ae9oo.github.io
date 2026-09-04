@@ -48,12 +48,31 @@
   background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
 }
 
+/* 마감 계산기 — cutCountControl(.ep-cuts)과 같은 자리·같은 문법의 인라인 위젯 */
+.ep-head .ep-due {
+  display: inline-flex; align-items: center; gap: 3px;
+  font-size: 11.5px; color: var(--text-dim); background: var(--surface-2);
+  border-radius: 999px; padding: 3px 6px 3px 10px;
+}
+.ep-due-text.late { color: var(--red); }
+.ep-due-set {
+  font-size: 11.5px; color: var(--text-dim); background: none;
+  border: 1px dashed var(--border); border-radius: 999px; padding: 3px 10px;
+}
+.ep-due-set:hover { color: var(--accent); border-color: var(--accent); }
+.ep-due-input {
+  width: 132px; padding: 2px 5px; font-size: 11.5px;
+  border: 1px solid var(--accent); border-radius: 4px;
+  background: var(--surface-0); color: var(--text);
+}
+
 /* ----------------------------------------------------------------- 공정 */
-.board { display: grid; gap: 8px; }
+.board { display: grid; gap: 8px; max-width: 560px; }
 
 .proc {
   background: var(--surface-1); border: 1px solid var(--border);
   border-radius: var(--radius-sm); overflow: hidden;
+  max-width: 560px;   /* 체크칸이 고정폭이라, 카드가 이보다 넓어지면 오른쪽에 빈 공간만 늘어남 */
 }
 .proc.dragging { opacity: 0.45; }
 .proc.drag-over { border-color: var(--accent); box-shadow: inset 0 2px 0 var(--accent); }
@@ -73,6 +92,29 @@
   font-variant-numeric: tabular-nums;
 }
 .proc-remain.done { color: var(--accent); background: var(--accent-dim); }
+
+/* 진행률 컨트롤 — 남은 칸이 있을 때 .proc-remain 자리를 대신합니다 */
+.proc-progress {
+  flex: none; display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; color: var(--text-muted); background: var(--surface-2);
+  border-radius: 999px; padding: 3px 6px 3px 10px;
+  font-variant-numeric: tabular-nums;
+}
+.proc-progress-num {
+  font-weight: 700; color: var(--text); padding: 0 2px; border-radius: 4px;
+}
+.proc-progress-num:hover { color: var(--accent); background: var(--surface-3); }
+.proc-progress-input {
+  width: 42px; padding: 2px 5px; font-size: 11px;
+  border: 1px solid var(--accent); border-radius: 4px;
+  background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
+}
+.proc-progress-all {
+  margin-left: 2px; padding: 2px 8px; border-radius: 999px;
+  background: var(--surface-0); border: 1px solid var(--border);
+  color: var(--text-muted); font-size: 10.5px; font-weight: 600;
+}
+.proc-progress-all:hover { color: var(--accent); border-color: var(--accent); }
 .proc-tools { display: flex; gap: 1px; }
 .proc-tools .danger:hover { color: var(--red); }
 
@@ -105,7 +147,15 @@
 .cut:hover { border-color: var(--border-accent); color: var(--text); }
 .cut.on { background: var(--accent); border-color: var(--accent); color: var(--on-accent); font-weight: 600; }
 
-.board-foot { margin-top: 10px; display: flex; justify-content: flex-end; }
+/* 공정 추가 — .proc 카드와 같은 폭·틀, 점선 테두리 (.ep-chip.add 와 같은 문법) */
+.proc-add {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; max-width: 560px; padding: 12px;
+  background: none; border: 1px dashed var(--border); border-radius: var(--radius-sm);
+  color: var(--text-dim); font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: border-color 0.12s, color 0.12s, background 0.12s;
+}
+.proc-add:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
 
 /* 모바일: 손가락으로 누르기 쉽게 컷 버튼을 크게 (약 2배) */
 @media (max-width: 900px) {

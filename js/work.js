@@ -6,10 +6,11 @@
    · 평상시에는 화면을 깔끔하게 두고, [순서 변경] 모드에서만 손잡이와 삭제 버튼이 보입니다.
 
      works: [{ id, name, archived, episodes: [
-       { id, number, title, cutCount, processes: [
+       { id, number, cutCount, dueDate, processes: [
          { id, name, order, collapsed, completedCuts: [1,2,3] }
        ] }
      ] }]
+     (부제 title 은 더는 UI 에서 안 씀. dueDate 는 없으면 '' 취급)
    ========================================================================== */
 window.MW = window.MW || {};
 
@@ -55,9 +56,59 @@ window.MW = window.MW || {};
 
   function workDialog(w) {
     var name = el('input.field', { value: w ? w.name : '', placeholder: '작품 이름' });
+
+    // 신규 생성일 때만: 회차 수 · 화별 컷수 · 공정 단계를 함께 받아 회차까지 한 번에 만듭니다.
+    // 비워두면(회차 수 0) 예전처럼 작품만 만들어집니다.
+    var epCount, cutsPerEp, stepsWrap, steps, stepInput;
+    if (!w) {
+      epCount = el('input.field', { type: 'number', min: '0', max: '999', placeholder: '0' });
+      cutsPerEp = el('input.field', { type: 'number', min: '1', max: '999', value: '60' });
+      steps = DEFAULT_PROCESSES.slice();
+      stepsWrap = el('div.row-wrap');
+      stepInput = el('input.field', {
+        placeholder: '공정 이름', style: { width: '110px' },
+        onkeydown: function (e) { if (e.key === 'Enter') { e.preventDefault(); addStep(); } }
+      });
+
+      var renderSteps = function () {
+        U.clear(stepsWrap);
+        steps.forEach(function (stepName, i) {
+          stepsWrap.appendChild(el('span.chip', { style: { display: 'inline-flex', alignItems: 'center', gap: '5px' } }, [
+            stepName,
+            el('button', {
+              text: '✕', style: { color: 'var(--text-dim)', fontSize: '10px' }, title: '삭제',
+              onclick: function () { steps.splice(i, 1); renderSteps(); }
+            })
+          ]));
+        });
+      };
+      var addStep = function () {
+        var v = stepInput.value.trim();
+        if (!v) return;
+        steps.push(v);
+        stepInput.value = '';
+        renderSteps();
+      };
+      renderSteps();
+    }
+
     MW.shell.modal({
       title: w ? '작품 이름 수정' : '작품 추가',
-      body: [el('div.form-row', {}, [el('label', { text: '작품 이름' }), name])],
+      body: [
+        el('div.form-row', {}, [el('label', { text: '작품 이름' }), name]),
+        w ? null : el('div.form-grid', {}, [
+          el('div.form-row', {}, [el('label', { text: '회차 수 (선택)' }), epCount]),
+          el('div.form-row', {}, [el('label', { text: '화별 컷수' }), cutsPerEp])
+        ]),
+        w ? null : el('div.form-row', {}, [
+          el('label', { text: '공정 단계' }),
+          stepsWrap,
+          el('div.row', { style: { marginTop: '6px' } }, [stepInput, el('button.btn.btn-sm', { text: '추가', onclick: function () { addStep(); } })])
+        ]),
+        w ? null : el('div.small.dim', {
+          text: '회차 수를 비워두면 작품만 만들어집니다. 채우면 1화부터 그 수만큼, 위 컷수·공정 구성으로 한 번에 만들어집니다.'
+        })
+      ],
       extra: w ? el('button.btn.btn-danger.btn-sm', {
         text: '삭제',
         onclick: function () {
@@ -77,14 +128,28 @@ window.MW = window.MW || {};
       onOk: function () {
         var v = name.value.trim();
         if (!v) { U.toast('작품 이름을 입력해 주세요.', 'warn'); return false; }
+        if (!w) {
+          var n = U.clamp(parseInt(epCount.value, 10) || 0, 0, 999);
+          if (n > 0 && !steps.length) { U.toast('공정을 하나 이상 넣어 주세요.', 'warn'); return false; }
+        }
         var newId = U.uid('work');
         MW.store.update(function (s) {
           if (w) {
             var x = s.works.find(function (y) { return y.id === w.id; });
             if (x) x.name = v;
           } else {
-            s.works.push({ id: newId, name: v, archived: false, episodes: [] });
-            s.settings.workSel = { workId: newId, epId: '' };
+            var cutN = U.clamp(parseInt(cutsPerEp.value, 10) || 60, 1, 999);
+            var episodes = [];
+            for (var i = 1; i <= n; i++) {
+              episodes.push({
+                id: U.uid('ep'), number: i, cutCount: cutN,
+                processes: steps.map(function (stepName, k) {
+                  return { id: U.uid('pr'), name: stepName, order: k, collapsed: k !== 0, completedCuts: [] };
+                })
+              });
+            }
+            s.works.push({ id: newId, name: v, archived: false, episodes: episodes });
+            s.settings.workSel = { workId: newId, epId: episodes.length ? episodes[0].id : '' };
           }
         });
       }
@@ -97,20 +162,22 @@ window.MW = window.MW || {};
       type: 'number', min: '0',
       value: ep ? ep.number : (last ? (+last.number || 0) + 1 : 1)
     });
-    var title = el('input.field', { value: ep ? (ep.title || '') : '', placeholder: '부제 (선택)' });
-    var cuts = el('input.field', {
+    // 전체 컷 수는 회차가 이미 있으면 화면의 인라인 편집기(cutCountControl)로만 고칩니다.
+    // 여기선 신규 생성 때만 필요합니다.
+    var cuts = ep ? null : el('input.field', {
       type: 'number', min: '1', max: '999',
-      value: ep ? ep.cutCount : (last ? last.cutCount : 60)
+      value: last ? last.cutCount : 60
     });
 
     MW.shell.modal({
       title: ep ? '회차 수정' : '회차 추가',
       body: [
-        el('div.form-grid', {}, [
-          el('div.form-row', {}, [el('label', { text: '회차 번호' }), number]),
-          el('div.form-row', {}, [el('label', { text: '전체 컷 수' }), cuts])
-        ]),
-        el('div.form-row', {}, [el('label', { text: '부제' }), title]),
+        ep
+          ? el('div.form-row', {}, [el('label', { text: '회차 번호' }), number])
+          : el('div.form-grid', {}, [
+              el('div.form-row', {}, [el('label', { text: '회차 번호' }), number]),
+              el('div.form-row', {}, [el('label', { text: '전체 컷 수' }), cuts])
+            ]),
         ep ? null : el('div.small.dim', {
           text: '기본 공정 ' + DEFAULT_PROCESSES.join(' · ') + ' 가 함께 만들어집니다. 이름은 나중에 바꿀 수 있습니다.'
         })
@@ -131,7 +198,6 @@ window.MW = window.MW || {};
         }
       }) : null,
       onOk: function () {
-        var cut = U.clamp(parseInt(cuts.value, 10) || 1, 1, 999);
         var num = parseInt(number.value, 10) || 0;
         var newId = U.uid('ep');
         MW.store.update(function (s) {
@@ -141,15 +207,10 @@ window.MW = window.MW || {};
             var x = w.episodes.find(function (y) { return y.id === ep.id; });
             if (!x) return;
             x.number = num;
-            x.title = title.value.trim();
-            x.cutCount = cut;
-            // 컷 수를 줄이면 사라진 컷의 체크는 지웁니다
-            x.processes.forEach(function (pr) {
-              pr.completedCuts = pr.completedCuts.filter(function (n) { return n <= cut; });
-            });
           } else {
+            var cut = U.clamp(parseInt(cuts.value, 10) || 1, 1, 999);
             w.episodes.push({
-              id: newId, number: num, title: title.value.trim(), cutCount: cut,
+              id: newId, number: num, cutCount: cut,
               processes: DEFAULT_PROCESSES.map(function (n, i) {
                 return { id: U.uid('pr'), name: n, order: i, collapsed: i !== 0, completedCuts: [] };
               })
@@ -272,12 +333,139 @@ window.MW = window.MW || {};
     });
   }
 
-  function processNode(work, ep, pr, index, total) {
+  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 episodeRemain 이 함께 씁니다 */
+  function processProgress(ep, pr) {
     var done = {};
     pr.completedCuts.forEach(function (n) { done[n] = true; });
     var doneCount = 0;
     for (var k = 1; k <= ep.cutCount; k++) if (done[k]) doneCount++;
-    var remain = ep.cutCount - doneCount;
+    return { done: done, doneCount: doneCount, remain: ep.cutCount - doneCount };
+  }
+
+  /** 완료 안 된 모든 공정의 남은 개수 합 - 회차 전체 "남은 일감" 수. 마감 계산기(dueDateControl)가 씁니다 */
+  function episodeRemain(ep) {
+    return ep.processes.reduce(function (sum, pr) { return sum + processProgress(ep, pr).remain; }, 0);
+  }
+
+  /** "남은 N컷" 자리 - 완료면 뱃지, 아니면 진행 개수를 팝업 없이 바로 쓰거나 한 번에 전체 체크 */
+  function progressControl(work, ep, pr, doneCount, remain) {
+    if (remain <= 0) return el('span.proc-remain.done', { text: '완료' });
+
+    var wrap = el('span.proc-progress');
+
+    function showLabel() {
+      U.clear(wrap);
+      wrap.appendChild(el('span', { text: '진행 ' }));
+      wrap.appendChild(el('button.proc-progress-num', {
+        type: 'button', text: String(doneCount), title: '진행한 컷 수 바로 쓰기', onclick: showInput
+      }));
+      wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
+      wrap.appendChild(el('button.proc-progress-all', {
+        type: 'button', text: '전체 체크', onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
+      }));
+    }
+
+    function showInput() {
+      U.clear(wrap);
+      var inp = el('input.proc-progress-input', { type: 'number', min: '0', max: String(ep.cutCount), value: doneCount });
+      var doneOnce = false;
+      function commit() {
+        if (doneOnce) return;
+        doneOnce = true;
+        var v = parseInt(inp.value, 10);
+        if (isNaN(v)) v = doneCount;
+        v = U.clamp(v, 0, ep.cutCount);
+        if (v === doneCount) { showLabel(); return; }
+        MW.store.update(function (s) {
+          var e = findEp(s, work.id, ep.id);
+          if (!e) return;
+          var p = e.processes.find(function (x) { return x.id === pr.id; });
+          if (!p) return;
+          var nums = [];
+          for (var n = 1; n <= v; n++) nums.push(n);
+          p.completedCuts = nums;
+        });
+      }
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
+      });
+      inp.addEventListener('blur', commit);
+      wrap.appendChild(el('span', { text: '진행 ' }));
+      wrap.appendChild(inp);
+      wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
+      inp.focus();
+      inp.select();
+    }
+
+    showLabel();
+    return wrap;
+  }
+
+  /** "마감" - cutCountControl 과 같은 라벨↔입력 토글 패턴. 팝업 없음 */
+  function dueDateControl(work, ep) {
+    var wrap = el('span.ep-due');
+
+    function diffDays(dueStr) {
+      var due = new Date(dueStr + 'T00:00:00').getTime();
+      var today = new Date(U.ymd(new Date()) + 'T00:00:00').getTime();
+      return Math.round((due - today) / 86400000);
+    }
+
+    function showLabel() {
+      U.clear(wrap);
+      var due = ep.dueDate;
+      if (!due) {
+        wrap.appendChild(el('button.ep-due-set', { type: 'button', text: '마감 설정', title: '마감일 설정', onclick: showInput }));
+        return;
+      }
+      var diff = diffDays(due);
+      var dday = diff === 0 ? 'D-day' : diff > 0 ? 'D-' + diff : 'D+' + (-diff);
+      var text;
+      if (diff < 0) {
+        var remainLate = episodeRemain(ep);
+        text = '마감 ' + dday + ' 지남' + (remainLate > 0 ? ' · 총 남은 ' + remainLate + '개' : '');
+      } else {
+        var remain = episodeRemain(ep);
+        if (remain <= 0) text = '마감 ' + dday + ' · 완료';
+        else text = '마감 ' + dday + ' · 하루 ' + Math.ceil(remain / (diff + 1)) + '개';
+      }
+      wrap.appendChild(el('span.ep-due-text' + (diff < 0 ? '.late' : ''), { text: text }));
+      wrap.appendChild(el('button.ep-cuts-edit', { type: 'button', text: '✎', title: '마감일 수정', onclick: showInput }));
+    }
+
+    function showInput() {
+      U.clear(wrap);
+      var inp = el('input.ep-due-input', { type: 'date', value: ep.dueDate || '' });
+      var doneOnce = false;
+      function commit() {
+        if (doneOnce) return;
+        doneOnce = true;
+        var v = inp.value || '';
+        if (v === (ep.dueDate || '')) { showLabel(); return; }
+        MW.store.update(function (s) {
+          var e = findEp(s, work.id, ep.id);
+          if (!e) return;
+          e.dueDate = v;
+        });
+      }
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') { e.preventDefault(); commit(); }
+        else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
+      });
+      inp.addEventListener('blur', commit);
+      wrap.appendChild(el('span', { text: '마감 ' }));
+      wrap.appendChild(inp);
+      inp.focus();
+    }
+
+    showLabel();
+    return wrap;
+  }
+
+  function processNode(work, ep, pr, index, total) {
+    var progress = processProgress(ep, pr);
+    var done = progress.done, doneCount = progress.doneCount, remain = progress.remain;
 
     var head = el('div.proc-head', {}, [
       reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
@@ -287,9 +475,7 @@ window.MW = window.MW || {};
         el('span.caret', { text: pr.collapsed ? '▸' : '▾' }),
         el('span.proc-name', { text: pr.name })
       ]),
-      el('span.proc-remain' + (remain <= 0 ? '.done' : ''), {
-        text: remain <= 0 ? '완료' : '남은 ' + remain + '컷'
-      }),
+      progressControl(work, ep, pr, doneCount, remain),
       el('span.spacer'),
       reorder ? el('div.proc-tools', {}, [
         el('button.btn.btn-ghost.btn-icon.btn-sm', {
@@ -464,7 +650,6 @@ window.MW = window.MW || {};
     var chips = work.episodes.slice().sort(function (a, b) { return (+a.number || 0) - (+b.number || 0); })
       .map(function (e) {
         return el('button.ep-chip' + (ep && e.id === ep.id ? '.active' : ''), {
-          title: e.title || '',
           onclick: function () { select(work.id, e.id); }
         }, [
           el('b', { text: e.number + '화' }),
@@ -482,18 +667,16 @@ window.MW = window.MW || {};
     }
 
     root.appendChild(el('div.ep-head', {}, [
-      el('h3', {}, [
-        ep.number + '화',
-        ep.title ? el('span.muted', { text: ' · ' + ep.title }) : null
-      ]),
+      el('h3', { text: ep.number + '화' }),
       cutCountControl(work, ep),
+      dueDateControl(work, ep),
       el('span.spacer'),
       el('button.btn.btn-sm' + (reorder ? '.active' : ''), {
         text: reorder ? '순서 변경 끝내기' : '순서 변경',
         onclick: function () { reorder = !reorder; render(); }
       }),
       el('button.btn.btn-ghost.btn-icon.btn-sm', {
-        text: '⚙', title: '회차 정보 (번호 · 부제 · 삭제)',
+        text: '⚙', title: '회차 정보 (번호 · 삭제)',
         onclick: function () { episodeDialog(work, ep); }
       })
     ]));
@@ -506,16 +689,13 @@ window.MW = window.MW || {};
     }
 
     var procs = sortedProcesses(ep);
-    var board = el('div.board', {}, procs.map(function (pr, i) {
+    var cards = procs.map(function (pr, i) {
       return processNode(work, ep, pr, i, procs.length);
+    });
+    cards.push(el('button.proc-add', {
+      type: 'button', text: '＋ 공정 추가', onclick: function () { processDialog(work, ep, null); }
     }));
-    root.appendChild(board);
-
-    root.appendChild(el('div.board-foot', {}, [
-      el('button.btn.btn-sm', {
-        text: '＋ 공정 추가', onclick: function () { processDialog(work, ep, null); }
-      })
-    ]));
+    root.appendChild(el('div.board', {}, cards));
   }
 
   MW.work = {
