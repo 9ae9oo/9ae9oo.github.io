@@ -113,14 +113,6 @@ window.MW = window.MW || {};
     ]);
   }
 
-  /** 꾸미기 이미지 — 설정에서 넣지 않았으면 null 이라 자리 자체가 생기지 않습니다 */
-  function imageCard() {
-    var img = MW.store.state.settings.homeImage;
-    if (!img) return null;
-    var size = MW.store.state.settings.homeImageSize || 'md';
-    return el('div.home-image.h-' + size, {}, [el('img', { src: img, alt: '' })]);
-  }
-
   function moneyCard() {
     var today = U.ymd(new Date());
     var ym = today.slice(0, 7);
@@ -139,85 +131,267 @@ window.MW = window.MW || {};
     ]);
   }
 
-  /* -------- 카드 순서 (설정 → 테마 탭에서 편집) -------- */
+  /* -------- 위젯 종류 -------- */
 
-  var HOME_SECTIONS = ['image', 'today', 'next', 'habits', 'money'];
-  var HOME_SECTION_LABELS = {
-    image: '꾸미기 이미지',
-    today: '오늘 일정',
-    next: '내일 · 미뤄진 일정',
-    habits: '오늘 한 해빗',
-    money: '오늘 쓴 돈'
+  var WIDGET_DEFS = {
+    today:   { label: '오늘 일정', builtin: true },
+    next:    { label: '내일 · 미뤄진 일정', builtin: true },
+    habits:  { label: '오늘 한 해빗', builtin: true },
+    money:   { label: '오늘 쓴 돈', builtin: true },
+    image:   { label: '이미지 갤러리', builtin: false, defaultConfig: { mode: 'fixed', images: [], intervalSec: 5 } },
+    minical: { label: '미니 달력', builtin: false },
+    embed:   { label: 'HTML 임베드', builtin: false, defaultConfig: { html: '' } }
   };
-  // 예전 키 → 새 키. 저장해 둔 순서를 잃지 않도록 옮겨 읽습니다.
-  var HOME_LEGACY = { calendar: 'today', inbox: 'next' };
+  var ADDABLE_TYPES = ['image', 'minical', 'embed'];
 
-  function homeOrder() {
-    var saved = MW.store.state.settings.homeOrder || [];
-    var ordered = [];
-    saved.forEach(function (k) {
-      var key = HOME_LEGACY[k] || k;
-      if (HOME_SECTIONS.indexOf(key) >= 0 && ordered.indexOf(key) < 0) ordered.push(key);
-    });
-    // 새로 생긴 카드는 뒤에 붙입니다. 다만 꾸미기 이미지는 예전에 늘 맨 위 고정이었으므로
-    // 기존 사용자의 화면에서 갑자기 아래로 내려가지 않게 그 자리를 지켜줍니다.
-    HOME_SECTIONS.forEach(function (k) {
-      if (ordered.indexOf(k) >= 0) return;
-      if (k === 'image') ordered.unshift(k); else ordered.push(k);
-    });
-    return ordered;
-  }
-
-  function moveHomeSection(key, delta) {
-    var order = homeOrder();
-    var i = order.indexOf(key);
-    var j = i + delta;
-    if (i < 0 || j < 0 || j >= order.length) return;
-    order.splice(i, 1);
-    order.splice(j, 0, key);
-    MW.store.update(function (s) { s.settings.homeOrder = order; });
-  }
-
-  function sectionNode(key) {
-    if (key === 'image') return imageCard();
-    if (key === 'today') return todayCard();
-    if (key === 'next') return nextCard();
-    if (key === 'habits') return habitsCard();
-    if (key === 'money') return moneyCard();
+  function widgetNode(w, editing) {
+    if (w.type === 'today') return todayCard();
+    if (w.type === 'next') return nextCard();
+    if (w.type === 'habits') return habitsCard();
+    if (w.type === 'money') return moneyCard();
+    if (w.type === 'image') return galleryWidgetNode(w, editing);
+    if (w.type === 'minical') return miniCalWidget();
+    if (w.type === 'embed') return embedWidgetNode(w, editing);
     return null;
   }
 
-  /* -------- 홈에서 직접: 드래그로 순서 바꾸기 + 아래쪽 드래그로 높이 조절 -------- */
+  /* -------- 이미지 갤러리 위젯 (고정 한 장 / 캐러셀 / 슬라이드쇼) -------- */
+
+  var galleryIndexState = {};        // widgetId -> 현재 보고 있는 사진 인덱스 (리렌더돼도 유지)
+  var activeSlideshowTimers = [];    // 매 렌더마다 정리하지 않으면 setInterval 이 계속 쌓입니다
+
+  function clearSlideshowTimers() {
+    activeSlideshowTimers.forEach(function (t) { clearInterval(t); });
+    activeSlideshowTimers = [];
+  }
+
+  function galleryFrame(widget, imgs, extra) {
+    var idx = galleryIndexState[widget.id] || 0;
+    if (idx >= imgs.length) idx = 0;
+    var dots = imgs.length > 1 ? el('div.home-gallery-dots', {}, imgs.map(function (_, i) {
+      return el('span.home-gallery-dot' + (i === idx ? '.active' : ''));
+    })) : null;
+    return { idx: idx, node: el('div.home-gallery', {}, [el('img', { src: imgs[idx], alt: '' })].concat(extra || []).concat([dots])) };
+  }
+
+  function galleryCarousel(widget, imgs) {
+    var f = galleryFrame(widget, imgs, [
+      el('button.home-gallery-nav.prev', {
+        text: '‹', title: '이전 사진',
+        onclick: function () { galleryIndexState[widget.id] = (galleryIndexState[widget.id] || 0) - 1; if (galleryIndexState[widget.id] < 0) galleryIndexState[widget.id] = imgs.length - 1; renderHome(); }
+      }),
+      el('button.home-gallery-nav.next', {
+        text: '›', title: '다음 사진',
+        onclick: function () { galleryIndexState[widget.id] = ((galleryIndexState[widget.id] || 0) + 1) % imgs.length; renderHome(); }
+      })
+    ]);
+    return f.node;
+  }
+
+  function gallerySlideshow(widget, imgs, intervalSec) {
+    var f = galleryFrame(widget, imgs);
+    if (imgs.length > 1) {
+      activeSlideshowTimers.push(setInterval(function () {
+        galleryIndexState[widget.id] = ((galleryIndexState[widget.id] || 0) + 1) % imgs.length;
+        renderHome();
+      }, Math.max(2, intervalSec || 5) * 1000));
+    }
+    return f.node;
+  }
+
+  function galleryEditPanel(widget) {
+    var cfg = widget.config;
+    var file = el('input', {
+      type: 'file', accept: 'image/*', multiple: true, draggable: 'false', style: { display: 'none' }
+    });
+    file.addEventListener('change', function () {
+      var files = Array.prototype.slice.call(this.files || []);
+      this.value = '';
+      files.forEach(function (f) {
+        if (cfg.images.length >= 20) { U.toast('사진은 최대 20장까지 담을 수 있습니다.', 'warn'); return; }
+        U.shrinkImage(f, 1600, function (dataUrl) { cfg.images.push(dataUrl); renderHome(); });
+      });
+    });
+
+    var thumbs = el('div.home-gallery-thumbs', {}, cfg.images.map(function (src, i) {
+      return el('div.home-gallery-thumb', {}, [
+        el('img', { src: src, alt: '' }),
+        el('button', { text: '✕', title: '삭제', onclick: function () { cfg.images.splice(i, 1); renderHome(); } })
+      ]);
+    }));
+
+    var modeSeg = el('div.seg', {}, [['fixed', '고정'], ['carousel', '캐러셀'], ['slideshow', '슬라이드쇼']].map(function (o) {
+      return el('button' + (cfg.mode === o[0] ? '.active' : ''), {
+        type: 'button', text: o[1],
+        onclick: function () { cfg.mode = o[0]; renderHome(); }
+      });
+    }));
+
+    var intervalInput = cfg.mode === 'slideshow' ? el('label.small.dim', {}, [
+      '간격(초) ',
+      el('input.input', {
+        type: 'number', min: '2', max: '30', step: '1', value: cfg.intervalSec || 5, draggable: 'false',
+        style: { width: '50px' },
+        onchange: function () { cfg.intervalSec = Math.min(30, Math.max(2, parseInt(this.value, 10) || 5)); renderHome(); }
+      })
+    ]) : null;
+
+    return el('div.home-gallery-edit', {}, [
+      thumbs,
+      el('div.row-wrap', { style: { marginTop: '6px', alignItems: 'center' } }, [
+        el('button.btn.btn-sm', { text: '+ 사진 추가', onclick: function () { file.click(); } }),
+        file, modeSeg, intervalInput
+      ])
+    ]);
+  }
+
+  function galleryWidgetNode(widget, editing) {
+    var cfg = widget.config || (widget.config = { mode: 'fixed', images: [], intervalSec: 5 });
+    var imgs = cfg.images || [];
+    var kids = [];
+
+    if (imgs.length) {
+      if (cfg.mode === 'carousel') kids.push(galleryCarousel(widget, imgs));
+      else if (cfg.mode === 'slideshow') kids.push(gallerySlideshow(widget, imgs, cfg.intervalSec));
+      else kids.push(el('img', { src: imgs[0], alt: '' }));
+    } else if (!editing) {
+      return null;   // 편집 중이 아니면서 사진도 없으면 자리 자체가 생기지 않음
+    } else {
+      kids.push(el('div.empty', { text: '사진이 없습니다.' }));
+    }
+
+    if (editing) kids.push(galleryEditPanel(widget));
+    return el('div.home-image' + (editing ? '.editing' : ''), {}, kids);
+  }
+
+  /* -------- 미니 달력 위젯 -------- */
+
+  function miniCalWidget() {
+    var now = new Date();
+    var todayStr = U.ymd(now);
+    var cells = U.monthGrid(now.getFullYear(), now.getMonth());
+
+    var grid = el('div.minical-grid', {}, cells.map(function (d) {
+      var dateStr = U.ymd(d);
+      var inMonth = d.getMonth() === now.getMonth();
+      var has = inMonth && (MW.calendar.eventsOn(dateStr).length > 0 || MW.calendar.todosOn(dateStr).some(function (t) { return !t.done; }));
+      return el('button.minical-cell' + (inMonth ? '' : '.out') + (dateStr === todayStr ? '.today' : '') + (has ? '.has' : ''), {
+        text: String(d.getDate()),
+        onclick: function () { MW.shell.go('calendar'); MW.calendar.goto(dateStr); }
+      });
+    }));
+
+    return el('div.card.home-minical', {}, [
+      el('h3', { text: '미니 달력' }),
+      el('div.minical-head', { text: (now.getFullYear()) + '년 ' + (now.getMonth() + 1) + '월' }),
+      el('div.minical-week', {}, U.weekdayNames().map(function (w) { return el('span', { text: w }); })),
+      grid
+    ]);
+  }
+
+  /* -------- HTML 임베드 위젯 (사용자 지정) — 격리된 iframe(sandbox) 안에서만 실행 -------- */
+
+  function embedWidgetNode(widget, editing) {
+    var cfg = widget.config || (widget.config = { html: '' });
+    if (!cfg.html && !editing) return null;
+
+    var frame = el('iframe.home-embed-frame', {
+      sandbox: 'allow-scripts allow-popups allow-popups-to-escape-sandbox',
+      referrerpolicy: 'no-referrer',
+      loading: 'lazy'
+    });
+    frame.srcdoc = cfg.html || '';
+
+    var kids = [frame];
+    if (editing) {
+      kids.push(el('div.home-embed-edit', {}, [
+        el('textarea', {
+          draggable: 'false',
+          placeholder: '유튜브·트위터·인스타그램 등의 임베드 코드나 원하는 HTML을 붙여넣으세요.',
+          text: cfg.html,
+          onchange: function () { cfg.html = this.value.slice(0, 20000); },
+          oninput: function () { cfg.html = this.value.slice(0, 20000); }
+        }),
+        el('div.small.dim', { text: '보안을 위해 격리된 영역(iframe)에서만 실행됩니다. 아래 "미리보기 새로고침"으로 확인하세요.', style: { marginTop: '4px' } }),
+        el('button.btn.btn-sm', { text: '미리보기 새로고침', style: { marginTop: '4px' }, onclick: function () { renderHome(); } })
+      ]));
+    }
+    return el('div.home-embed', {}, kids);
+  }
+
+  /* -------- 홈 편집 모드: 순서·크기 드래그, 위젯 켜기/끄기·추가·삭제, 저장/취소 -------- */
 
   var dragHomeKey = null;
   var MIN_CARD_H = 80, MAX_CARD_H = 800;
-  var HOME_COLS = 2;   // 홈은 2칸 그리드. 카드가 1칸(절반) 또는 2칸(전체 폭)을 차지
+  var HOME_COLS = 3;        // 홈은 3칸 그리드. 위젯이 1~3칸을 차지
+  var HOME_ROWS_MAX = 3;    // 세로로도 최대 3칸까지
+  var HOME_ROW_UNIT = 140;  // 세로 리사이즈 시 한 칸 늘리는 데 필요한 드래그 거리(px) 기준. 행 높이는 내용에 따라 자동
+
+  var editMode = false;
+  var draft = null;   // 편집 중에만 존재. 저장을 눌러야 실제 설정에 반영됨 (실수로 바뀌는 것 방지)
+
+  function cloneHomeSettings() {
+    var s = MW.store.state.settings;
+    return {
+      widgets: JSON.parse(JSON.stringify(s.homeWidgets || [])),
+      heights: Object.assign({}, s.homeCardHeights),
+      spans: Object.assign({}, s.homeCardSpans),
+      rowSpans: Object.assign({}, s.homeCardRowSpans)
+    };
+  }
+
+  /** 편집 중이면 임시본(draft), 아니면 실제 저장된 설정을 봅니다 */
+  function curHome() {
+    if (editMode && draft) return draft;
+    var s = MW.store.state.settings;
+    return { widgets: s.homeWidgets || [], heights: s.homeCardHeights || {}, spans: s.homeCardSpans || {}, rowSpans: s.homeCardRowSpans || {} };
+  }
+
+  function enterEdit() { draft = cloneHomeSettings(); editMode = true; renderHome(); }
+  function cancelEdit() { draft = null; editMode = false; renderHome(); }
+  function saveEdit() {
+    var d = draft;
+    MW.store.update(function (s) {
+      s.settings.homeWidgets = d.widgets;
+      s.settings.homeCardHeights = d.heights;
+      s.settings.homeCardSpans = d.spans;
+      s.settings.homeCardRowSpans = d.rowSpans;
+    });
+    draft = null;
+    editMode = false;
+    renderHome();
+  }
+
+  function addWidget(type) {
+    var def = WIDGET_DEFS[type];
+    if (!def) return;
+    var w = { id: U.uid(type), type: type, enabled: true };
+    if (def.defaultConfig) w.config = JSON.parse(JSON.stringify(def.defaultConfig));
+    draft.widgets.push(w);
+    renderHome();
+  }
+
+  function removeWidget(id) {
+    draft.widgets = draft.widgets.filter(function (w) { return w.id !== id; });
+    delete draft.heights[id]; delete draft.spans[id]; delete draft.rowSpans[id];
+    renderHome();
+  }
 
   function dropHomeSection(targetKey) {
     var from = dragHomeKey;
     if (!from || from === targetKey) return;
-    var order = homeOrder();
-    var i = order.indexOf(from), j = order.indexOf(targetKey);
+    var i = draft.widgets.findIndex(function (w) { return w.id === from; });
+    var j = draft.widgets.findIndex(function (w) { return w.id === targetKey; });
     if (i < 0 || j < 0) return;
-    order.splice(j, 0, order.splice(i, 1)[0]);
-    MW.store.update(function (s) { s.settings.homeOrder = order; });
+    var item = draft.widgets.splice(i, 1)[0];
+    var newJ = draft.widgets.findIndex(function (w) { return w.id === targetKey; });
+    draft.widgets.splice(newJ, 0, item);
+    renderHome();
   }
 
-  function setCardHeight(key, px) {
-    MW.store.update(function (s) {
-      var hc = Object.assign({}, s.settings.homeCardHeights);
-      if (px == null) delete hc[key]; else hc[key] = px;
-      s.settings.homeCardHeights = hc;
-    });
-  }
-
-  function setCardSpan(key, span) {
-    MW.store.update(function (s) {
-      var sp = Object.assign({}, s.settings.homeCardSpans);
-      if (span >= HOME_COLS) delete sp[key]; else sp[key] = span;   // 전체 폭이 기본값이라 저장 안 함
-      s.settings.homeCardSpans = sp;
-    });
-  }
+  function setCardHeight(key, px) { if (px == null) delete draft.heights[key]; else draft.heights[key] = px; }
+  function setCardSpan(key, span) { if (span >= HOME_COLS) delete draft.spans[key]; else draft.spans[key] = span; }
+  function setCardRowSpan(key, rowSpan) { if (rowSpan <= 1) delete draft.rowSpans[key]; else draft.rowSpans[key] = rowSpan; }
 
   /** 그리드 한 칸의 너비(px) — 가로 리사이즈 중 드래그 거리와 비교하는 기준 */
   function homeColWidth() {
@@ -231,15 +405,13 @@ window.MW = window.MW || {};
   function startCardResizeX(e, key, wrap) {
     e.preventDefault();
     var startX = e.clientX;
-    var startSpan = Math.min(HOME_COLS, Math.max(1, (MW.store.state.settings.homeCardSpans || {})[key] || HOME_COLS));
+    var startSpan = Math.min(HOME_COLS, Math.max(1, draft.spans[key] || HOME_COLS));
     var colW = homeColWidth();
     var span = startSpan;
     wrap.classList.add('resizing-x');
     function move(ev) {
       var dx = ev.clientX - startX;
-      if (startSpan < HOME_COLS && dx > colW * 0.5) span = HOME_COLS;
-      else if (startSpan >= HOME_COLS && dx < -colW * 0.5) span = 1;
-      else span = startSpan;
+      span = Math.min(HOME_COLS, Math.max(1, Math.round(startSpan + dx / colW)));
       wrap.style.gridColumn = 'span ' + span;
     }
     function up() {
@@ -247,6 +419,27 @@ window.MW = window.MW || {};
       document.removeEventListener('pointerup', up);
       wrap.classList.remove('resizing-x');
       setCardSpan(key, span);
+    }
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  }
+
+  function startCardResizeXY(e, key, wrap) {
+    e.preventDefault();
+    var startY = e.clientY;
+    var startRowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, draft.rowSpans[key] || 1));
+    var rowSpan = startRowSpan;
+    wrap.classList.add('resizing-xy');
+    function move(ev) {
+      var dy = ev.clientY - startY;
+      rowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, Math.round(startRowSpan + dy / HOME_ROW_UNIT)));
+      wrap.style.gridRow = 'span ' + rowSpan;
+    }
+    function up() {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      wrap.classList.remove('resizing-xy');
+      setCardRowSpan(key, rowSpan);
     }
     document.addEventListener('pointermove', move);
     document.addEventListener('pointerup', up);
@@ -271,66 +464,126 @@ window.MW = window.MW || {};
     document.addEventListener('pointerup', up);
   }
 
-  /** 카드마다 [드래그 손잡이 + 실제 카드 + 아래쪽·오른쪽 리사이즈 바]로 감쌉니다 */
-  function homeCardWrap(key, node) {
+  /** 위젯마다 카드 하나로 감쌉니다. 편집 모드일 때만 손잡이·리사이즈 핸들·삭제 버튼이 붙습니다 */
+  function homeCardWrap(widget, node, editing) {
     if (!node) return null;
-    var heights = MW.store.state.settings.homeCardHeights || {};
-    var h = heights[key];
-    var span = Math.min(HOME_COLS, Math.max(1, (MW.store.state.settings.homeCardSpans || {})[key] || HOME_COLS));
+    var key = widget.id;
+    var home = curHome();
+    var h = home.heights[key];
+    var span = Math.min(HOME_COLS, Math.max(1, home.spans[key] || HOME_COLS));
+    var rowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, home.rowSpans[key] || 1));
+
+    var kids = [node];
+    if (editing) {
+      kids.unshift(el('span.home-card-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }));
+      if (!WIDGET_DEFS[widget.type].builtin) {
+        kids.push(el('button.home-card-remove', {
+          text: '✕', title: '위젯 삭제',
+          onclick: function () { MW.shell.confirm('이 위젯을 삭제할까요?', function () { removeWidget(key); }); }
+        }));
+      }
+    }
 
     var wrap = el('div.home-card-wrap' + (h ? '.resized' : ''), {
-      style: Object.assign({ gridColumn: 'span ' + span }, h ? { height: h + 'px' } : null)
-    }, [
-      el('span.home-card-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }),
-      node,
-      el('div.home-card-resize', {
+      style: Object.assign({ gridColumn: 'span ' + span, gridRow: 'span ' + rowSpan }, h ? { height: h + 'px' } : null)
+    }, kids);
+
+    if (editing) {
+      wrap.appendChild(el('div.home-card-resize', {
         title: '드래그해서 높이 조절 (더블클릭: 기본 높이로)',
         onpointerdown: function (e) { startCardResize(e, key, wrap); },
         ondblclick: function () { wrap.style.height = ''; wrap.classList.remove('resized'); setCardHeight(key, null); }
-      }),
-      el('div.home-card-resize-x', {
+      }));
+      wrap.appendChild(el('div.home-card-resize-x', {
         title: '드래그해서 폭 조절 (더블클릭: 전체 폭으로)',
         onpointerdown: function (e) { startCardResizeX(e, key, wrap); },
         ondblclick: function () { wrap.style.gridColumn = 'span ' + HOME_COLS; setCardSpan(key, HOME_COLS); }
-      })
-    ]);
+      }));
+      wrap.appendChild(el('div.home-card-resize-xy', {
+        title: '드래그해서 세로로 길게 (더블클릭: 기본 1줄로)',
+        onpointerdown: function (e) { startCardResizeXY(e, key, wrap); },
+        ondblclick: function () { wrap.style.gridRow = 'span 1'; setCardRowSpan(key, 1); }
+      }));
 
-    wrap.draggable = true;
-    wrap.addEventListener('dragstart', function (e) {
-      dragHomeKey = key;
-      wrap.classList.add('dragging');
-      try { e.dataTransfer.setData('text/plain', key); } catch (err) { /* 일부 브라우저 */ }
-      e.dataTransfer.effectAllowed = 'move';
-    });
-    wrap.addEventListener('dragend', function () {
-      dragHomeKey = null;
-      wrap.classList.remove('dragging');
-    });
-    wrap.addEventListener('dragover', function (e) {
-      if (!dragHomeKey || dragHomeKey === key) return;
-      e.preventDefault();
-      wrap.classList.add('drag-over');
-    });
-    wrap.addEventListener('dragleave', function () { wrap.classList.remove('drag-over'); });
-    wrap.addEventListener('drop', function (e) {
-      e.preventDefault();
-      wrap.classList.remove('drag-over');
-      dropHomeSection(key);
-    });
+      wrap.draggable = true;
+      wrap.addEventListener('dragstart', function (e) {
+        dragHomeKey = key;
+        wrap.classList.add('dragging');
+        try { e.dataTransfer.setData('text/plain', key); } catch (err) { /* 일부 브라우저 */ }
+        e.dataTransfer.effectAllowed = 'move';
+      });
+      wrap.addEventListener('dragend', function () { dragHomeKey = null; wrap.classList.remove('dragging'); });
+      wrap.addEventListener('dragover', function (e) {
+        if (!dragHomeKey || dragHomeKey === key) return;
+        e.preventDefault();
+        wrap.classList.add('drag-over');
+      });
+      wrap.addEventListener('dragleave', function () { wrap.classList.remove('drag-over'); });
+      wrap.addEventListener('drop', function (e) {
+        e.preventDefault();
+        wrap.classList.remove('drag-over');
+        dropHomeSection(key);
+      });
+    }
 
     return wrap;
+  }
+
+  function editToolbar() {
+    var rows = draft.widgets.map(function (w, idx) {
+      var def = WIDGET_DEFS[w.type] || { label: w.type };
+      var label = def.label + (def.builtin ? '' : ' #' + (idx + 1));
+      return el('label.home-edit-row', {}, [
+        el('input', {
+          type: 'checkbox', checked: w.enabled !== false,
+          onchange: function () { w.enabled = this.checked; renderHome(); }
+        }),
+        el('span', { text: label })
+      ]);
+    });
+
+    var addBtns = ADDABLE_TYPES.map(function (type) {
+      return el('button.btn.btn-sm', { text: '+ ' + WIDGET_DEFS[type].label, onclick: function () { addWidget(type); } });
+    });
+
+    return el('div.home-edit-toolbar', {}, [
+      el('div.home-edit-title', { text: '대시보드 편집' }),
+      el('div.small.dim', {
+        text: '체크박스로 위젯을 켜고 끕니다. 카드는 손잡이(⠿)로 순서를, 오른쪽·아래쪽 가장자리로 크기를 바꿉니다. 저장을 눌러야 실제로 반영됩니다.',
+        style: { marginBottom: '8px' }
+      }),
+      el('div.home-edit-checklist', {}, rows),
+      el('div.home-edit-add', {}, addBtns),
+      el('div.home-edit-actions', {}, [
+        el('button.btn.btn-sm', { text: '취소', onclick: cancelEdit }),
+        el('button.btn.btn-primary.btn-sm', { text: '저장', onclick: saveEdit })
+      ])
+    ]);
+  }
+
+  function renderEditBar() {
+    var bar = $('#home-edit-bar');
+    if (!bar) return;
+    U.clear(bar);
+    if (!editMode) bar.appendChild(el('button.btn.btn-sm', { text: '편집', onclick: enterEdit }));
   }
 
   function renderHome() {
     var host = $('#page-home-body');
     if (!host) return;
+    clearSlideshowTimers();
     U.clear(host);
 
     homeClock();
+    renderEditBar();
 
-    homeOrder().forEach(function (key) {
-      var node = sectionNode(key);
-      var wrap = homeCardWrap(key, node);
+    var home = curHome();
+    if (editMode) host.appendChild(editToolbar());
+
+    home.widgets.forEach(function (w) {
+      if (w.enabled === false) return;
+      var node = widgetNode(w, editMode);
+      var wrap = homeCardWrap(w, node, editMode);
       if (wrap) host.appendChild(wrap);
     });
   }
@@ -437,11 +690,7 @@ window.MW = window.MW || {};
   }
 
   MW.app = {
-    boot: boot, renderHome: renderHome, renderAll: renderAll,
-    // 설정 → 테마 탭의 "대시보드 카드 순서" 편집에서 사용
-    homeSectionLabels: HOME_SECTION_LABELS,
-    homeOrder: homeOrder,
-    moveHomeSection: moveHomeSection
+    boot: boot, renderHome: renderHome, renderAll: renderAll
   };
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
