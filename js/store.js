@@ -35,8 +35,9 @@ window.MW = window.MW || {};
            preset: 'base'|'mint'|'peach'|'lavender'|'butter' (전부 화이트 계열, 파스텔 강조색만 다름)
            accent/bg/card: '#rrggbb' 이면 사용자 지정, '' 이면 프리셋 값
            bgImage: data URL (화면 전체 뒤 배경, 비우면 없음)
-           contentWidth: 'narrow'|'normal'|'wide'|'full' — 가운데 컨텐츠 최대폭 */
-        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal' }
+           contentWidth: 'narrow'|'normal'|'wide'|'full'|'custom' — 가운데 컨텐츠 최대폭
+           contentWidthPx: 'custom' 일 때 쓰는 사용자 지정 픽셀값 (320~2000) */
+        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal', contentWidthPx: 1100 }
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       playlists: [],
@@ -124,7 +125,8 @@ window.MW = window.MW || {};
       bg: HEX.test(th.bg || '') ? th.bg : '',
       card: HEX.test(th.card || '') ? th.card : '',
       bgImage: typeof th.bgImage === 'string' ? th.bgImage : '',
-      contentWidth: ['narrow', 'normal', 'wide', 'full'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal'
+      contentWidth: ['narrow', 'normal', 'wide', 'full', 'custom'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal',
+      contentWidthPx: (function (n) { return (typeof n === 'number' && isFinite(n)) ? Math.min(2000, Math.max(320, Math.round(n))) : 1100; })(th.contentWidthPx)
     };
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
