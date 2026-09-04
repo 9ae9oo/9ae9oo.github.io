@@ -335,61 +335,17 @@ window.MW = window.MW || {};
     return { done: done, doneCount: doneCount, remain: ep.cutCount - doneCount };
   }
 
-  /** "남은 N컷" 자리 - 완료면 뱃지, 아니면 진행 개수를 팝업 없이 바로 쓰거나 한 번에 전체 체크 */
   /** "― 미완료 N컷" (완료면 "완료") — 공정 이름 옆, 얇은 글씨·다른 색.
-      눌러서 진행 컷 수를 팝업 없이 바로 쓸 수 있습니다 (완료 상태면 눌러서 전체 해제) */
-  function remainingControl(work, ep, pr, doneCount, remain) {
+      미완료 상태는 계산된 값만 보여주는 순수 텍스트입니다 (입력·클릭 대상 아님).
+      완료 상태만 버튼입니다 — 실수로 전체 체크했을 때 눌러서 되돌릴 수 있어야 하므로. */
+  function remainingControl(work, ep, pr, remain) {
     if (remain <= 0) {
       return el('button.proc-remain.done', {
         type: 'button', text: '완료', title: '눌러서 전체 해제',
         onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
       });
     }
-
-    var wrap = el('span.proc-remaining');
-
-    function showLabel() {
-      U.clear(wrap);
-      wrap.appendChild(el('button.proc-remaining-btn', {
-        type: 'button', text: '미완료 ' + remain + '컷', title: '진행한 컷 수 바로 쓰기', onclick: showInput
-      }));
-    }
-
-    function showInput() {
-      U.clear(wrap);
-      var inp = el('input.proc-progress-input', { type: 'number', min: '0', max: String(ep.cutCount), value: doneCount });
-      var doneOnce = false;
-      function commit() {
-        if (doneOnce) return;
-        doneOnce = true;
-        var v = parseInt(inp.value, 10);
-        if (isNaN(v)) v = doneCount;
-        v = U.clamp(v, 0, ep.cutCount);
-        if (v === doneCount) { showLabel(); return; }
-        MW.store.update(function (s) {
-          var e = findEp(s, work.id, ep.id);
-          if (!e) return;
-          var p = e.processes.find(function (x) { return x.id === pr.id; });
-          if (!p) return;
-          var nums = [];
-          for (var n = 1; n <= v; n++) nums.push(n);
-          p.completedCuts = nums;
-        });
-      }
-      inp.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); commit(); }
-        else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
-      });
-      inp.addEventListener('blur', commit);
-      wrap.appendChild(el('span', { text: '완료 ' }));
-      wrap.appendChild(inp);
-      wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
-      inp.focus();
-      inp.select();
-    }
-
-    showLabel();
-    return wrap;
+    return el('span.proc-remaining', { text: '미완료 ' + remain + '컷' });
   }
 
   /** 공정 헤더의 마감·할당량 부분 — remainingControl 뒤에 이어 붙어 같은 한 줄을 이룹니다:
@@ -485,7 +441,7 @@ window.MW = window.MW || {};
 
   function processNode(work, ep, pr, index, total) {
     var progress = processProgress(ep, pr);
-    var done = progress.done, doneCount = progress.doneCount, remain = progress.remain;
+    var done = progress.done, remain = progress.remain;
 
     var head = el('div.proc-head', {}, [
       reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
@@ -496,7 +452,7 @@ window.MW = window.MW || {};
         el('span.proc-name', { text: pr.name })
       ]),
       el('span.proc-dash', { text: '―' }),
-      remainingControl(work, ep, pr, doneCount, remain),
+      remainingControl(work, ep, pr, remain),
       dueQuotaNodes(work, ep, pr, remain),
       el('span.spacer'),
       reorder ? el('div.proc-tools', {}, [

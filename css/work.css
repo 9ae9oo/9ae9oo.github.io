@@ -57,11 +57,10 @@
 
 /* 숫자 입력의 네이티브 스피너 제거 — 자리만 차지하고 안 씀 */
 .ep-cuts-input::-webkit-inner-spin-button, .ep-cuts-input::-webkit-outer-spin-button,
-.ep-num-input::-webkit-inner-spin-button, .ep-num-input::-webkit-outer-spin-button,
-.proc-progress-input::-webkit-inner-spin-button, .proc-progress-input::-webkit-outer-spin-button {
+.ep-num-input::-webkit-inner-spin-button, .ep-num-input::-webkit-outer-spin-button {
   -webkit-appearance: none; margin: 0;
 }
-.ep-cuts-input, .ep-num-input, .proc-progress-input { -moz-appearance: textfield; }
+.ep-cuts-input, .ep-num-input { -moz-appearance: textfield; }
 
 /* 마감 계산기 — cutCountControl(.ep-cuts)과 같은 문법의 인라인 위젯. 공정마다 하나씩이라
    .proc-head 안에 놓이므로 부모 스코프 없이 씁니다 */
@@ -121,17 +120,11 @@
 .proc-remain.done { color: var(--accent); cursor: pointer; }
 .proc-remain.done:hover { color: var(--red); }
 
-/* "― 미완료 N컷" — 공정 이름 옆, 얇은 글씨(400)·다른 색(muted)으로 이름과 구분 */
-.proc-remaining { flex: none; display: inline-flex; align-items: center; gap: 4px; }
-.proc-remaining-btn {
-  font-size: 13px; font-weight: 400; color: var(--text-muted);
-  padding: 2px 4px; border-radius: 4px; font-variant-numeric: tabular-nums;
-}
-.proc-remaining-btn:hover { color: var(--accent); background: var(--surface-2); }
-.proc-progress-input {
-  width: 42px; padding: 3px 5px; font-size: 13px;
-  border: 1px solid var(--accent); border-radius: 4px;
-  background: var(--surface-0); color: var(--text); font-variant-numeric: tabular-nums;
+/* "― 미완료 N컷" — 공정 이름 옆, 얇은 글씨(400)·다른 색(muted)으로 이름과 구분.
+   계산된 값만 보여주는 텍스트라 클릭 대상이 아닙니다 (완료 상태만 .proc-remain.done 버튼). */
+.proc-remaining {
+  flex: none; font-size: 13px; font-weight: 400; color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* 하루 할당량 — 마감 표시(.ep-due-text)보다 낮은 톤 */
