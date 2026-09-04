@@ -319,7 +319,7 @@ window.MW = window.MW || {};
     });
   }
 
-  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 dueDateControl 이 함께 씁니다 */
+  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 remainingControl/dueRow 가 함께 씁니다 */
   function processProgress(ep, pr) {
     var done = {};
     pr.completedCuts.forEach(function (n) { done[n] = true; });
@@ -329,7 +329,9 @@ window.MW = window.MW || {};
   }
 
   /** "남은 N컷" 자리 - 완료면 뱃지, 아니면 진행 개수를 팝업 없이 바로 쓰거나 한 번에 전체 체크 */
-  function progressControl(work, ep, pr, doneCount, remain) {
+  /** "― 미완료 N컷" (완료면 "완료") — 공정 이름 옆, 얇은 글씨·다른 색.
+      눌러서 진행 컷 수를 팝업 없이 바로 쓸 수 있습니다 (완료 상태면 눌러서 전체 해제) */
+  function remainingControl(work, ep, pr, doneCount, remain) {
     if (remain <= 0) {
       return el('button.proc-remain.done', {
         type: 'button', text: '완료', title: '눌러서 전체 해제',
@@ -337,16 +339,12 @@ window.MW = window.MW || {};
       });
     }
 
-    var wrap = el('span.proc-progress');
+    var wrap = el('span.proc-remaining');
 
     function showLabel() {
       U.clear(wrap);
-      wrap.appendChild(el('button.proc-progress-num', {
-        type: 'button', text: String(doneCount), title: '진행한 컷 수 바로 쓰기', onclick: showInput
-      }));
-      wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
-      wrap.appendChild(el('button.btn.btn-sm', {
-        type: 'button', text: '전체', title: '전체 체크', onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
+      wrap.appendChild(el('button.proc-remaining-btn', {
+        type: 'button', text: '미완료 ' + remain + '컷', title: '진행한 컷 수 바로 쓰기', onclick: showInput
       }));
     }
 
@@ -376,6 +374,7 @@ window.MW = window.MW || {};
         else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
       });
       inp.addEventListener('blur', commit);
+      wrap.appendChild(el('span', { text: '완료 ' }));
       wrap.appendChild(inp);
       wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
       inp.focus();
@@ -386,11 +385,11 @@ window.MW = window.MW || {};
     return wrap;
   }
 
-  /** "마감" - cutCountControl 과 같은 라벨↔입력 토글 패턴. 팝업 없음.
-      공정마다 마감이 다를 수 있어 회차가 아니라 공정 단위로 둡니다.
-      remain 은 processNode 가 이미 계산해 둔 값을 그대로 받습니다 (중복 계산 방지) */
-  function dueDateControl(work, ep, pr, remain) {
-    var wrap = el('span.ep-due');
+  /** 공정 헤더 둘째 줄 — 마감 | 하루 할당량 [전체 완료]. 마감마다 별개로 둡니다.
+      마감 입력은 날짜 선택 뒤 [설정] 버튼을 눌러야 확실히 반영되는 걸 알 수 있게
+      (blur 로도 커밋되지만, 그것만으론 "입력만 하고 끝나는지" 헷갈린다는 피드백) 명시 버튼을 둡니다. */
+  function dueRow(work, ep, pr, remain) {
+    var wrap = el('div.proc-head-row2');
 
     function diffDays(dueStr) {
       var due = new Date(dueStr + 'T00:00:00').getTime();
@@ -398,59 +397,75 @@ window.MW = window.MW || {};
       return Math.round((due - today) / 86400000);
     }
 
-    function showLabel() {
+    function render() {
       U.clear(wrap);
       var due = pr.dueDate;
-      if (!due) {
-        wrap.appendChild(el('span.ep-due-text', { text: '마감 미설정' }));
-        wrap.appendChild(el('button.btn.btn-sm', { type: 'button', text: '설정', title: '마감일 설정', onclick: showInput }));
-        return;
-      }
-      var diff = diffDays(due);
-      var dday = diff === 0 ? 'D-day' : diff > 0 ? 'D-' + diff : 'D+' + (-diff);
-      var text, cls;
-      if (diff < 0) {
-        text = '마감 ' + dday + ' 지남' + (remain > 0 ? ' · 남은 ' + remain + '개' : '');
-        cls = '.late';
-      } else if (remain <= 0) {
-        text = '마감 ' + dday + ' · 완료';
-        cls = '.active';
-      } else {
-        text = '마감 ' + dday + ' · 하루 ' + Math.ceil(remain / (diff + 1)) + '컷 작업 필요';
-        cls = '.active';
-      }
-      wrap.appendChild(el('span.ep-due-text' + cls, { text: text }));
-      wrap.appendChild(el('button.btn.btn-ghost.btn-icon.btn-sm', { type: 'button', text: '✎', title: '마감일 수정', onclick: showInput }));
-    }
+      var dueWrap = el('span.ep-due');
 
-    function showInput() {
-      U.clear(wrap);
-      var inp = el('input.ep-due-input', { type: 'date', value: pr.dueDate || '' });
-      var doneOnce = false;
-      function commit() {
-        if (doneOnce) return;
-        doneOnce = true;
-        var v = inp.value || '';
-        if (v === (pr.dueDate || '')) { showLabel(); return; }
-        MW.store.update(function (s) {
-          var e = findEp(s, work.id, ep.id);
-          if (!e) return;
-          var p = e.processes.find(function (x) { return x.id === pr.id; });
-          if (!p) return;
-          p.dueDate = v;
+      function showDueLabel() {
+        U.clear(dueWrap);
+        if (!due) {
+          dueWrap.appendChild(el('span.ep-due-text', { text: '마감 미설정' }));
+          dueWrap.appendChild(el('button.btn.btn-sm', { type: 'button', text: '설정', title: '마감일 설정', onclick: showDueInput }));
+        } else {
+          var diff = diffDays(due);
+          var dday = diff === 0 ? 'D-day' : diff > 0 ? 'D-' + diff : 'D+' + (-diff);
+          var text = diff < 0 ? ('마감 ' + dday + ' 지남') : ('마감 ' + dday);
+          dueWrap.appendChild(el('span.ep-due-text' + (diff < 0 ? '.late' : '.active'), { text: text }));
+          dueWrap.appendChild(el('button.btn.btn-ghost.btn-icon.btn-sm', { type: 'button', text: '✎', title: '마감일 수정', onclick: showDueInput }));
+        }
+      }
+
+      function showDueInput() {
+        U.clear(dueWrap);
+        var inp = el('input.ep-due-input', { type: 'date', value: due || '' });
+        var doneOnce = false;
+        function commit() {
+          if (doneOnce) return;
+          doneOnce = true;
+          var v = inp.value || '';
+          if (v === (due || '')) { render(); return; }
+          MW.store.update(function (s) {
+            var e = findEp(s, work.id, ep.id);
+            if (!e) return;
+            var p = e.processes.find(function (x) { return x.id === pr.id; });
+            if (!p) return;
+            p.dueDate = v;
+          });
+        }
+        inp.addEventListener('keydown', function (e) {
+          if (e.key === 'Enter') { e.preventDefault(); commit(); }
+          else if (e.key === 'Escape') { doneOnce = true; render(); }
         });
+        inp.addEventListener('blur', commit);
+        dueWrap.appendChild(el('span', { text: '마감 ' }));
+        dueWrap.appendChild(inp);
+        dueWrap.appendChild(el('button.btn.btn-sm', {
+          type: 'button', text: '설정', title: '마감일 반영', onclick: function () { commit(); }
+        }));
+        inp.focus();
       }
-      inp.addEventListener('keydown', function (e) {
-        if (e.key === 'Enter') { e.preventDefault(); commit(); }
-        else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
-      });
-      inp.addEventListener('blur', commit);
-      wrap.appendChild(el('span', { text: '마감 ' }));
-      wrap.appendChild(inp);
-      inp.focus();
+
+      showDueLabel();
+      wrap.appendChild(dueWrap);
+
+      if (remain > 0) {
+        wrap.appendChild(el('span.ep-header-sep', { text: '|' }));
+        if (due) {
+          var diff = diffDays(due);
+          if (diff >= 0) {
+            var daily = Math.ceil(remain / (diff + 1));
+            wrap.appendChild(el('span.proc-quota', { text: '하루 할당량 ' + daily + '컷 남음' }));
+          }
+        }
+        wrap.appendChild(el('button.btn.btn-sm', {
+          type: 'button', text: '전체 완료', title: '전체 체크',
+          onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
+        }));
+      }
     }
 
-    showLabel();
+    render();
     return wrap;
   }
 
@@ -496,18 +511,18 @@ window.MW = window.MW || {};
     var done = progress.done, doneCount = progress.doneCount, remain = progress.remain;
 
     var head = el('div.proc-head', {}, [
-      reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
-      el('button.proc-toggle', {
-        onclick: function () { toggleCollapse(work, ep, pr); }
-      }, [
-        el('span.caret', { text: pr.collapsed ? '▸' : '▾' }),
-        el('span.proc-name', { text: pr.name })
-      ]),
-      el('span.spacer'),
-      dueDateControl(work, ep, pr, remain),
-      el('span.ep-header-sep', { text: '|' }),
-      progressControl(work, ep, pr, doneCount, remain),
-      reorder ? el('div.proc-tools', {}, [
+      el('div.proc-head-row1', {}, [
+        reorder ? el('span.proc-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }) : null,
+        el('button.proc-toggle', {
+          onclick: function () { toggleCollapse(work, ep, pr); }
+        }, [
+          el('span.caret', { text: pr.collapsed ? '▸' : '▾' }),
+          el('span.proc-name', { text: pr.name })
+        ]),
+        el('span.proc-dash', { text: '―' }),
+        remainingControl(work, ep, pr, doneCount, remain),
+        el('span.spacer'),
+        reorder ? el('div.proc-tools', {}, [
         el('button.btn.btn-ghost.btn-icon.btn-sm', {
           text: '↑', title: '위로', disabled: index === 0,
           onclick: function () { moveProcess(work, ep, pr, -1); }
@@ -534,7 +549,9 @@ window.MW = window.MW || {};
             });
           }
         })
-      ]) : null
+        ]) : null
+      ]),
+      dueRow(work, ep, pr, remain)
     ]);
 
     var body = null;
@@ -653,7 +670,7 @@ window.MW = window.MW || {};
       wrap.appendChild(el('span.ep-header-text', {}, [
         el('h3', { text: ep.number + '화' }),
         el('span.ep-header-sep', { text: '|' }),
-        el('span.ep-header-cuts', { text: '전체 ' + ep.cutCount + '컷' })
+        el('span.ep-header-cuts', { text: '총 ' + ep.cutCount + '컷' })
       ]));
       wrap.appendChild(el('button.btn.btn-sm', {
         type: 'button', text: '편집', title: '회차 번호 · 컷수 수정', onclick: showInput
@@ -706,7 +723,7 @@ window.MW = window.MW || {};
         numInp,
         el('span', { text: '화' }),
         el('span.ep-header-sep', { text: '|' }),
-        el('span', { text: '전체' }),
+        el('span', { text: '총' }),
         cutInp,
         el('span', { text: '컷' }),
         el('button.btn.btn-sm.btn-primary', {
