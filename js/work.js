@@ -6,11 +6,12 @@
    · 평상시에는 화면을 깔끔하게 두고, [순서 변경] 모드에서만 손잡이와 삭제 버튼이 보입니다.
 
      works: [{ id, name, archived, episodes: [
-       { id, number, cutCount, dueDate, processes: [
-         { id, name, order, collapsed, completedCuts: [1,2,3] }
+       { id, number, cutCount, processes: [
+         { id, name, order, collapsed, completedCuts: [1,2,3], dueDate }
        ] }
      ] }]
-     (부제 title 은 더는 UI 에서 안 씀. dueDate 는 없으면 '' 취급)
+     (부제 title 은 더는 UI 에서 안 씀. dueDate 는 공정마다 따로 두고, 없으면 '' 취급 — 공정별로
+      마감이 다를 수 있어서 회차 단위가 아니라 공정 단위로 둡니다)
    ========================================================================== */
 window.MW = window.MW || {};
 
@@ -318,18 +319,13 @@ window.MW = window.MW || {};
     });
   }
 
-  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 episodeRemain 이 함께 씁니다 */
+  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 dueDateControl 이 함께 씁니다 */
   function processProgress(ep, pr) {
     var done = {};
     pr.completedCuts.forEach(function (n) { done[n] = true; });
     var doneCount = 0;
     for (var k = 1; k <= ep.cutCount; k++) if (done[k]) doneCount++;
     return { done: done, doneCount: doneCount, remain: ep.cutCount - doneCount };
-  }
-
-  /** 완료 안 된 모든 공정의 남은 개수 합 - 회차 전체 "남은 일감" 수. 마감 계산기(dueDateControl)가 씁니다 */
-  function episodeRemain(ep) {
-    return ep.processes.reduce(function (sum, pr) { return sum + processProgress(ep, pr).remain; }, 0);
   }
 
   /** "남은 N컷" 자리 - 완료면 뱃지, 아니면 진행 개수를 팝업 없이 바로 쓰거나 한 번에 전체 체크 */
@@ -392,8 +388,10 @@ window.MW = window.MW || {};
     return wrap;
   }
 
-  /** "마감" - cutCountControl 과 같은 라벨↔입력 토글 패턴. 팝업 없음 */
-  function dueDateControl(work, ep) {
+  /** "마감" - cutCountControl 과 같은 라벨↔입력 토글 패턴. 팝업 없음.
+      공정마다 마감이 다를 수 있어 회차가 아니라 공정 단위로 둡니다.
+      remain 은 processNode 가 이미 계산해 둔 값을 그대로 받습니다 (중복 계산 방지) */
+  function dueDateControl(work, ep, pr, remain) {
     var wrap = el('span.ep-due');
 
     function diffDays(dueStr) {
@@ -404,7 +402,7 @@ window.MW = window.MW || {};
 
     function showLabel() {
       U.clear(wrap);
-      var due = ep.dueDate;
+      var due = pr.dueDate;
       if (!due) {
         wrap.appendChild(el('button.ep-due-set', { type: 'button', text: '마감 설정', title: '마감일 설정', onclick: showInput }));
         return;
@@ -413,12 +411,11 @@ window.MW = window.MW || {};
       var dday = diff === 0 ? 'D-day' : diff > 0 ? 'D-' + diff : 'D+' + (-diff);
       var text;
       if (diff < 0) {
-        var remainLate = episodeRemain(ep);
-        text = '마감 ' + dday + ' 지남' + (remainLate > 0 ? ' · 총 남은 ' + remainLate + '개' : '');
+        text = '마감 ' + dday + ' 지남' + (remain > 0 ? ' · 남은 ' + remain + '개' : '');
+      } else if (remain <= 0) {
+        text = '마감 ' + dday + ' · 완료';
       } else {
-        var remain = episodeRemain(ep);
-        if (remain <= 0) text = '마감 ' + dday + ' · 완료';
-        else text = '마감 ' + dday + ' · 하루 ' + Math.ceil(remain / (diff + 1)) + '개';
+        text = '마감 ' + dday + ' · 하루 ' + Math.ceil(remain / (diff + 1)) + '개';
       }
       wrap.appendChild(el('span.ep-due-text' + (diff < 0 ? '.late' : ''), { text: text }));
       wrap.appendChild(el('button.ep-cuts-edit', { type: 'button', text: '✎', title: '마감일 수정', onclick: showInput }));
@@ -426,17 +423,19 @@ window.MW = window.MW || {};
 
     function showInput() {
       U.clear(wrap);
-      var inp = el('input.ep-due-input', { type: 'date', value: ep.dueDate || '' });
+      var inp = el('input.ep-due-input', { type: 'date', value: pr.dueDate || '' });
       var doneOnce = false;
       function commit() {
         if (doneOnce) return;
         doneOnce = true;
         var v = inp.value || '';
-        if (v === (ep.dueDate || '')) { showLabel(); return; }
+        if (v === (pr.dueDate || '')) { showLabel(); return; }
         MW.store.update(function (s) {
           var e = findEp(s, work.id, ep.id);
           if (!e) return;
-          e.dueDate = v;
+          var p = e.processes.find(function (x) { return x.id === pr.id; });
+          if (!p) return;
+          p.dueDate = v;
         });
       }
       inp.addEventListener('keydown', function (e) {
@@ -503,6 +502,7 @@ window.MW = window.MW || {};
         el('span.proc-name', { text: pr.name })
       ]),
       el('span.spacer'),
+      dueDateControl(work, ep, pr, remain),
       progressControl(work, ep, pr, doneCount, remain),
       reorder ? el('div.proc-tools', {}, [
         el('button.btn.btn-ghost.btn-icon.btn-sm', {
@@ -790,7 +790,6 @@ window.MW = window.MW || {};
     root.appendChild(el('div.ep-head', {}, [
       episodeHeaderControl(work, ep),
       el('span.spacer'),
-      dueDateControl(work, ep),
       el('button.btn.btn-sm' + (reorder ? '.active' : ''), {
         text: reorder ? '순서 변경 끝내기' : '순서 변경',
         onclick: function () { reorder = !reorder; render(); }

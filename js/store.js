@@ -90,9 +90,10 @@ window.MW = window.MW || {};
       events: [],
       /* 작업 관리 — 작품 → 회차 → 컷 → 공정
          {id, name, archived, episodes:[
-           {id, number, cutCount, dueDate, processes:[
-             {id, name, order, collapsed, completedCuts:[1,2,3]} ]} ]}
-         · dueDate 는 없으면 '' 취급 (마이그레이션 불필요, 옵셔널)
+           {id, number, cutCount, processes:[
+             {id, name, order, collapsed, completedCuts:[1,2,3], dueDate} ]} ]}
+         · dueDate 는 공정마다 따로 두고, 없으면 '' 취급 (마이그레이션 불필요, 옵셔널) —
+           공정별로 마감이 다를 수 있어서 회차 단위가 아니라 공정 단위입니다
          · title(부제)은 더는 UI 에서 쓰지 않지만, 예전에 저장된 값은 그대로 둡니다 */
       works: sampleWorks(),
       ledger: {

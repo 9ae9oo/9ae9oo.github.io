@@ -70,8 +70,9 @@
 }
 .ep-cuts-input, .ep-num-input { -moz-appearance: textfield; }
 
-/* 마감 계산기 — cutCountControl(.ep-cuts)과 같은 자리·같은 문법의 인라인 위젯 */
-.ep-head .ep-due {
+/* 마감 계산기 — cutCountControl(.ep-cuts)과 같은 문법의 인라인 위젯. 공정마다 하나씩이라
+   .proc-head 안에 놓이므로 부모 스코프 없이 씁니다 */
+.ep-due {
   display: inline-flex; align-items: center; gap: 3px;
   font-size: 11.5px; color: var(--text-dim); background: var(--surface-2);
   border-radius: 999px; padding: 3px 6px 3px 10px;
@@ -99,15 +100,19 @@
 .proc.dragging { opacity: 0.45; }
 .proc.drag-over { border-color: var(--accent); box-shadow: inset 0 2px 0 var(--accent); }
 
-.proc-head { display: flex; align-items: center; gap: 4px; padding: 4px 8px 4px 4px; }
+/* flex-wrap — 공정마다 마감 pill이 붙게 되면서 좁은 화면(모바일)에서 이름+마감+진행률이
+   한 줄에 다 안 들어갈 수 있음. wrap 해서 pill이 다음 줄로 밀리게 하고, 이름 자체는
+   .proc-name 에서 말줄임으로 절대 세로로 안 쪼개지게 함 */
+.proc-head { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; padding: 4px 8px 4px 4px; }
 .proc-grip { padding: 0 6px; color: var(--text-dim); cursor: grab; font-size: 14px; user-select: none; }
 .proc-toggle {
-  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;
+  display: flex; align-items: center; gap: 8px; flex: 1; min-width: 60px;
   background: none; border: none; cursor: pointer; color: var(--text);
   padding: 9px 6px; font-size: 13.5px; font-weight: 600; text-align: left;
 }
 .proc-toggle:hover { color: var(--accent); }
 .proc-toggle .caret { color: var(--text-muted); font-size: 13px; width: 14px; flex: none; }
+.proc-name { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .proc-remain {
   flex: none; font-size: 11px; color: var(--text-muted);
   background: var(--surface-2); border-radius: 999px; padding: 2px 9px;
