@@ -87,7 +87,8 @@
 }
 .tool-item {
   writing-mode: vertical-rl;
-  text-orientation: upright;
+  text-orientation: mixed;   /* upright 였으면 영문 라벨(Inbox 등)이 한 글자씩 쪼개져 보임 —
+                                mixed 는 로마자를 옆으로 눕혀 한 줄로, 한글/한자는 그대로 세웁니다 */
   letter-spacing: 2px;
   font-size: 12px;
   font-weight: 600;
