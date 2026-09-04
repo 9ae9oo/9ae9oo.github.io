@@ -341,13 +341,12 @@ window.MW = window.MW || {};
 
     function showLabel() {
       U.clear(wrap);
-      wrap.appendChild(el('span', { text: '진행 ' }));
       wrap.appendChild(el('button.proc-progress-num', {
         type: 'button', text: String(doneCount), title: '진행한 컷 수 바로 쓰기', onclick: showInput
       }));
       wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
-      wrap.appendChild(el('button.proc-progress-all', {
-        type: 'button', text: '전체 체크', onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
+      wrap.appendChild(el('button.btn.btn-sm', {
+        type: 'button', text: '전체', title: '전체 체크', onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
       }));
     }
 
@@ -377,7 +376,6 @@ window.MW = window.MW || {};
         else if (e.key === 'Escape') { doneOnce = true; showLabel(); }
       });
       inp.addEventListener('blur', commit);
-      wrap.appendChild(el('span', { text: '진행 ' }));
       wrap.appendChild(inp);
       wrap.appendChild(el('span', { text: ' / ' + ep.cutCount }));
       inp.focus();
@@ -404,21 +402,25 @@ window.MW = window.MW || {};
       U.clear(wrap);
       var due = pr.dueDate;
       if (!due) {
-        wrap.appendChild(el('button.ep-due-set', { type: 'button', text: '마감 설정', title: '마감일 설정', onclick: showInput }));
+        wrap.appendChild(el('span.ep-due-text', { text: '마감 미설정' }));
+        wrap.appendChild(el('button.btn.btn-sm', { type: 'button', text: '설정', title: '마감일 설정', onclick: showInput }));
         return;
       }
       var diff = diffDays(due);
       var dday = diff === 0 ? 'D-day' : diff > 0 ? 'D-' + diff : 'D+' + (-diff);
-      var text;
+      var text, cls;
       if (diff < 0) {
         text = '마감 ' + dday + ' 지남' + (remain > 0 ? ' · 남은 ' + remain + '개' : '');
+        cls = '.late';
       } else if (remain <= 0) {
         text = '마감 ' + dday + ' · 완료';
+        cls = '.active';
       } else {
-        text = '마감 ' + dday + ' · 하루 ' + Math.ceil(remain / (diff + 1)) + '개';
+        text = '마감 ' + dday + ' · 하루 ' + Math.ceil(remain / (diff + 1)) + '컷 작업 필요';
+        cls = '.active';
       }
-      wrap.appendChild(el('span.ep-due-text' + (diff < 0 ? '.late' : ''), { text: text }));
-      wrap.appendChild(el('button.ep-cuts-edit', { type: 'button', text: '✎', title: '마감일 수정', onclick: showInput }));
+      wrap.appendChild(el('span.ep-due-text' + cls, { text: text }));
+      wrap.appendChild(el('button.btn.btn-ghost.btn-icon.btn-sm', { type: 'button', text: '✎', title: '마감일 수정', onclick: showInput }));
     }
 
     function showInput() {
@@ -503,6 +505,7 @@ window.MW = window.MW || {};
       ]),
       el('span.spacer'),
       dueDateControl(work, ep, pr, remain),
+      el('span.ep-header-sep', { text: '|' }),
       progressControl(work, ep, pr, doneCount, remain),
       reorder ? el('div.proc-tools', {}, [
         el('button.btn.btn-ghost.btn-icon.btn-sm', {
@@ -605,14 +608,7 @@ window.MW = window.MW || {};
               }));
             })(n);
           }
-          body.appendChild(el('div.cut-row', {}, [
-            el('button.cut-label', {
-              text: f === t ? String(f) : f + '~' + t,
-              title: '이 줄 전체 체크 / 해제',
-              onclick: function () { toggleRow(work, ep, pr, f, t); }
-            }),
-            el('div.cuts', {}, cells)
-          ]));
+          body.appendChild(el('div.cuts', {}, cells));
         })(from, to);
       }
     }
