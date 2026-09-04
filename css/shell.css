@@ -679,3 +679,29 @@ body.panel-instant #panelhost { transition: none !important; }
   font-variant-numeric: tabular-nums; margin-right: auto;
 }
 .home-money .value.minus { color: var(--red); }
+
+/* ------------------------------------------------ 홈: 카드 드래그 재배치 + 높이 조절 */
+.home-card-wrap { position: relative; margin-bottom: 14px; }
+.home-card-wrap:last-child { margin-bottom: 0; }
+.home-card-wrap > .card { margin: 0; }
+.home-card-wrap > .home-image { margin: 0; }
+.home-card-wrap.resized { overflow: hidden; }
+.home-card-wrap.resized > .card { height: 100%; overflow: auto; }
+.home-card-wrap.resized > .home-image { height: 100%; }
+.home-card-wrap.dragging { opacity: 0.45; }
+.home-card-wrap.drag-over { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius); }
+
+.home-card-grip {
+  position: absolute; top: 4px; right: 6px; z-index: 2;
+  padding: 2px 6px; color: var(--text-dim); cursor: grab;
+  font-size: 13px; line-height: 1; user-select: none;
+}
+.home-card-resize {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 12px;
+  cursor: ns-resize; z-index: 2; touch-action: none;
+}
+.home-card-resize::after {
+  content: ''; position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%);
+  width: 32px; height: 3px; border-radius: 2px; background: var(--border);
+}
+.home-card-wrap.resizing .home-card-resize::after { background: var(--accent); }

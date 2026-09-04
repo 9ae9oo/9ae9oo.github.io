@@ -28,7 +28,8 @@ window.MW = window.MW || {};
         floats: {},           // 플로팅 창 위치·크기 기억
         habitPanelOpen: true, // 캘린더 상단 해빗 트래커 펼침 여부
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
-        homeOrder: ['image', 'today', 'next', 'habits', 'money'],  // 대시보드 카드 순서 (설정 → 테마에서 변경)
+        homeOrder: ['image', 'today', 'next', 'habits', 'money'],  // 대시보드 카드 순서 (설정 → 테마에서 변경, 또는 홈에서 직접 드래그)
+        homeCardHeights: {},   // 홈 카드별 사용자 지정 높이 { [카드키]: px } — 홈에서 카드 아래쪽을 드래그해 조절. 없으면 기본 높이
         homeImage: '',        // 홈 꾸밈 이미지 (data URL, 날짜 아래에 표시, 비우면 숨김)
         reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
@@ -112,6 +113,15 @@ window.MW = window.MW || {};
     if (!Array.isArray(out.settings.homeOrder)) out.settings.homeOrder = base.settings.homeOrder.slice();
     if (typeof out.settings.homeImage !== 'string') out.settings.homeImage = '';
     if (['auto', 'on', 'off'].indexOf(out.settings.reduceMotion) < 0) out.settings.reduceMotion = 'auto';
+    (function () {
+      var raw = (out.settings.homeCardHeights && typeof out.settings.homeCardHeights === 'object') ? out.settings.homeCardHeights : {};
+      var clean = {};
+      Object.keys(raw).forEach(function (k) {
+        var n = raw[k];
+        if (typeof n === 'number' && isFinite(n)) clean[k] = Math.min(800, Math.max(80, Math.round(n)));
+      });
+      out.settings.homeCardHeights = clean;
+    })();
     delete out.settings.pomoScale;   // 구버전 필드 — 이제 창 크기(settings.floats.pomodoro)로 대체
     // theme: 프리셋 + 세부 오버라이드 구조로 정규화. 구버전( { mode, accent } )도 여기서 흡수합니다.
     var th = (out.settings.theme && typeof out.settings.theme === 'object') ? out.settings.theme : {};

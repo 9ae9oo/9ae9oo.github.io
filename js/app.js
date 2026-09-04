@@ -187,6 +187,92 @@ window.MW = window.MW || {};
     return null;
   }
 
+  /* -------- 홈에서 직접: 드래그로 순서 바꾸기 + 아래쪽 드래그로 높이 조절 -------- */
+
+  var dragHomeKey = null;
+  var MIN_CARD_H = 80, MAX_CARD_H = 800;
+
+  function dropHomeSection(targetKey) {
+    var from = dragHomeKey;
+    if (!from || from === targetKey) return;
+    var order = homeOrder();
+    var i = order.indexOf(from), j = order.indexOf(targetKey);
+    if (i < 0 || j < 0) return;
+    order.splice(j, 0, order.splice(i, 1)[0]);
+    MW.store.update(function (s) { s.settings.homeOrder = order; });
+  }
+
+  function setCardHeight(key, px) {
+    MW.store.update(function (s) {
+      var hc = Object.assign({}, s.settings.homeCardHeights);
+      if (px == null) delete hc[key]; else hc[key] = px;
+      s.settings.homeCardHeights = hc;
+    });
+  }
+
+  function startCardResize(e, key, wrap) {
+    e.preventDefault();
+    var startY = e.clientY;
+    var startH = wrap.getBoundingClientRect().height;
+    wrap.classList.add('resizing');
+    function move(ev) {
+      var h = Math.min(MAX_CARD_H, Math.max(MIN_CARD_H, Math.round(startH + (ev.clientY - startY))));
+      wrap.style.height = h + 'px';
+    }
+    function up() {
+      document.removeEventListener('pointermove', move);
+      document.removeEventListener('pointerup', up);
+      wrap.classList.remove('resizing');
+      setCardHeight(key, Math.min(MAX_CARD_H, Math.max(MIN_CARD_H, Math.round(wrap.getBoundingClientRect().height))));
+    }
+    document.addEventListener('pointermove', move);
+    document.addEventListener('pointerup', up);
+  }
+
+  /** 카드마다 [드래그 손잡이 + 실제 카드 + 아래쪽 리사이즈 바]로 감쌉니다 */
+  function homeCardWrap(key, node) {
+    if (!node) return null;
+    var heights = MW.store.state.settings.homeCardHeights || {};
+    var h = heights[key];
+
+    var wrap = el('div.home-card-wrap' + (h ? '.resized' : ''), {
+      style: h ? { height: h + 'px' } : null
+    }, [
+      el('span.home-card-grip', { text: '⠿', title: '끌어서 순서 바꾸기' }),
+      node,
+      el('div.home-card-resize', {
+        title: '드래그해서 높이 조절 (더블클릭: 기본 높이로)',
+        onpointerdown: function (e) { startCardResize(e, key, wrap); },
+        ondblclick: function () { wrap.style.height = ''; wrap.classList.remove('resized'); setCardHeight(key, null); }
+      })
+    ]);
+
+    wrap.draggable = true;
+    wrap.addEventListener('dragstart', function (e) {
+      dragHomeKey = key;
+      wrap.classList.add('dragging');
+      try { e.dataTransfer.setData('text/plain', key); } catch (err) { /* 일부 브라우저 */ }
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    wrap.addEventListener('dragend', function () {
+      dragHomeKey = null;
+      wrap.classList.remove('dragging');
+    });
+    wrap.addEventListener('dragover', function (e) {
+      if (!dragHomeKey || dragHomeKey === key) return;
+      e.preventDefault();
+      wrap.classList.add('drag-over');
+    });
+    wrap.addEventListener('dragleave', function () { wrap.classList.remove('drag-over'); });
+    wrap.addEventListener('drop', function (e) {
+      e.preventDefault();
+      wrap.classList.remove('drag-over');
+      dropHomeSection(key);
+    });
+
+    return wrap;
+  }
+
   function renderHome() {
     var host = $('#page-home-body');
     if (!host) return;
@@ -196,7 +282,8 @@ window.MW = window.MW || {};
 
     homeOrder().forEach(function (key) {
       var node = sectionNode(key);
-      if (node) host.appendChild(node);
+      var wrap = homeCardWrap(key, node);
+      if (wrap) host.appendChild(wrap);
     });
   }
 
