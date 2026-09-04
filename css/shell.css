@@ -240,8 +240,31 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .track-item .t-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .track-item .t-idx { font-size: 11px; color: var(--text-dim); width: 18px; text-align: right; flex-shrink: 0; }
 
-.settings-track-item { cursor: default; min-height: 38px; }
+.music-import-card { margin-bottom: 14px; }
+.music-import-row, .music-target-row, .music-playlist-head, .music-edit-toolbar {
+  display: flex; align-items: center; gap: 8px;
+}
+.music-import-row, .music-target-row { flex-wrap: wrap; }
+.music-target-row { margin-top: 10px; }
+.music-import-input { flex: 1 1 360px; min-width: 180px; width: auto; }
+.music-target-select { flex: 1 1 260px; min-width: 180px; width: auto; }
+.music-empty-create { box-shadow: 0 0 0 3px var(--accent-dim); }
+.music-playlist-empty { margin-top: 14px; }
+
+.card.music-playlist-card { padding: 0; overflow: hidden; }
+.music-playlist-head { min-height: 50px; padding: 9px 12px; }
+.music-playlist-head.editing { flex-wrap: wrap; }
+.music-playlist-toggle {
+  display: inline-flex; align-items: center; gap: 9px; min-width: 0;
+  color: var(--text); text-align: left; font-weight: 650;
+}
+.music-playlist-toggle:disabled { cursor: default; }
+.music-playlist-chevron { width: 14px; flex-shrink: 0; color: var(--text-dim); font-size: 11px; }
+.music-playlist-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.music-playlist-name { flex: 1 1 240px; min-width: 140px; width: auto; font-weight: 650; }
+.music-playlist-body { border-top: 1px solid var(--border); padding: 7px 8px 9px; }
 .music-track-list.editing { user-select: none; }
+.settings-track-item { cursor: default; min-height: 38px; }
 .settings-track-item.editing { position: relative; border: 1px solid transparent; }
 .settings-track-item.editing.selected { background: var(--accent-dim); }
 .settings-track-item.editing.dragging { opacity: 0.42; }
@@ -263,15 +286,20 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .track-select { border: 1px solid var(--border); background: var(--surface-0); font-size: 14px; }
 .track-select:hover { border-color: var(--accent); }
 .track-select.selected { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.music-selection-count { color: var(--accent); }
-.music-edit-toolbar { margin-top: 10px; flex-wrap: wrap; }
-.music-edit-help {
-  margin-top: 10px; padding: 8px 10px; border-radius: var(--radius-sm);
-  background: var(--accent-dim); color: var(--text-muted); font-size: 12px; line-height: 1.55;
-}
+.music-track-remove { flex-shrink: 0; color: var(--text-dim); font-size: 18px; }
+.music-track-remove:hover { color: var(--red); background: var(--red-dim); }
+.music-selection-count { color: var(--accent); font-size: 12px; font-weight: 650; white-space: nowrap; }
+.music-edit-toolbar { padding: 2px 0 7px; flex-wrap: wrap; }
 .btn:disabled { opacity: 0.42; cursor: not-allowed; }
 @media (max-width: 640px) {
+  .music-import-input { flex-basis: 100%; }
+  .music-import-row > .btn { flex: 1; }
+  .music-target-select { flex-basis: 100%; }
+  .music-playlist-head { align-items: flex-start; }
+  .music-playlist-head:not(.editing) .music-playlist-toggle { padding-top: 4px; }
+  .music-playlist-head.editing .music-playlist-name { flex-basis: calc(100% - 30px); }
   .music-edit-toolbar .spacer { display: none; }
+  .music-edit-toolbar .btn-danger { margin-left: auto; }
 }
 
 /* ------- 가운데 컨텐츠 — max-width 로 크기 고정, margin-right:auto 로 남는 폭을 오른쪽으로 밀어냄.

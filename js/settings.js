@@ -11,7 +11,11 @@ window.MW = window.MW || {};
 
   var tab = 'time';
   var root = null;
-  var musicEdit = null;       // { playlistId, order:[trackId], originalIds:{}, selected:{} }
+  var musicEdit = null;       // { playlistId, name, order:[trackId], originalIds:{}, selected:{} }
+  var musicOpenPlaylistId;
+  var musicTargetPlaylistId = '';
+  var musicImportUrl = '';
+  var musicImporting = false;
 
   /* ------------------------------------------------------------ 음악 */
 
@@ -20,10 +24,12 @@ window.MW = window.MW || {};
     pl.tracks.forEach(function (tr) { originalIds[tr.id] = true; });
     musicEdit = {
       playlistId: pl.id,
+      name: pl.name,
       order: pl.tracks.map(function (tr) { return tr.id; }),
       originalIds: originalIds,
       selected: {}
     };
+    musicOpenPlaylistId = pl.id;
     render();
   }
 
@@ -55,6 +61,7 @@ window.MW = window.MW || {};
         if (!draft.originalIds[tr.id] && !included[tr.id]) next.push(tr);
       });
       pl.tracks = next;
+      pl.name = draft.name.trim() || '이름 없음';
       if (s.player.playlistId === pl.id) {
         var playingIndex = next.findIndex(function (tr) { return tr.id === playingId; });
         s.player.index = playingIndex >= 0 ? playingIndex : U.clamp(s.player.index || 0, 0, Math.max(0, next.length - 1));
@@ -68,6 +75,23 @@ window.MW = window.MW || {};
     if (!musicEdit) return;
     musicEdit.order = musicEdit.order.filter(function (id) { return !musicEdit.selected[id]; });
     musicEdit.selected = {};
+    render();
+  }
+
+  function deleteMusicTrack(trackId) {
+    if (!musicEdit) return;
+    musicEdit.order = musicEdit.order.filter(function (id) { return id !== trackId; });
+    delete musicEdit.selected[trackId];
+    render();
+  }
+
+  function toggleAllMusicTracks() {
+    if (!musicEdit) return;
+    var allSelected = musicEdit.order.length > 0 && musicEdit.order.every(function (id) {
+      return !!musicEdit.selected[id];
+    });
+    musicEdit.selected = {};
+    if (!allSelected) musicEdit.order.forEach(function (id) { musicEdit.selected[id] = true; });
     render();
   }
 
@@ -89,11 +113,17 @@ window.MW = window.MW || {};
     return musicEdit.order.map(function (id) { return byId[id]; }).filter(Boolean);
   }
 
-  function syncMusicSelection(list, count, deleteButton) {
+  function syncMusicSelection(list, count, deleteButton, selectAllButton) {
     var total = Object.keys(musicEdit.selected).length;
     count.textContent = total + '곡 선택';
     deleteButton.disabled = total === 0;
-    Array.prototype.forEach.call(list.querySelectorAll('[data-edit-track-id]'), function (row) {
+    var rows = Array.prototype.slice.call(list.querySelectorAll('[data-edit-track-id]'));
+    var allSelected = rows.length > 0 && rows.every(function (row) {
+      return !!musicEdit.selected[row.dataset.editTrackId];
+    });
+    selectAllButton.textContent = allSelected ? '전체 해제' : '전체 선택';
+    selectAllButton.disabled = rows.length === 0;
+    rows.forEach(function (row) {
       var selected = !!musicEdit.selected[row.dataset.editTrackId];
       var check = row.querySelector('.track-select');
       row.classList.toggle('selected', selected);
@@ -137,7 +167,7 @@ window.MW = window.MW || {};
   }
 
   /** 체크버튼을 누른 채 위아래로 훑으면 같은 상태로 여러 곡을 선택/해제합니다. */
-  function attachMusicPaintSelection(list, count, deleteButton) {
+  function attachMusicPaintSelection(list, count, deleteButton, selectAllButton) {
     list.addEventListener('pointerdown', function (e) {
       var check = e.target.closest('.track-select');
       if (!check || !list.contains(check)) return;
@@ -151,7 +181,7 @@ window.MW = window.MW || {};
         var id = row.dataset.editTrackId;
         if (selecting) musicEdit.selected[id] = true;
         else delete musicEdit.selected[id];
-        syncMusicSelection(list, count, deleteButton);
+        syncMusicSelection(list, count, deleteButton, selectAllButton);
       }
 
       function rowAt(ev) {
@@ -244,175 +274,252 @@ window.MW = window.MW || {};
     });
   }
 
+  function openMusicPlaylistCreator() {
+    if (MW.store.state.playlists.length >= MW.music.MAX_PLAYLISTS) {
+      U.toast('재생목록은 최대 ' + MW.music.MAX_PLAYLISTS + '개까지입니다.', 'warn');
+      return;
+    }
+    var name = el('input.field', { placeholder: '재생목록 이름' });
+    MW.shell.modal({
+      title: '재생목록 만들기',
+      body: [el('div.form-row', {}, [el('label', { text: '이름' }), name])],
+      onOk: function () {
+        if (!name.value.trim()) { U.toast('이름을 입력해 주세요.', 'warn'); return false; }
+        var id = MW.music.addPlaylist(name.value.trim());
+        if (!id) return false;
+        musicTargetPlaylistId = id;
+        musicOpenPlaylistId = id;
+      }
+    });
+  }
+
+  function deleteMusicPlaylist(pl) {
+    MW.shell.confirm('"' + pl.name + '" 재생목록을 삭제할까요?', function () {
+      musicEdit = null;
+      if (musicTargetPlaylistId === pl.id) musicTargetPlaylistId = '';
+      MW.store.update(function (s) {
+        s.playlists = s.playlists.filter(function (item) { return item.id !== pl.id; });
+        if (s.player.playlistId === pl.id) {
+          s.player.playlistId = s.playlists[0] ? s.playlists[0].id : null;
+          s.player.index = 0;
+        }
+      });
+      musicOpenPlaylistId = MW.store.state.playlists[0] ? MW.store.state.playlists[0].id : null;
+    });
+  }
+
+  function selectedMusicTarget() {
+    return MW.store.state.playlists.find(function (pl) { return pl.id === musicTargetPlaylistId; }) || null;
+  }
+
+  function addMusicTrackFromInput() {
+    var target = selectedMusicTarget();
+    if (!target) { U.toast('곡을 넣을 재생목록을 먼저 선택해 주세요.', 'warn'); return; }
+    if (MW.music.playlistId(musicImportUrl) && !MW.music.videoId(musicImportUrl)) {
+      importMusicPlaylistFromInput();
+      return;
+    }
+    if (MW.music.addTrack(target.id, musicImportUrl)) {
+      musicImportUrl = '';
+      render();
+    }
+  }
+
+  function importMusicPlaylistFromInput() {
+    var target = selectedMusicTarget();
+    if (!target) { U.toast('곡을 넣을 재생목록을 먼저 선택해 주세요.', 'warn'); return; }
+    if (!musicImportUrl.trim()) { U.toast('YouTube 재생목록 주소를 붙여넣어 주세요.', 'warn'); return; }
+    var url = musicImportUrl;
+    musicImporting = true;
+    render();
+    MW.music.importPlaylist(target.id, url).then(function (result) {
+      musicImporting = false;
+      musicImportUrl = '';
+      if (!result.added) {
+        U.toast('추가할 새 곡이 없습니다. 이미 들어 있는 곡은 건너뛰었습니다.', 'warn');
+      } else {
+        var message = result.added + '곡을 가져왔습니다.';
+        if (result.skipped) message += ' 이미 있던 ' + result.skipped + '곡은 건너뛰었습니다.';
+        U.toast(message);
+      }
+      render();
+    }).catch(function (err) {
+      musicImporting = false;
+      U.toast(err && err.message ? err.message : '재생목록을 가져오지 못했습니다.', 'err');
+      render();
+    });
+  }
+
   function renderMusic(host) {
     var pls = MW.store.state.playlists;
     if (musicEdit && !pls.some(function (pl) { return pl.id === musicEdit.playlistId; })) musicEdit = null;
+    if (typeof musicOpenPlaylistId === 'undefined') musicOpenPlaylistId = pls[0] ? pls[0].id : null;
+    else if (musicOpenPlaylistId && !pls.some(function (pl) { return pl.id === musicOpenPlaylistId; })) {
+      musicOpenPlaylistId = pls[0] ? pls[0].id : null;
+    }
+    if (musicTargetPlaylistId && !pls.some(function (pl) { return pl.id === musicTargetPlaylistId; })) {
+      musicTargetPlaylistId = '';
+    }
+    if (musicEdit) musicOpenPlaylistId = musicEdit.playlistId;
 
     host.appendChild(el('div.callout', {}, [
-      el('strong', { text: '곡 관리는 여기에서만 합니다. ' }),
-      '상단바에서는 재생과 목록 전환만 하고, 추가·삭제·순서변경은 이 페이지에서 처리합니다. ',
-      '유튜브 영상은 한 곡씩 추가하고, 공개 재생목록은 주소 하나로 전체 곡을 가져올 수 있습니다. '
-      + '재생목록 편집에서는 드래그로 순서를 바꾸거나 여러 곡을 골라 지울 수 있습니다.'
+      el('strong', { text: '곡과 재생목록을 여기에서 정리합니다. ' }),
+      '재생은 오른쪽 뮤직플레이어에서 할 수 있습니다.'
     ]));
 
-    host.appendChild(el('div.lg-toolbar', {}, [
-      el('span.small.muted', { text: '재생목록 ' + pls.length + ' / ' + MW.music.MAX_PLAYLISTS }),
-      el('span.spacer'),
-      el('button.btn.btn-primary.btn-sm', {
-        text: '＋ 재생목록 만들기',
-        disabled: !!musicEdit,
-        onclick: function () {
-          var name = el('input.field', { placeholder: '재생목록 이름' });
-          MW.shell.modal({
-            title: '재생목록 만들기',
-            body: [el('div.form-row', {}, [el('label', { text: '이름' }), name])],
-            onOk: function () {
-              if (!name.value.trim()) { U.toast('이름을 입력해 주세요.', 'warn'); return false; }
-              MW.music.addPlaylist(name.value.trim());
-            }
-          });
-        }
-      })
+    var locked = musicImporting || !!musicEdit;
+    var targetOptions = [el('option', {
+      value: '', disabled: true, text: pls.length ? '곡을 넣을 재생목록' : '먼저 재생목록을 만들어 주세요'
+    })].concat(pls.map(function (pl) {
+      return el('option', { value: pl.id, text: pl.name });
+    }));
+    var targetSelect = el('select.field.music-target-select', {
+      disabled: !pls.length || locked,
+      onchange: function () { musicTargetPlaylistId = this.value; }
+    }, targetOptions);
+    targetSelect.value = musicTargetPlaylistId || '';
+
+    var urlInput = el('input.field.music-import-input', {
+      value: musicImportUrl,
+      placeholder: 'YouTube 영상 또는 재생목록 주소',
+      disabled: !pls.length || locked,
+      oninput: function () { musicImportUrl = this.value; },
+      onkeydown: function (e) { if (e.key === 'Enter') addMusicTrackFromInput(); }
+    });
+    var createButton = el('button.btn.btn-sm' + (!pls.length ? '.btn-primary.music-empty-create' : ''), {
+      text: '＋ 새 재생목록 만들기',
+      disabled: locked || pls.length >= MW.music.MAX_PLAYLISTS,
+      title: pls.length >= MW.music.MAX_PLAYLISTS ? '재생목록은 최대 5개까지 만들 수 있습니다.' : '새 재생목록 만들기',
+      onclick: openMusicPlaylistCreator
+    });
+
+    host.appendChild(el('div.card.music-import-card', {}, [
+      el('div.music-import-row', {}, [
+        urlInput,
+        el('button.btn.btn-primary.btn-sm', {
+          text: '＋ 한 곡', disabled: !pls.length || locked, onclick: addMusicTrackFromInput
+        }),
+        el('button.btn.btn-sm', {
+          text: musicImporting ? '가져오는 중…' : '＋ 재생목록 전체',
+          disabled: !pls.length || locked,
+          onclick: importMusicPlaylistFromInput
+        })
+      ]),
+      el('div.music-target-row', {}, [
+        targetSelect,
+        createButton,
+        el('span.spacer'),
+        el('span.small.muted', { text: '재생목록 ' + pls.length + ' / ' + MW.music.MAX_PLAYLISTS })
+      ])
     ]));
 
     if (!pls.length) {
-      host.appendChild(el('div.empty', { text: '재생목록이 없습니다.\n＋ 버튼으로 첫 목록을 만들어 주세요.' }));
+      host.appendChild(el('div.empty.music-playlist-empty', {
+        text: '아직 재생목록이 없습니다. 위의 버튼으로 첫 재생목록을 만들어 주세요.'
+      }));
       return;
     }
 
     pls.forEach(function (pl) {
       var editing = !!musicEdit && musicEdit.playlistId === pl.id;
-      var addTrack = function () {
-        var value = urlInput.value;
-        if (MW.music.playlistId(value) && !MW.music.videoId(value)) { importPlaylist(); return; }
-        if (MW.music.addTrack(pl.id, value)) urlInput.value = '';
-      };
-      var addButton, importButton;
-      var setImportBusy = function (busy) {
-        urlInput.disabled = busy;
-        addButton.disabled = busy;
-        importButton.disabled = busy;
-        importButton.textContent = busy ? '가져오는 중…' : '목록 가져오기';
-      };
-      var importPlaylist = function () {
-        if (!urlInput.value.trim()) { U.toast('YouTube 재생목록 주소를 붙여넣어 주세요.', 'warn'); return; }
-        setImportBusy(true);
-        MW.music.importPlaylist(pl.id, urlInput.value).then(function (result) {
-          setImportBusy(false);
-          urlInput.value = '';
-          if (!result.added) {
-            U.toast('추가할 새 곡이 없습니다. 이미 들어 있는 곡은 건너뛰었습니다.', 'warn');
-            return;
-          }
-          var message = result.added + '곡을 가져왔습니다.';
-          if (result.skipped) message += ' 이미 있던 ' + result.skipped + '곡은 건너뛰었습니다.';
-          U.toast(message);
-        }).catch(function (err) {
-          setImportBusy(false);
-          U.toast(err && err.message ? err.message : '재생목록을 가져오지 못했습니다.', 'err');
-        });
-      };
-      var urlInput = el('input.field', {
-        placeholder: 'YouTube 영상 또는 재생목록 주소',
-        style: { flex: '1 1 360px', minWidth: '180px', width: 'auto' },
-        onkeydown: function (e) { if (e.key === 'Enter') addTrack(); }
-      });
-      addButton = el('button.btn.btn-primary.btn-sm', { text: '곡 추가', onclick: addTrack });
-      importButton = el('button.btn.btn-sm', { text: '목록 가져오기', onclick: importPlaylist });
-
-      var selectionCount = editing ? el('span.chip.music-selection-count', { text: '0곡 선택' }) : null;
+      var expanded = editing || musicOpenPlaylistId === pl.id;
+      var shownTracks = editing ? musicDraftTracks(pl) : pl.tracks;
+      var selectAllButton = editing ? el('button.btn.btn-sm', {
+        text: '전체 선택', onclick: toggleAllMusicTracks
+      }) : null;
+      var selectionCount = editing ? el('span.music-selection-count', { text: '0곡 선택' }) : null;
       var deleteSelected = editing ? el('button.btn.btn-sm.btn-danger', {
         text: '선택 삭제', disabled: true, onclick: deleteSelectedMusicTracks
       }) : null;
-      var shownTracks = editing ? musicDraftTracks(pl) : pl.tracks;
-      var tracks = el('div.music-track-list' + (editing ? '.editing' : ''), {}, shownTracks.length ? shownTracks.map(function (tr, i) {
-        if (editing) {
-          return el('div.track-item.settings-track-item.editing', { dataset: { editTrackId: tr.id } }, [
-            el('button.track-grip', { type: 'button', text: '⠿', title: '끌어서 순서 바꾸기', 'aria-label': '순서 바꾸기' }),
+
+      var tracks = null;
+      if (expanded) {
+        tracks = el('div.music-track-list' + (editing ? '.editing' : ''), {}, shownTracks.length ? shownTracks.map(function (tr, i) {
+          var title = tr.title || tr.videoId;
+          if (editing) {
+            return el('div.track-item.settings-track-item.editing', { dataset: { editTrackId: tr.id } }, [
+              el('button.track-select', {
+                type: 'button', title: '누르거나 누른 채 훑어서 선택', 'aria-label': title + ' 선택', 'aria-pressed': 'false',
+                onkeydown: function (e) {
+                  if (e.key !== 'Enter' && e.key !== ' ') return;
+                  e.preventDefault();
+                  if (musicEdit.selected[tr.id]) delete musicEdit.selected[tr.id];
+                  else musicEdit.selected[tr.id] = true;
+                  render();
+                }
+              }),
+              el('button.track-grip', {
+                type: 'button', text: '⠿', title: '끌어서 순서 변경', 'aria-label': title + ' 순서 변경'
+              }),
+              el('span.t-idx', { text: String(i + 1) }),
+              el('span.t-title', { text: title, title: title }),
+              el('button.btn.btn-ghost.btn-icon.btn-sm.music-track-remove', {
+                type: 'button', text: '×', title: '이 곡 삭제', 'aria-label': title + ' 삭제',
+                onclick: function () { deleteMusicTrack(tr.id); }
+              })
+            ]);
+          }
+          return el('div.track-item.settings-track-item', {}, [
             el('span.t-idx', { text: String(i + 1) }),
-            el('button.track-select', {
-              type: 'button', title: '누르거나 누른 채 훑어서 선택', 'aria-label': tr.title + ' 선택', 'aria-pressed': 'false',
-              onkeydown: function (e) {
-                if (e.key !== 'Enter' && e.key !== ' ') return;
-                e.preventDefault();
-                if (musicEdit.selected[tr.id]) delete musicEdit.selected[tr.id];
-                else musicEdit.selected[tr.id] = true;
-                render();
-              }
-            }),
-            el('span.t-title', { text: tr.title || tr.videoId, title: tr.title || tr.videoId })
+            el('span.t-title', { text: title, title: title })
           ]);
-        }
-        return el('div.track-item.settings-track-item', {}, [
-          el('span.t-idx', { text: String(i + 1) }),
-          el('input.field.t-title', {
-            value: tr.title, style: { background: 'transparent', border: 'none', padding: '2px 4px' },
-            onchange: function () {
-              var v = this.value.trim() || tr.videoId;
-              MW.store.update(function (s) {
-                var p = s.playlists.find(function (x) { return x.id === pl.id; });
-                var t = p && p.tracks.find(function (x) { return x.id === tr.id; });
-                if (t) t.title = v;
-              });
-            }
-          })
-        ]);
-      }) : [el('div.empty', { text: '곡이 없습니다.' })]);
-      if (editing && shownTracks.length) {
-        attachMusicPaintSelection(tracks, selectionCount, deleteSelected);
-        attachMusicReorder(tracks);
-        syncMusicSelection(tracks, selectionCount, deleteSelected);
+        }) : [el('div.empty', { text: '곡이 없습니다.' })]);
       }
 
-      host.appendChild(el('div.card', {}, [
-        el('div.row', { style: { flexWrap: 'wrap' } }, [
-          el('input.field', {
-            value: pl.name, disabled: editing,
-            style: { fontWeight: '600', width: 'auto', flex: '1 1 180px', minWidth: '120px' },
-            onchange: function () {
-              var v = this.value.trim() || '이름 없음';
-              MW.store.update(function (s) {
-                var p = s.playlists.find(function (x) { return x.id === pl.id; });
-                if (p) p.name = v;
-              });
-            }
+      if (editing && shownTracks.length) {
+        attachMusicPaintSelection(tracks, selectionCount, deleteSelected, selectAllButton);
+        attachMusicReorder(tracks);
+        syncMusicSelection(tracks, selectionCount, deleteSelected, selectAllButton);
+      }
+
+      var header;
+      if (editing) {
+        header = el('div.music-playlist-head.editing', {}, [
+          el('span.music-playlist-chevron', { text: '▼', 'aria-hidden': 'true' }),
+          el('input.field.music-playlist-name', {
+            value: musicEdit.name,
+            'aria-label': '재생목록 이름',
+            oninput: function () { musicEdit.name = this.value; }
           }),
           el('span.chip', { text: shownTracks.length + '곡' }),
-          editing ? null : el('button.btn.btn-sm', { text: '재생', onclick: function () { MW.music.selectPlaylist(pl.id); } }),
-          editing ? null : el('button.btn.btn-sm', {
-            text: '재생목록 편집', disabled: !!musicEdit, onclick: function () { beginMusicEdit(pl); }
-          }),
-          editing ? null : el('button.btn.btn-sm.btn-danger', {
-            text: '목록 삭제',
+          el('span.spacer'),
+          el('button.btn.btn-sm.btn-danger', { text: '재생목록 삭제', onclick: function () { deleteMusicPlaylist(pl); } }),
+          el('button.btn.btn-sm', { text: '취소', onclick: cancelMusicEdit }),
+          el('button.btn.btn-primary.btn-sm', { text: '편집 완료', onclick: finishMusicEdit })
+        ]);
+      } else {
+        header = el('div.music-playlist-head', {}, [
+          el('button.music-playlist-toggle', {
+            type: 'button',
+            disabled: !!musicEdit,
+            'aria-expanded': expanded ? 'true' : 'false',
             onclick: function () {
-              MW.shell.confirm('"' + pl.name + '" 재생목록을 삭제할까요?', function () {
-                MW.store.update(function (s) {
-                  s.playlists = s.playlists.filter(function (x) { return x.id !== pl.id; });
-                  if (s.player.playlistId === pl.id) {
-                    s.player.playlistId = s.playlists[0] ? s.playlists[0].id : null;
-                    s.player.index = 0;
-                  }
-                });
-              });
+              musicOpenPlaylistId = expanded ? null : pl.id;
+              render();
             }
-          })
-        ]),
-        editing ? el('div.music-edit-tools', {}, [
-          el('div.row.music-edit-toolbar', {}, [
-            selectionCount,
-            deleteSelected,
-            el('span.spacer'),
-            el('button.btn.btn-sm', { text: '취소', onclick: cancelMusicEdit }),
-            el('button.btn.btn-primary.btn-sm', { text: '편집 완료', onclick: finishMusicEdit })
+          }, [
+            el('span.music-playlist-chevron', { text: expanded ? '▼' : '▶', 'aria-hidden': 'true' }),
+            el('span.music-playlist-title', { text: pl.name })
           ]),
-          el('div.music-edit-help', {
-            text: '⠿ 손잡이를 끌어 순서를 바꾸세요. 체크버튼을 누른 채 여러 곡을 훑을 수 있습니다. 편집 완료 전에는 저장되지 않습니다.'
-          })
-        ]) : el('div.row', { style: { marginTop: '10px', flexWrap: 'wrap' } }, [
-          urlInput,
-          el('div.row', {}, [addButton, importButton])
-        ]),
-        el('div', { style: { marginTop: '10px' } }, [tracks])
+          expanded ? el('span.chip', { text: shownTracks.length + '곡' }) : null,
+          el('span.spacer'),
+          expanded ? el('button.btn.btn-sm', {
+            text: '재생목록 편집', disabled: musicImporting, onclick: function () { beginMusicEdit(pl); }
+          }) : null
+        ]);
+      }
+
+      host.appendChild(el('div.card.music-playlist-card' + (expanded ? '.expanded' : ''), {}, [
+        header,
+        expanded ? el('div.music-playlist-body', {}, [
+          editing ? el('div.music-edit-toolbar', {}, [
+            selectAllButton,
+            selectionCount,
+            el('span.spacer'),
+            deleteSelected
+          ]) : null,
+          tracks
+        ]) : null
       ]));
     });
   }
