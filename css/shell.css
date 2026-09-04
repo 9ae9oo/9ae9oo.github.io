@@ -85,14 +85,13 @@
 @media (min-width: 641px) {
   body.anypanel-open #toolrail { right: var(--side-panel-w); }
 }
+/* 글자 대신 아이콘 — 왼쪽 사이드바(.sidebar-item)와 같은 언어. 세로쓰기 문제(영문 라벨이
+   한 글자씩 쪼개지는 것)를 애초에 피합니다. 이름은 title 툴팁으로 확인 */
 .tool-item {
-  writing-mode: vertical-rl;
-  text-orientation: mixed;   /* upright 였으면 영문 라벨(Inbox 등)이 한 글자씩 쪼개져 보임 —
-                                mixed 는 로마자를 옆으로 눕혀 한 줄로, 한글/한자는 그대로 세웁니다 */
-  letter-spacing: 2px;
-  font-size: 12px;
-  font-weight: 600;
-  padding: 12px 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
   background: var(--surface-2);
   border: 1px solid var(--border);
   border-right: none;
@@ -102,6 +101,8 @@
   cursor: pointer;
   transition: background 0.15s, color 0.15s;
 }
+.tool-item .icon { font-size: 20px; line-height: 1; }
+.tool-item .label { display: none; }   /* 라벨은 항상 숨김 — sidebar-item과 동일한 패턴 */
 .tool-item:hover { background: var(--surface-3); color: var(--text); }
 .tool-item.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
@@ -512,7 +513,7 @@ body.panel-instant #panelhost { transition: none !important; }
   /* 상단 메뉴는 흐름 안에 있어 겹치지 않음. 아래는 [도구 탭 + 입력창] 만큼 비움 */
   #content #main {
     padding-top: 8px;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom));
+    padding-bottom: calc(99px + env(safe-area-inset-bottom));   /* 아이콘 도구 탭 높이에 맞춤 */
   }
   .page { padding: 16px 12px 24px; }
 
@@ -553,9 +554,6 @@ body.panel-instant #panelhost { transition: none !important; }
   }
   .tool-item {
     flex: 1;
-    writing-mode: horizontal-tb;
-    letter-spacing: 0;
-    text-align: center;
     padding: 8px 4px;
     min-height: 34px;
     border: 1px solid var(--border);
@@ -572,7 +570,7 @@ body.panel-instant #panelhost { transition: none !important; }
     top: auto !important;
     left: 10px !important;
     right: 10px !important;
-    bottom: calc(96px + env(safe-area-inset-bottom)) !important;
+    bottom: calc(99px + env(safe-area-inset-bottom)) !important;   /* 아이콘 도구 탭 높이에 맞춤 */
     width: auto !important;
     max-width: none !important;
     height: auto !important;
