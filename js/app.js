@@ -56,21 +56,26 @@ window.MW = window.MW || {};
     ]);
   }
 
-  function nextCard() {
+  function tomorrowCard() {
     var now = new Date();
-    var today = U.ymd(now);
     var tomorrow = U.ymd(new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1));
+    return el('div.card', {}, [
+      el('h3', { text: '내일' }),
+      listOrEmpty(itemsOn(tomorrow).map(function (it) { return itemRow(it, tomorrow); }), '내일은 일정이 없습니다.')
+    ]);
+  }
 
+  function postponedCard() {
+    var today = U.ymd(new Date());
     // 미뤄진 것 = 기한이 지났는데 아직 안 끝낸 할 일.
     // 지나간 일정(이벤트)은 미뤄진 게 아니라 그냥 지나간 것이므로 넣지 않습니다.
     var late = MW.store.state.todos.filter(function (t) {
       return !t.done && t.date && t.date < today;
     }).sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
 
-    var kids = [el('h3', { text: '내일 · 미뤄진 일정' })];
+    var kids = [el('h3', {}, ['미뤄진 일정 ', el('span.dash-late-count', { text: String(late.length) })])];
 
     if (late.length) {
-      kids.push(el('h4.dash-subhead', {}, ['미뤄짐 ', el('span.dash-late-count', { text: String(late.length) })]));
       kids.push(el('div.today-list', {}, late.map(function (t) {
         return el('div.today-row', {
           onclick: function () { MW.shell.go('calendar'); MW.calendar.goto(t.date); }
@@ -82,8 +87,7 @@ window.MW = window.MW || {};
       })));
     }
 
-    kids.push(el('h4.dash-subhead', { text: '내일' }));
-    kids.push(listOrEmpty(itemsOn(tomorrow).map(function (it) { return itemRow(it, tomorrow); }), '내일은 일정이 없습니다.'));
+    if (!late.length) kids.push(el('div.empty', { text: '미뤄진 일정이 없습니다.' }));
 
     return el('div.card', {}, kids);
   }
@@ -105,7 +109,21 @@ window.MW = window.MW || {};
             el('span.dash-habit-count', { text: count + '/' + target })
           ]);
         }))
-      : el('div.empty', { text: '해빗이 없습니다. 설정 → 시간 · 해빗에서 추가해 보세요.' });
+      : el('div.empty', {}, [
+        el('div', { text: '해빗이 없습니다.' }),
+        el('button.btn.btn-sm', {
+          type: 'button', text: '첫 해빗 추가',
+          onclick: function () {
+            MW.shell.go('settings');
+            // 주소 전환으로 화면을 다시 그린 다음 입력칸에 도착해야 포커스가 사라지지 않습니다.
+            setTimeout(function () {
+              MW.settings.openTab('time');
+              var input = document.getElementById('new-habit-name');
+              if (input) { input.scrollIntoView({ block: 'center' }); input.focus(); }
+            }, 0);
+          }
+        })
+      ]);
 
     return el('div.card', {}, [
       el('h3', {}, ['오늘 한 해빗 ', el('span.muted', { text: list.length ? MW.habitGrid.todaySummary() : '' })]),
@@ -135,7 +153,8 @@ window.MW = window.MW || {};
 
   var WIDGET_DEFS = {
     today:   { label: '오늘 일정', builtin: true },
-    next:    { label: '내일 · 미뤄진 일정', builtin: true },
+    tomorrow: { label: '내일', builtin: true },
+    postponed: { label: '미뤄진 일정', builtin: true },
     habits:  { label: '오늘 한 해빗', builtin: true },
     money:   { label: '오늘 쓴 돈', builtin: true },
     image:   { label: '이미지 갤러리', builtin: false, defaultConfig: { mode: 'fixed', images: [], intervalSec: 5 } },
@@ -146,7 +165,8 @@ window.MW = window.MW || {};
 
   function widgetNode(w, editing) {
     if (w.type === 'today') return todayCard();
-    if (w.type === 'next') return nextCard();
+    if (w.type === 'tomorrow') return tomorrowCard();
+    if (w.type === 'postponed') return postponedCard();
     if (w.type === 'habits') return habitsCard();
     if (w.type === 'money') return moneyCard();
     if (w.type === 'image') return galleryWidgetNode(w, editing);
@@ -322,10 +342,15 @@ window.MW = window.MW || {};
   /* -------- 홈 편집 모드: 순서·크기 드래그, 위젯 켜기/끄기·추가·삭제, 저장/취소 -------- */
 
   var dragHomeKey = null;
-  var MIN_CARD_H = 80, MAX_CARD_H = 800;
-  var HOME_COLS = 3;        // 홈은 3칸 그리드. 위젯이 1~3칸을 차지
-  var HOME_ROWS_MAX = 3;    // 세로로도 최대 3칸까지
-  var HOME_ROW_UNIT = 140;  // 세로 리사이즈 시 한 칸 늘리는 데 필요한 드래그 거리(px) 기준. 행 높이는 내용에 따라 자동
+  var HOME_COLS = 4;        // 가로 모눈 4칸. 위젯은 1~4칸을 차지합니다.
+  var HOME_ROWS_MAX = 4;    // 세로도 최대 4칸까지 늘릴 수 있습니다.
+
+  function homeRowStep() {
+    var grid = document.querySelector('.home-widget-grid');
+    var style = getComputedStyle(grid || document.documentElement);
+    // 실제 모눈 높이와 칸 사이 여백을 합쳐, 한 눈금 드래그하면 정확히 한 칸 늘어납니다.
+    return (parseFloat(style.getPropertyValue('--dash-row')) || 112) + (parseFloat(style.rowGap) || 0);
+  }
 
   var editMode = false;
   var draft = null;   // 편집 중에만 존재. 저장을 눌러야 실제 설정에 반영됨 (실수로 바뀌는 것 방지)
@@ -389,17 +414,16 @@ window.MW = window.MW || {};
     renderHome();
   }
 
-  function setCardHeight(key, px) { if (px == null) delete draft.heights[key]; else draft.heights[key] = px; }
   function setCardSpan(key, span) { if (span >= HOME_COLS) delete draft.spans[key]; else draft.spans[key] = span; }
   function setCardRowSpan(key, rowSpan) { if (rowSpan <= 1) delete draft.rowSpans[key]; else draft.rowSpans[key] = rowSpan; }
 
   /** 그리드 한 칸의 너비(px) — 가로 리사이즈 중 드래그 거리와 비교하는 기준 */
   function homeColWidth() {
-    var host = $('#page-home-body');
+    var host = document.querySelector('.home-widget-grid');
     if (!host) return 300;
     var rect = host.getBoundingClientRect();
     var gap = parseFloat(getComputedStyle(host).columnGap) || 14;
-    return (rect.width - gap * (HOME_COLS - 1)) / HOME_COLS;
+    return (rect.width + gap) / HOME_COLS;
   }
 
   function startCardResizeX(e, key, wrap) {
@@ -429,10 +453,11 @@ window.MW = window.MW || {};
     var startY = e.clientY;
     var startRowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, draft.rowSpans[key] || 1));
     var rowSpan = startRowSpan;
+    var rowStep = homeRowStep();
     wrap.classList.add('resizing-xy');
     function move(ev) {
       var dy = ev.clientY - startY;
-      rowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, Math.round(startRowSpan + dy / HOME_ROW_UNIT)));
+      rowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, Math.round(startRowSpan + dy / rowStep)));
       wrap.style.gridRow = 'span ' + rowSpan;
     }
     function up() {
@@ -445,31 +470,11 @@ window.MW = window.MW || {};
     document.addEventListener('pointerup', up);
   }
 
-  function startCardResize(e, key, wrap) {
-    e.preventDefault();
-    var startY = e.clientY;
-    var startH = wrap.getBoundingClientRect().height;
-    wrap.classList.add('resizing');
-    function move(ev) {
-      var h = Math.min(MAX_CARD_H, Math.max(MIN_CARD_H, Math.round(startH + (ev.clientY - startY))));
-      wrap.style.height = h + 'px';
-    }
-    function up() {
-      document.removeEventListener('pointermove', move);
-      document.removeEventListener('pointerup', up);
-      wrap.classList.remove('resizing');
-      setCardHeight(key, Math.min(MAX_CARD_H, Math.max(MIN_CARD_H, Math.round(wrap.getBoundingClientRect().height))));
-    }
-    document.addEventListener('pointermove', move);
-    document.addEventListener('pointerup', up);
-  }
-
   /** 위젯마다 카드 하나로 감쌉니다. 편집 모드일 때만 손잡이·리사이즈 핸들·삭제 버튼이 붙습니다 */
   function homeCardWrap(widget, node, editing) {
     if (!node) return null;
     var key = widget.id;
     var home = curHome();
-    var h = home.heights[key];
     var span = Math.min(HOME_COLS, Math.max(1, home.spans[key] || HOME_COLS));
     var rowSpan = Math.min(HOME_ROWS_MAX, Math.max(1, home.rowSpans[key] || 1));
 
@@ -484,15 +489,16 @@ window.MW = window.MW || {};
       }
     }
 
-    var wrap = el('div.home-card-wrap' + (h ? '.resized' : ''), {
-      style: Object.assign({ gridColumn: 'span ' + span, gridRow: 'span ' + rowSpan }, h ? { height: h + 'px' } : null)
+    var wrap = el('div.home-card-wrap', {
+      'data-widget-id': key,
+      style: { gridColumn: 'span ' + span, gridRow: 'span ' + rowSpan }
     }, kids);
 
     if (editing) {
       wrap.appendChild(el('div.home-card-resize', {
-        title: '드래그해서 높이 조절 (더블클릭: 기본 높이로)',
-        onpointerdown: function (e) { startCardResize(e, key, wrap); },
-        ondblclick: function () { wrap.style.height = ''; wrap.classList.remove('resized'); setCardHeight(key, null); }
+        title: '드래그해서 세로 칸 수 조절 (더블클릭: 1칸)',
+        onpointerdown: function (e) { startCardResizeXY(e, key, wrap); },
+        ondblclick: function () { wrap.style.gridRow = 'span 1'; setCardRowSpan(key, 1); }
       }));
       wrap.appendChild(el('div.home-card-resize-x', {
         title: '드래그해서 폭 조절 (더블클릭: 전체 폭으로)',
@@ -579,12 +585,15 @@ window.MW = window.MW || {};
 
     var home = curHome();
     if (editMode) host.appendChild(editToolbar());
+    // 편집 도구는 격자 밖에 두어, 설명이 길어져도 카드의 고정 행 높이를 밀어내지 않습니다.
+    var grid = el('div.home-widget-grid');
+    host.appendChild(grid);
 
     home.widgets.forEach(function (w) {
       if (w.enabled === false) return;
       var node = widgetNode(w, editMode);
       var wrap = homeCardWrap(w, node, editMode);
-      if (wrap) host.appendChild(wrap);
+      if (wrap) grid.appendChild(wrap);
     });
   }
 

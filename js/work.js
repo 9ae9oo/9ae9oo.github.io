@@ -400,6 +400,7 @@ window.MW = window.MW || {};
     var selectedCount = el('span.work-template-selected-count', { text: '0개 선택' });
     var selectAll = el('input.chk', { type: 'checkbox', 'aria-label': '전체 회차 선택' });
     var editSelected = el('button.btn.btn-sm', { type: 'button', text: '선택 수정', disabled: true });
+    var duplicateSelected = el('button.btn.btn-sm', { type: 'button', text: '선택 복제', disabled: true });
     var deleteSelected = el('button.btn.btn-sm.btn-danger', { type: 'button', text: '선택 삭제', disabled: true });
     var selectionArea = el('div.work-template-selection-area');
     var deleteNotice = el('div.work-template-delete-note');
@@ -422,6 +423,7 @@ window.MW = window.MW || {};
       selectAll.indeterminate = count > 0 && count < total;
       selectAll.disabled = total === 0;
       editSelected.disabled = count === 0;
+      duplicateSelected.disabled = count === 0;
       deleteSelected.disabled = count === 0;
     }
     function episodeProcessChips(ep) {
@@ -581,6 +583,30 @@ window.MW = window.MW || {};
       ]));
     });
 
+    // 선택한 회차를 복제해 새 회차로 늘립니다 — 컷수·공정 구성만 그대로 가져오고,
+    // 체크 기록과 마감일은 복사하지 않습니다(복제는 "같은 틀의 새 회차"이지 진행 상황까지
+    // 베끼는 게 아니므로). 번호는 현재 목록의 최대 번호 다음부터 선택 순서대로 이어 붙입니다.
+    duplicateSelected.addEventListener('click', function () {
+      var targets = selectedDrafts();
+      if (!targets.length) return;
+      var nextNumber = episodeDrafts.reduce(function (max, ep) {
+        return Math.max(max, +ep.number || 0);
+      }, 0) + 1;
+      targets.forEach(function (source, i) {
+        episodeDrafts.push({
+          id: U.uid('ep'), number: nextNumber + i, cutCount: source.cutCount,
+          processes: processNamesOf(source).map(function (n, k) {
+            return { id: U.uid('pr'), name: n, order: k, collapsed: k !== 0, completedCuts: [] };
+          })
+        });
+      });
+      selected = {};
+      approvedWarning = '';
+      closeSelectionArea();
+      drawEpisodeList();
+      U.toast(targets.length + '개 회차를 복제했습니다 (저장 전까지 취소할 수 있습니다).');
+    });
+
     deleteSelected.addEventListener('click', function () {
       var targets = selectedDrafts();
       if (!targets.length) return;
@@ -664,6 +690,7 @@ window.MW = window.MW || {};
           selectedCount,
           el('span.spacer'),
           editSelected,
+          duplicateSelected,
           deleteSelected
         ]),
         episodeList,
@@ -762,35 +789,42 @@ window.MW = window.MW || {};
       type: 'number', min: '1', max: '999',
       value: baseTemplate.cutCount
     });
+    var count = el('input.field', { type: 'number', min: '1', max: '999', value: 1 });
 
     MW.shell.modal({
       title: '회차 추가',
       body: [
         el('div.form-grid', {}, [
           el('div.form-row', {}, [el('label', { text: '회차 번호' }), number]),
+          el('div.form-row', {}, [el('label', { text: '만들 화수' }), count]),
           el('div.form-row', {}, [el('label', { text: '전체 컷 수' }), cuts])
         ]),
         el('div.small.dim', {
-          text: '기본 공정 ' + baseTemplate.processes.join(' · ') + '이(가) 함께 만들어집니다.'
+          text: '기본 공정 ' + baseTemplate.processes.join(' · ') + '이(가) 함께 만들어집니다. ' +
+            '"만들 화수"를 1보다 크게 하면 회차 번호부터 이어서 그만큼 한꺼번에 만듭니다(예: 5화, 3개 → 5·6·7화).'
         })
       ],
       onOk: function () {
         var num = parseInt(number.value, 10) || 0;
         var cut = U.clamp(parseInt(cuts.value, 10) || 1, 1, 999);
-        var newId = U.uid('ep');
+        var howMany = U.clamp(parseInt(count.value, 10) || 1, 1, 999);
+        var newEpisodes = [];
+        for (var i = 0; i < howMany; i++) {
+          newEpisodes.push({
+            id: U.uid('ep'), number: num + i, cutCount: cut,
+            processes: baseTemplate.processes.map(function (n, k) {
+              return { id: U.uid('pr'), name: n, order: k, collapsed: k !== 0, completedCuts: [] };
+            })
+          });
+        }
         MW.store.update(function (s) {
           var w = s.works.find(function (x) { return x.id === work.id; });
           if (!w) return;
           if (!hasWorkTemplate(w)) {
             w.template = { cutCount: baseTemplate.cutCount, processes: baseTemplate.processes.slice() };
           }
-          w.episodes.push({
-            id: newId, number: num, cutCount: cut,
-            processes: baseTemplate.processes.map(function (n, i) {
-              return { id: U.uid('pr'), name: n, order: i, collapsed: i !== 0, completedCuts: [] };
-            })
-          });
-          s.settings.workSel = { workId: w.id, epId: newId };
+          newEpisodes.forEach(function (e) { w.episodes.push(e); });
+          s.settings.workSel = { workId: w.id, epId: newEpisodes[0].id };
         });
       }
     });
@@ -907,7 +941,7 @@ window.MW = window.MW || {};
     });
   }
 
-  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 remainingControl/dueRow 가 함께 씁니다 */
+  /** 한 공정의 완료 lookup·완료 개수·남은 개수 (컷 수 기준). processNode 와 remainingControl/dueQuotaNodes 가 함께 씁니다 */
   function processProgress(ep, pr) {
     var done = {};
     pr.completedCuts.forEach(function (n) { done[n] = true; });
@@ -916,63 +950,113 @@ window.MW = window.MW || {};
     return { done: done, doneCount: doneCount, remain: ep.cutCount - doneCount };
   }
 
+  /** 마감일 하나로 D-day 표시와 남은 일수를 함께 구합니다 — dueQuotaNodes(펼친 줄)와
+      collapsedStatusNode(접힌 줄) 둘 다 같은 계산을 쓰므로 여기 하나로 모아둡니다. */
+  function dueDdayInfo(dueDate) {
+    var d = new Date(dueDate + 'T00:00:00').getTime();
+    var today = new Date(U.ymd(new Date()) + 'T00:00:00').getTime();
+    var diff = Math.round((d - today) / 86400000);
+    var dday = diff === 0 ? 'D-day' : diff > 0 ? ('D-' + pad3(diff) + '일') : ('D+' + pad3(-diff) + '일');
+    return { diff: diff, late: diff < 0, text: dday };
+  }
+
   /** "― 미완료 N컷" (완료면 "완료") — 공정 이름 옆, 얇은 글씨·다른 색.
-      미완료 상태는 계산된 값만 보여주는 순수 텍스트입니다 (입력·클릭 대상 아님).
-      완료 상태만 버튼입니다 — 실수로 전체 체크했을 때 눌러서 되돌릴 수 있어야 하므로. */
-  function remainingControl(work, ep, pr, remain) {
-    if (remain <= 0) {
-      return el('button.proc-remain.done', {
-        type: 'button', text: '완료', title: '눌러서 전체 해제',
-        onclick: function () { toggleRow(work, ep, pr, 1, ep.cutCount); }
-      });
-    }
+      완료·미완료 둘 다 계산된 값만 보여주는 순수 텍스트입니다 (입력·클릭 대상 아님).
+      전체 체크를 되돌리려면 dueQuotaNodes 의 "전체 취소" 버튼을 씁니다.
+      공정이 접혀 있을 때는 이 대신 collapsedStatusNode 를 씁니다. */
+  function remainingControl(pr, remain) {
+    if (remain <= 0) return el('span.proc-remain.done', { text: '완료' });
     return el('span.proc-remaining', { text: '미완료 ' + remain + '컷' });
   }
 
-  /** 공정 헤더의 마감·할당량 부분 — remainingControl 뒤에 이어 붙어 같은 한 줄을 이룹니다:
-      마감일 [입력칸] , D-017일 | 하루 할당량 032컷 남음 [전체 완료]
-      마감일 입력칸은 항상 보이고(따로 편집 모드로 안 들어가도 됨), 날짜를 고르면 change
-      이벤트로 바로 반영됩니다 — 네이티브 달력에서 날짜를 고르면 change 가 확실히 발생하므로,
-      blur 만 믿을 때와 달리 "입력만 하고 안 넘어간 것처럼 보이는" 문제가 없습니다. */
+  /** 접힌 공정의 한 줄 요약 — 펼쳤을 때 쓰는 마감 입력·하루 할당량·전체 완료 버튼은
+      전부 "지금 이 공정을 조작할 때"만 필요해서, 접힌 줄에는 결과만 텍스트로 둡니다.
+      완료면 초록 "완료"만, 미완료면 "미완료 N컷"에 마감이 있을 때만 D-day 를 얇게 덧붙입니다. */
+  function collapsedStatusNode(pr, remain) {
+    if (remain <= 0) return el('span.proc-collapsed-done', { text: '완료' });
+    var children = [el('span.proc-remaining', { text: '미완료 ' + remain + '컷' })];
+    if (pr.dueDate) {
+      var info = dueDdayInfo(pr.dueDate);
+      children.push(el('span.ep-due-text' + (info.late ? '.late' : '.active'), {
+        text: info.text + (info.late ? ' 지남' : '')
+      }));
+    }
+    return el('span.proc-collapsed-status', {}, children);
+  }
+
+  /** 마감일 표시 — 평소엔 텍스트(라벨↔입력 토글, episodeHeaderControl 과 같은 패턴),
+      달력 아이콘(📅)을 눌러야 실제 날짜 입력칸이 나옵니다. 날짜를 고르면(change) 커밋하고
+      바로 텍스트로 되돌아가므로, 입력칸이 계속 박스로 떠 있지 않습니다. 미완료 N컷 처럼
+      "지금 조작할 때만" 입력칸이 필요하다는 원칙을 마감일에도 적용한 것입니다. */
+  function dueEditControl(work, ep, pr) {
+    var wrap = el('span.ep-due');
+
+    function labelInfo() {
+      return pr.dueDate ? dueDdayInfo(pr.dueDate) : null;
+    }
+
+    function showText() {
+      U.clear(wrap);
+      var info = labelInfo();
+      wrap.appendChild(info
+        ? el('span.ep-due-text' + (info.late ? '.late' : '.active'), {
+            text: info.text + (info.late ? ' 지남' : '')
+          })
+        : el('span.ep-due-label', { text: '마감일 미설정' }));
+      wrap.appendChild(el('button.ep-due-edit-btn', {
+        type: 'button', text: '📅', title: '마감일 수정', 'aria-label': '마감일 수정',
+        onclick: showInput
+      }));
+    }
+
+    function showInput() {
+      U.clear(wrap);
+      var inp = el('input.ep-due-input', { type: 'date', value: pr.dueDate || '' });
+      inp.addEventListener('change', function () {
+        var v = inp.value || '';
+        if (v !== (pr.dueDate || '')) {
+          MW.store.update(function (s) {
+            var e = findEp(s, work.id, ep.id);
+            if (!e) return;
+            var p = e.processes.find(function (x) { return x.id === pr.id; });
+            if (!p) return;
+            p.dueDate = v;
+          });
+        }
+        showText();
+      });
+      inp.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape') { e.preventDefault(); showText(); }
+      });
+      // 날짜를 안 고르고 그냥 클릭 밖으로 나가면(change 없이 blur 만) 텍스트로 되돌립니다.
+      // change 가 먼저 발생한 경우엔 그 안에서 이미 showText() 로 wrap 을 다시 그려서 inp 가
+      // 더 이상 wrap 의 자식이 아니므로, 아래 조건에서 자연히 걸러집니다.
+      inp.addEventListener('blur', function () {
+        setTimeout(function () { if (wrap.contains(inp)) showText(); }, 0);
+      });
+      wrap.appendChild(inp);
+      inp.focus();
+      // 네이티브 달력을 바로 열어서 클릭 한 번으로 고를 수 있게 함 (미지원 브라우저는 그냥 입력칸만 포커스)
+      if (inp.showPicker) { try { inp.showPicker(); } catch (err) { /* 미지원 브라우저 */ } }
+    }
+
+    showText();
+    return wrap;
+  }
+
+  /** 하루 할당량 · 전체 완료 버튼 — 공정이 펼쳐져 있을 때만 쓰입니다(processNode 참고).
+      마감일 자체(dueEditControl)는 "미완료 N컷" 옆에 따로 붙으므로 여기 포함되지 않습니다.
+      proc-head 의 spacer 가 이 함수가 반환하는 노드 전체를 줄 오른쪽 끝으로 밀어붙입니다:
+      하루 할당량 032컷 남음 [전체 완료] */
   function dueQuotaNodes(work, ep, pr, remain) {
     var due = pr.dueDate;
-
-    function diffDays(dueStr) {
-      var d = new Date(dueStr + 'T00:00:00').getTime();
-      var today = new Date(U.ymd(new Date()) + 'T00:00:00').getTime();
-      return Math.round((d - today) / 86400000);
-    }
-
-    var diff = due ? diffDays(due) : null;
-    var dueGroupChildren = [el('span.ep-due-label', { text: '마감일' })];
-
-    var inp = el('input.ep-due-input', { type: 'date', value: due || '' });
-    inp.addEventListener('change', function () {
-      var v = inp.value || '';
-      if (v === (pr.dueDate || '')) return;
-      MW.store.update(function (s) {
-        var e = findEp(s, work.id, ep.id);
-        if (!e) return;
-        var p = e.processes.find(function (x) { return x.id === pr.id; });
-        if (!p) return;
-        p.dueDate = v;
-      });
-    });
-    dueGroupChildren.push(inp);
-
-    if (due) {
-      var dday = diff === 0 ? 'D-day' : diff > 0 ? ('D-' + pad3(diff) + '일') : ('D+' + pad3(-diff) + '일');
-      var text = ', ' + dday + (diff < 0 ? ' 지남' : '');
-      dueGroupChildren.push(el('span.ep-due-text' + (diff < 0 ? '.late' : '.active'), { text: text }));
-    }
-
-    var nodes = [el('span.ep-due', {}, dueGroupChildren)];
+    var info = due ? dueDdayInfo(due) : null;
+    var nodes = [];
 
     // "전체 완료" ↔ "전체 취소" — remain 이 0 이 됐다고 버튼 자체를 없애면 실수로 전체
     // 체크했을 때 되돌릴 자리가 이 줄에서 사라져 버립니다. 자리는 그대로 두고 라벨·동작만 뒤집습니다.
-    nodes.push(el('span.ep-header-sep', { text: '|' }));
-    if (remain > 0 && due && diff >= 0) {
-      var daily = Math.ceil(remain / (diff + 1));
+    if (remain > 0 && info && info.diff >= 0) {
+      var daily = Math.ceil(remain / (info.diff + 1));
       nodes.push(el('span.proc-quota', { text: '하루 할당량 ' + pad3(daily) + '컷 남음' }));
     }
     nodes.push(el('button.btn.btn-sm', {
@@ -1035,9 +1119,14 @@ window.MW = window.MW || {};
         el('span.proc-name', { text: pr.name })
       ]),
       el('span.proc-dash', { text: '―' }),
-      remainingControl(work, ep, pr, remain),
-      dueQuotaNodes(work, ep, pr, remain),
-      el('span.spacer'),
+      pr.collapsed ? collapsedStatusNode(pr, remain) : [
+        remainingControl(pr, remain),
+        // 완료된 공정은 접힌 줄(collapsedStatusNode)과 마찬가지로 마감일을 안 보여줍니다 —
+        // 다 끝난 공정에는 D-day가 더 이상 의미 있는 정보가 아니므로.
+        remain > 0 ? dueEditControl(work, ep, pr) : null,
+        el('span.spacer'),
+        dueQuotaNodes(work, ep, pr, remain)
+      ],
       reorder ? el('div.proc-tools', {}, [
       el('button.btn.btn-ghost.btn-icon.btn-sm', {
         text: '↑', title: '위로', disabled: index === 0,

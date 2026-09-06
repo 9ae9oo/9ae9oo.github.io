@@ -10,7 +10,7 @@ window.MW = window.MW || {};
   var U = MW.util;
 
   var KEY = 'mw.v1';       // 저장 키는 유지하고, 안쪽 version 으로 스키마를 올립니다
-  var VERSION = 6;
+  var VERSION = 7;
 
   function catsOf(names) {
     return names.map(function (n) { return { id: 'c-' + n, name: n }; });
@@ -49,20 +49,21 @@ window.MW = window.MW || {};
         pomoPinned: false,    // 앱 실행 시 뽀모도로 창을 자동으로 띄울지 (창 위치·크기는 settings.floats.pomodoro)
         /* 대시보드 위젯 목록. 홈 → "편집"에서 추가·삭제·켜기/끄기·순서 변경.
            { id, type, enabled, config? }
-           type: 'today'|'next'|'habits'|'money' (고정 1개씩, 끄기만 가능)
+           type: 'today'|'tomorrow'|'postponed'|'habits'|'money' (고정 1개씩, 끄기만 가능)
                | 'image'(갤러리)|'minical'(미니 달력)|'embed'(HTML 임베드) — 여러 개 추가 가능
            image.config: { mode:'fixed'|'carousel'|'slideshow', images:[dataURL,…], intervalSec }
            embed.config: { html: '사용자가 붙여넣은 HTML' } */
         homeWidgets: [
           { id: 'image', type: 'image', enabled: false, config: { mode: 'fixed', images: [], intervalSec: 5 } },
           { id: 'today', type: 'today', enabled: true },
-          { id: 'next', type: 'next', enabled: true },
+          { id: 'tomorrow', type: 'tomorrow', enabled: true },
+          { id: 'postponed', type: 'postponed', enabled: true },
           { id: 'habits', type: 'habits', enabled: true },
           { id: 'money', type: 'money', enabled: true }
         ],
-        homeCardHeights: {},   // 위젯별 사용자 지정 높이 { [위젯id]: px } — 편집 모드에서 카드 아래쪽을 드래그해 조절. 없으면 기본 높이
-        homeCardSpans: {},     // 위젯별 가로 칸수 { [위젯id]: 1~3 } — 3칸 그리드에서 몇 칸을 차지할지. 없으면 3(전체 폭)
-        homeCardRowSpans: {},  // 위젯별 세로 칸수 { [위젯id]: 1~3 } — 편집 모드에서 오른쪽 아래 모서리를 드래그. 없으면 1
+        homeCardHeights: {},   // 구버전 픽셀 높이 원본 보관. v7부터 화면에는 칸 수를 적용합니다.
+        homeCardSpans: { today: 2, tomorrow: 1, postponed: 1, habits: 2, money: 2 }, // 가로 1~4칸. 생략하면 전체 폭
+        homeCardRowSpans: {},  // 세로 1~4칸. 생략하면 1칸
         reduceMotion: 'auto', // 'auto'(OS 설정) | 'on'(항상 줄임) | 'off'(항상 켬)
         workSel: { workId: 'sample-work', epId: 'sample-ep-1' },   // 작업 페이지에서 마지막으로 보던 작품·회차
         /* 테마 = 프리셋 하나 + 세부 오버라이드. 오버라이드가 빈 문자열이면 프리셋 기본값을 씁니다.
@@ -71,7 +72,7 @@ window.MW = window.MW || {};
            bgImage: data URL (화면 전체 뒤 배경, 비우면 없음)
            contentWidth: 'narrow'|'normal'|'wide'|'full'|'custom' — 가운데 컨텐츠 최대폭 (최대 800px)
            contentWidthPx: 'custom' 일 때 쓰는 사용자 지정 픽셀값 (320~800) */
-        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal', contentWidthPx: 760 }
+        theme: { preset: 'base', accent: '', bg: '', card: '', bgImage: '', contentWidth: 'normal', contentWidthPx: 760, dashRowHeight: 'normal' }
       },
       pomodoro: { work: 25, shortBreak: 5, longBreak: 15, repeat: 4, autoNext: false },  // legacy 파이썬 앱과 동일한 기본값
       playlists: [],
@@ -148,7 +149,8 @@ window.MW = window.MW || {};
     out.version = VERSION;
     out.settings = Object.assign({}, base.settings, data.settings || {});
     (function () {
-      var BUILTIN = ['today', 'next', 'habits', 'money'];
+      var BUILTIN = ['today', 'tomorrow', 'postponed', 'habits', 'money'];
+      var LEGACY_BUILTIN = ['today', 'next', 'habits', 'money'];
       var MULTI = ['image', 'minical', 'embed'];
       var KNOWN = BUILTIN.concat(MULTI);
 
@@ -156,16 +158,16 @@ window.MW = window.MW || {};
       // out.settings 는 이미 base(기본 homeWidgets)와 병합된 뒤라, 반드시 원본 data 쪽을 봐야 합니다.
       if (!data.settings || !Array.isArray(data.settings.homeWidgets) || !data.settings.homeWidgets.length) {
         var legacyKey = { calendar: 'today', inbox: 'next' };
-        var order = Array.isArray(data.settings && data.settings.homeOrder) ? data.settings.homeOrder : BUILTIN;
+        var order = Array.isArray(data.settings && data.settings.homeOrder) ? data.settings.homeOrder : LEGACY_BUILTIN;
         var seen = {};
         var widgets = [];
         order.forEach(function (k) {
           var key = legacyKey[k] || k;
-          if (BUILTIN.indexOf(key) < 0 || seen[key]) return;
+          if (LEGACY_BUILTIN.indexOf(key) < 0 || seen[key]) return;
           seen[key] = true;
           widgets.push({ id: key, type: key, enabled: true });
         });
-        BUILTIN.forEach(function (key) {
+        LEGACY_BUILTIN.forEach(function (key) {
           if (!seen[key]) widgets.push({ id: key, type: key, enabled: true });
         });
         var legacyImg = (data.settings && typeof data.settings.homeImage === 'string') ? data.settings.homeImage : '';
@@ -179,7 +181,16 @@ window.MW = window.MW || {};
       delete out.settings.homeImage;
       delete out.settings.homeImageSize;
 
-      // 위젯 목록 정리: 알 수 없는 타입 제거, 고정 위젯(today/next/habits/money)은 하나씩만, id 중복 방지
+      // 합쳐져 있던 카드의 자리에 두 카드를 나란히 넣고, 숨김 상태도 함께 물려줍니다.
+      out.settings.homeWidgets = out.settings.homeWidgets.reduce(function (list, w) {
+        if (w && w.type === 'next') {
+          list.push({ id: 'tomorrow', type: 'tomorrow', enabled: w.enabled !== false });
+          list.push({ id: 'postponed', type: 'postponed', enabled: w.enabled !== false });
+        } else list.push(w);
+        return list;
+      }, []);
+
+      // 위젯 목록 정리: 알 수 없는 타입 제거, 고정 위젯은 하나씩만, id 중복 방지
       var idsSeen = {}, builtinSeen = {};
       out.settings.homeWidgets = out.settings.homeWidgets.filter(function (w) {
         if (!w || typeof w !== 'object' || KNOWN.indexOf(w.type) < 0) return false;
@@ -224,7 +235,7 @@ window.MW = window.MW || {};
       var raw = (out.settings.homeCardSpans && typeof out.settings.homeCardSpans === 'object') ? out.settings.homeCardSpans : {};
       var clean = {};
       Object.keys(raw).forEach(function (k) {
-        if (Number.isInteger(raw[k]) && raw[k] >= 1 && raw[k] <= 3) clean[k] = raw[k];
+        if (Number.isInteger(raw[k]) && raw[k] >= 1 && raw[k] <= 4) clean[k] = raw[k];
       });
       out.settings.homeCardSpans = clean;
     })();
@@ -232,7 +243,7 @@ window.MW = window.MW || {};
       var raw = (out.settings.homeCardRowSpans && typeof out.settings.homeCardRowSpans === 'object') ? out.settings.homeCardRowSpans : {};
       var clean = {};
       Object.keys(raw).forEach(function (k) {
-        if (Number.isInteger(raw[k]) && raw[k] >= 1 && raw[k] <= 3) clean[k] = raw[k];
+        if (Number.isInteger(raw[k]) && raw[k] >= 1 && raw[k] <= 4) clean[k] = raw[k];
       });
       out.settings.homeCardRowSpans = clean;
     })();
@@ -250,8 +261,24 @@ window.MW = window.MW || {};
       card: HEX.test(th.card || '') ? th.card : '',
       bgImage: typeof th.bgImage === 'string' ? th.bgImage : '',
       contentWidth: ['narrow', 'normal', 'wide', 'full', 'custom'].indexOf(th.contentWidth) >= 0 ? th.contentWidth : 'normal',
-      contentWidthPx: (function (n) { return (typeof n === 'number' && isFinite(n)) ? Math.min(800, Math.max(320, Math.round(n))) : 760; })(th.contentWidthPx)
+      contentWidthPx: (function (n) { return (typeof n === 'number' && isFinite(n)) ? Math.min(800, Math.max(320, Math.round(n))) : 760; })(th.contentWidthPx),
+      dashRowHeight: ['low', 'normal', 'high'].indexOf(th.dashRowHeight) >= 0 ? th.dashRowHeight : 'normal'
     };
+    if (fromV < 7) {
+      var spans = out.settings.homeCardSpans;
+      var rows = out.settings.homeCardRowSpans;
+      var rowPx = { low: 84, normal: 112, high: 140 }[out.settings.theme.dashRowHeight];
+      // 옛 픽셀 높이를 가까운 모눈 수로 옮깁니다. 원래 값은 백업에 남기고 한 번만 변환합니다.
+      Object.keys(out.settings.homeCardHeights).forEach(function (id) {
+        rows[id] = Math.min(4, Math.max(1, Math.ceil((out.settings.homeCardHeights[id] + 14) / (rowPx + 14))));
+      });
+      Object.keys(spans).forEach(function (id) { if (spans[id] === 3) spans[id] = 4; });
+      // 분리한 두 카드는 기획대로 각각 1칸에서 시작합니다.
+      spans.tomorrow = 1;
+      spans.postponed = 1;
+      delete spans.next;
+      delete rows.next;
+    }
     out.pomodoro = Object.assign({}, base.pomodoro, data.pomodoro || {});
     out.player = Object.assign({}, base.player, data.player || {});
     out.ledger = Object.assign({}, base.ledger, data.ledger || {});
@@ -401,14 +428,29 @@ window.MW = window.MW || {};
   }
 
   /** 자동 저장이 되었다는 것을 조용히 알려줍니다 (연속 입력 중에는 한 번만) */
-  var notifySaved = U.debounce(function () { U.toast('저장됨', 'save'); }, 1200);
+  var notifySaved = U.debounce(function () {
+    // 앞선 성공 알림을 기다리는 동안 쓰기가 실패했다면, 성공 알림을 뒤늦게 띄우지 않습니다.
+    if (saveState.phase === 'saved') U.toast('저장됨', 'save');
+  }, 1200);
+
+  // 저장 상태는 화면용 신호입니다. 백업 데이터에 넣지 않고 실제 쓰기 결과만 전달합니다.
+  var saveState = { phase: 'idle', savedAt: null };
+  var saveSubs = [];
+  function signalSave(phase) {
+    saveState = { phase: phase, savedAt: phase === 'saved' ? Date.now() : saveState.savedAt };
+    saveSubs.forEach(function (fn) {
+      try { fn(saveState); } catch (e) { console.error('[store] 저장 표시 오류', e); }
+    });
+  }
 
   function write(silent) {
     try {
       localStorage.setItem(KEY, JSON.stringify(state));
       writeFailed = false;
+      signalSave('saved');
       if (!silent) notifySaved();
     } catch (e) {
+      signalSave('error');
       if (!writeFailed) {
         writeFailed = true;
         U.toast('저장에 실패했습니다 (저장 공간 초과 또는 사생활 보호 모드).', 'err');
@@ -432,6 +474,7 @@ window.MW = window.MW || {};
     /** update(function (s) { s.todos.push(...) }) — 변경 후 저장 + 전체 알림 */
     update: function (fn) {
       if (typeof fn === 'function') fn(state);
+      signalSave('pending');
       scheduleWrite();
       emit();
       return state;
@@ -440,10 +483,14 @@ window.MW = window.MW || {};
     /** 저장만 하고 리렌더는 하지 않음 (타이머처럼 초당 갱신되는 값) */
     touch: function (fn) {
       if (typeof fn === 'function') fn(state);
+      signalSave('pending');
       scheduleWrite();
     },
 
     on: function (fn) { subs.push(fn); return fn; },
+
+    get saveState() { return saveState; },
+    onSave: function (fn) { saveSubs.push(fn); },
 
     flush: function () { write(true); },
 

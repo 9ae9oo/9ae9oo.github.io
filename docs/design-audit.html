@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creator Workspace 디자인 감사</title>
+<style>
+  :root {
+    --bg: #f7f8fb;
+    --card: #ffffff;
+    --line: #dfe2ea;
+    --line-soft: #eceef4;
+    --text: #1c1f2b;
+    --muted: #4d5364;
+    --dim: #6f7686;
+    --high: #b91c1c;
+    --mid: #a16207;
+    --low: #15803d;
+    --accent-ink: #3f63b4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    padding: 40px 20px 80px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Pretendard", -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+    font-size: 14px;
+    line-height: 1.7;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; }
+
+  h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; margin: 0 0 6px; }
+  .sub { color: var(--muted); margin: 0 0 28px; }
+  h2 {
+    font-size: 17px; font-weight: 700; margin: 44px 0 14px;
+    padding-bottom: 8px; border-bottom: 1px solid var(--line);
+  }
+  h3 { font-size: 14px; font-weight: 700; margin: 0 0 8px; }
+  p { margin: 0 0 10px; }
+  code {
+    font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+    font-size: 12.5px; background: var(--line-soft); padding: 1px 5px; border-radius: 4px;
+  }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 4px; }
+  .stat {
+    flex: 1 1 150px; background: var(--card); border: 1px solid var(--line);
+    border-radius: 8px; padding: 14px 16px;
+  }
+  .stat .n { font-size: 22px; font-weight: 700; line-height: 1.2; }
+  .stat .l { color: var(--dim); font-size: 12px; }
+
+  .item {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 18px 20px; margin-bottom: 12px;
+  }
+  .item-head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+  .num {
+    flex: none; font-size: 12px; font-weight: 700; color: var(--dim);
+    font-variant-numeric: tabular-nums;
+  }
+  .item h3 { flex: 1; margin: 0; }
+  .tags { display: flex; gap: 6px; flex: none; }
+  .tag {
+    font-size: 11px; font-weight: 700; padding: 2px 7px;
+    border: 1px solid currentColor; border-radius: 4px; white-space: nowrap;
+  }
+  .t-high { color: var(--high); }
+  .t-mid { color: var(--mid); }
+  .t-low { color: var(--low); }
+  .t-eff { color: var(--dim); font-weight: 500; }
+
+  .row { display: grid; grid-template-columns: 74px minmax(0, 1fr); gap: 4px 12px; margin-top: 10px; }
+  .row dt { color: var(--dim); font-size: 12px; font-weight: 600; }
+  .row dd { margin: 0; }
+  .row dd + dt { margin-top: 6px; }
+
+  .group {
+    background: var(--card); border: 1px solid var(--line); border-radius: 8px;
+    padding: 16px 20px; margin-bottom: 10px;
+  }
+  .group h3 { margin-bottom: 4px; }
+  .group p { color: var(--muted); margin: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+  th { color: var(--dim); font-size: 12px; font-weight: 600; border-bottom: 1px solid var(--line); }
+  td.sev { white-space: nowrap; width: 62px; font-size: 11px; font-weight: 700; }
+  td.dim-col { white-space: nowrap; width: 92px; color: var(--dim); font-size: 12px; }
+  .appendix { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 12px; }
+
+  .note { color: var(--dim); font-size: 12.5px; }
+  .method { background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 16px 20px; }
+  .method ul { margin: 8px 0 0; padding-left: 18px; }
+  .method li { margin-bottom: 4px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>Creator Workspace 디자인 감사</h1>
+  <p class="sub">2026-09-06 · 기능이 아니라 테마·시각 디자인만 대상 · 코드 11개 차원 감사 + 실제 화면 확인</p>
+
+  <div class="stats">
+    <div class="stat"><div class="n">80</div><div class="l">검증된 발견</div></div>
+    <div class="stat"><div class="n" style="color:var(--high)">34</div><div class="l">심각</div></div>
+    <div class="stat"><div class="n" style="color:var(--mid)">42</div><div class="l">보통</div></div>
+    <div class="stat"><div class="n">18</div><div class="l">우선 조치 항목</div></div>
+  </div>
+  <p class="note" style="margin-top:10px">
+    80건을 근본 원인별로 합치면 18개로 줄어듭니다. 아래는 <strong>지금 고치면 체감이 큰 순서</strong>입니다.
+    모든 대안은 플랫·미니멀 방향(그림자·장식 도형·외부 라이브러리 없음)을 지킵니다.
+  </p>
+
+  <h2>1군 — 읽히지 않는 정보 (색·대비)</h2>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">01</span>
+      <h3>강조색을 글자색으로 쓰는 25곳이 전부 대비 1.6~2.0:1 — 선택된 것이 가장 안 보인다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>파스텔 <code>--accent</code> 하나가 면(배경·테두리)과 글자 양쪽에 쓰입니다. 활성 탭, 좌측 레일의 현재 페이지, 재생 중인 곡, 토요일 날짜가 모두 이 색 글자라 흰 카드 위에서 1.63~2.03:1 입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>사용자가 가장 확실히 읽어야 할 "지금 선택된 것"이 주변 항목보다 <strong>흐리게</strong> 보이는 역전이 일어납니다. 프리셋을 바꿔도 5종 전부 미달이라 우연이 아니라 구조 문제입니다.</dd>
+      <dt>대안</dt>
+      <dd><code>--accent</code>는 면·테두리·밑줄 전용으로 두고, 글자용 <code>--accent-ink</code>를 파생시킵니다. <code>js/shell.js</code>의 <code>applyTheme</code>에서 이미 쓰는 <code>U.mixHex</code>로 흰 배경 대비 4.5:1을 넘길 때까지 어둡게 섞으면 됩니다(base <code>#9db8f0</code> → 약 <code>#3f63b4</code>). 새 색·새 장식 없이 토큰 하나만 늘어납니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">02</span>
+      <h3>의미색(초록·빨강·주황)이 다크 전용 값 한 세트뿐 — 흰 카드 위 금액·경고가 1.5~1.9:1</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">작음</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>실제로 켜지는 테마는 라이트 프리셋 5종뿐인데 <code>--green #4ade80</code>, <code>--red #f87171</code>, <code>--amber #fbbf24</code>는 어두운 배경 기준 값입니다. MONEY의 21px 볼드 금액이 1.7:1, 일정 알람 헤더가 1.51:1입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>돈·경고·완료처럼 <strong>정확히 읽혀야 하는 정보</strong>가 화면에서 가장 안 보이는 글자가 됐습니다. 토스트 경고는 1.44:1로 배경과 거의 붙습니다.</dd>
+      <dt>대안</dt>
+      <dd><code>:root[data-preset]</code> 공통 블록에 흰 배경용 진한 값을 추가합니다 — <code>--green #15803d</code>(5.0:1), <code>--red #b91c1c</code>(6.5:1), <code>--amber #a16207</code>(4.9:1). <code>-dim</code> 배경 알파는 그대로 두면 되므로 "옅은 배경 + 진한 글자"가 되어 칩·콜아웃·알람이 그대로 읽힙니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">03</span>
+      <h3><code>--text-dim</code>이 모든 팔레트에서 AA 미달인데 60곳 넘게 쓰임 — WORKFLOW 컷 숫자 포함</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">작음</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>2.20~3.21:1. 이 앱의 주 컨텐츠인 체크보드의 <strong>미완료 컷 숫자</strong>가 2.82:1이라 격자가 "숫자가 적힌 칸"이 아니라 "거의 빈 회색 칸"으로 보입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>완료 칸(8.9:1)과 미완료 칸의 대비 격차가 3배가 넘어, 진행 상황을 훑을 때 미완료 쪽 숫자를 읽으려면 눈을 붙여야 합니다. 게다가 9.5~11px 초소형 글자에도 같은 색을 써서 크기와 대비가 동시에 최저치입니다.</dd>
+      <dt>대안</dt>
+      <dd><code>--text-dim</code>을 <code>#949aa8</code> → <code>#6f7686</code>로 내립니다(흰 배경 4.55:1). <code>--text-muted</code>와는 여전히 구분되므로 3단 위계는 유지됩니다. 여기에 규칙 하나를 더합니다 — <strong>11px 미만 글자에는 dim을 쓰지 않고 muted를 쓴다.</strong></dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">04</span>
+      <h3>프리셋 5개 전부 <code>--surface-0</code>과 <code>--surface-1</code>이 같은 색 — 표면 위계가 존재하지 않는다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>코드는 surface 0→1→2 세 단계를 전제로 짜여 있는데, 출고되는 5개 테마에서 0단과 1단이 물리적으로 같은 픽셀 값입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>"그림자 없이 색과 타이포로 위계를 표현한다"고 정해놓고, 정작 위계를 담당할 표면 토큰이 무너져 있습니다. 카드·입력창·비활성 칸이 전부 한 장의 흰 판이 되고 남은 구분 수단은 1.24:1 테두리 한 줄뿐입니다. 거래 표의 고정 헤더가 본문 행과 같은 배경이라 스크롤 중 섞이고, 설정에서 카드색을 바꾸면 안쪽 흰 요소들이 구멍처럼 남습니다.</dd>
+      <dt>대안</dt>
+      <dd>프리셋의 <code>--surface-0</code>를 카드보다 한 단계 눌린 값으로 실제 분리합니다(base <code>#f7f8fc</code> / mint <code>#f4faf7</code> / peach <code>#fdf7f3</code> / lavender <code>#faf7fe</code> / butter <code>#fbf8ef</code>). 그리고 설정의 카드색 노브는 <code>--surface-1</code>만 바꾸는 대신 <code>U.mixHex</code>로 표면 스케일 전체를 파생시킵니다.</dd>
+    </dl>
+  </div>
+
+  <h2>2군 — 상태가 보이지 않음</h2>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">05</span>
+      <h3>CSS 전체에 <code>:focus-visible</code>이 0건 — 키보드로는 지금 어디 있는지 알 수 없다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">작음</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>입력창은 <code>outline: none</code>으로 기본 링을 지우고 대체 신호가 테두리 색 변화 하나뿐인데 그 변화가 1.99:1입니다. 버튼·탭·컷 칸은 OS 기본 링에 의존해 요소마다 표시가 제각각입니다. Tab으로 체크보드를 지나가면 100개 넘는 칸을 통과하는데 어디인지 알 수 없습니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>키보드 사용자에게는 현재 위치 표시가 사실상 없는 상태이고, 색상 변화 하나에만 의존하므로 색각 이상 사용자에게도 마찬가지입니다.</dd>
+      <dt>대안</dt>
+      <dd>전역 규칙 한 줄: <code>:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }</code>. <code>--text</code>는 흰 배경 15:1이라 프리셋 5개 전부에서 확실히 보이고 강조색 밝기에 좌우되지 않습니다. <code>:focus-visible</code>은 마우스 클릭에는 걸리지 않으므로 지금의 조용한 화면은 그대로입니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">06</span>
+      <h3>비활성 입력창이 활성과 픽셀 단위로 동일 — <code>.field:disabled</code> 규칙이 없다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">작음</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>설정 → 음악에서 재생목록이 없으면 주소 입력창이 비활성인데 겉보기엔 멀쩡합니다. 같은 줄의 버튼만 42%로 흐려져서, 버튼은 죽고 입력창은 살아 있는 모순된 화면이 됩니다. 비활성 투명도도 0.42 / 0.25 / 없음 세 갈래입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>사용자가 주소를 붙여넣고 왜 아무 일도 안 일어나는지 찾게 됩니다. 게다가 opacity로 만든 비활성(2.43:1)이 평범한 보조 텍스트와 밝기가 완전히 겹쳐, 흐린 정도만으로는 비활성인지 부가 정보인지 구분할 수 없습니다.</dd>
+      <dt>대안</dt>
+      <dd><code>--disabled-opacity: 0.42</code> 토큰을 만들어 세 곳을 통일하고 <code>.field:disabled { opacity: var(--disabled-opacity); cursor: not-allowed; }</code> 한 줄을 추가합니다. input·select·textarea 전부에 한 번에 적용됩니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">07</span>
+      <h3>선택하면 hover가 죽고, 선택 표시 문법이 4갈래로 갈린다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>상태 규칙이 <code>:hover</code>보다 <em>뒤에</em> 선언돼 있어, 체크된 컷·완료한 해빗·재생 중인 트랙 위에 마우스를 올리면 아무 반응이 없습니다. 좌측 레일의 현재 페이지 표시는 1.10:1 배경 하나뿐인데, 마우스를 올리면(1.16:1) 오히려 더 진해지는 역전까지 있습니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>체크한 컷을 다시 눌러 해제하는 것이 WORKFLOW의 핵심 조작인데, 하필 <strong>되돌릴 수 있는 요소에서만</strong> hover가 죽어 헛클릭을 유발합니다.</dd>
+      <dt>대안</dt>
+      <dd>선언 순서를 "기본 → 상태 → 상태+hover"로 못박고 <code>.cut.on:hover</code> 같은 조합 규칙을 명시합니다(<code>--accent-hover</code>는 이미 존재하는 토큰). 선택 표시는 색 대신 <strong>명도 계단 + 굵기</strong>로 통일합니다 — 배경 <code>--surface-3</code>, 글자 <code>--text</code>/600, accent는 2px 밑줄 같은 "선"에만.</dd>
+    </dl>
+  </div>
+
+  <h2>3군 — 아이콘이 테마를 따라오지 않음</h2>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">08</span>
+      <h3>1차 내비게이션 아이콘 9개가 전부 컬러 이모지 — hover·active 색 규칙이 통째로 죽어 있다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">큼</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>사이드바 5개(🏠🎬📅💰⚙️)와 툴레일 4개(📥📝🎵⏱️)가 컬러 이모지입니다. 컬러 폰트는 자기 색을 칠하므로 <code>color</code> 선언이 아무 효과가 없습니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>이미 작성해 둔 3단계 색 규칙(<code>--text-muted</code> → <code>--text</code> → <code>--on-accent</code>)이 화면에 전혀 나타나지 않습니다. 테마를 5개나 만들어 두고 앱에서 가장 눈에 띄는 요소만 그 테마 밖에 있습니다. 메모 카드에서는 ♥(텍스트)만 상태색이 먹고 🔒·🗑(이모지)는 죽는 반쪽 동작까지 생깁니다.</dd>
+      <dt>대안</dt>
+      <dd><code>js/util.js</code>에 <code>U.icon(name)</code> 헬퍼를 두고 <code>currentColor</code> 인라인 SVG로 교체합니다. <code>js/timer.js</code>에 이미 <code>createElementNS</code>로 SVG를 만드는 패턴이 있어 <strong>외부 라이브러리 없이</strong> 단일 파일 빌드도 그대로 통과합니다. 규격은 <code>viewBox="0 0 24 24"</code>, <code>stroke="currentColor"</code>, <code>stroke-width="1.75"</code>로 고정.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">09</span>
+      <h3>BGM 재생 버튼과 다음 곡 버튼이 똑같은 글자 ▶ — 크기 2px 차이로만 구분된다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>미니바에서 11px ▶(다음 곡)과 14px ▶(재생)이 2px 간격으로 붙어 있습니다. 같은 줄에 컬러 이모지(🔀🔁🔇🔊)와 단색 글리프(◀▶❚❚)가 섞여 있고, <code>.mus-control.on</code>의 강조색은 이모지 쪽에서만 무효입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>플레이어의 가장 기본적인 두 동작을 눌러보기 전에는 구분할 수 없습니다. 표준 플레이어라면 형태 자체가 다른데(다음 곡 = 삼각형 + 세로 바) 여기서는 형태 정보가 아예 없습니다. 셔플·음소거가 켜졌는지도 색으로 표시되지 않습니다.</dd>
+      <dt>대안</dt>
+      <dd>transport 5개를 SVG로 바꿔 <strong>형태로</strong> 구분합니다 — 재생 <code>M8 5v14l11-7z</code>, 일시정지는 사각형 두 개, 다음 곡은 삼각형+세로 바, 이전 곡은 좌우 반전. 크기는 <code>.mus-control svg { width:18px }</code> 한 줄로 모읍니다.</dd>
+    </dl>
+  </div>
+
+  <h2>4군 — 토큰이 기준으로 작동하지 않음</h2>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">10</span>
+      <h3>버튼 높이가 5종(20·22·27·30·36px) — 36px 입력칸 옆에 27px 버튼이 붙는다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>작품 선택 드롭다운(36px) 옆의 [작품 관리]가 27px, 작품 이름 입력칸(36px) 옆의 [작품 추가하기]가 27px입니다. 세로 가운데 정렬이라 위아래로 4.5px씩 틈이 생깁니다. 정작 토큰 <code>--control-inline-h: 32px</code>는 정의만 되고 <strong>사용처가 0회</strong>입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>같은 <code>.btn-sm</code>이 WORKFLOW에서만 22px, 다른 페이지에서는 30px로 렌더돼 화면을 옮기면 버튼이 한 단계 커집니다. 작품 관리 모달 하나 안에서만 22 / 30 / 36px 세 높이가 세로로 놓여 정렬선이 세 번 어긋납니다. 쓰이지 않는 토큰이 남아 있다는 것 자체가 "토큰을 안 보고 새 숫자를 적었다"는 증거입니다.</dd>
+      <dt>대안</dt>
+      <dd>단계를 셋으로 확정합니다 — <code>--control-h 36px</code>(입력칸과 같은 줄), <code>--control-sm-h 30px</code>(보조), 신규 <code>--control-xs-h 22px</code>(텍스트 줄에 얹히는 인라인). 27px·20px은 22px로 흡수하고 죽은 <code>--control-inline-h</code>는 삭제합니다. 입력칸과 같은 줄에 서는 버튼들은 오버라이드를 <strong>지워서</strong> 36px을 그대로 쓰게 합니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">11</span>
+      <h3>모서리 값이 15종 — 토큰과 똑같은 6px·10px까지 손으로 다시 적혀 있다</h3>
+      <div class="tags"><span class="tag t-mid">보통</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>토큰은 <code>--radius 10px</code>, <code>--radius-sm 6px</code> 둘뿐인데 실제로는 2·3·4·5·6·7·9·10·11·12·16·17·999px·50%가 쓰입니다. BGM 패널만 11~17px 계열을 혼자 쓰고, 공정 헤더 한 줄에 999px·6px·4px이 동시에 있습니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>Inbox → Memo → BGM을 번갈아 열면 BGM만 다른 앱에서 가져온 화면처럼 보입니다. 컷 격자는 카드(6px) 안에 7px 칸이 들어가 <strong>바깥보다 안쪽이 더 둥근</strong> 역전이 생기고, 모바일에서는 9px로 더 벌어집니다. 알약(999px)은 원래 상태 배지의 모양인데 버튼이 빌려 쓰면서 "누르는 것 / 읽는 것"의 구분이 흐려집니다.</dd>
+      <dt>대안</dt>
+      <dd><code>--radius-xs 3px</code>를 추가해 xs/sm/lg 세 단계 + 999px(배지 전용) + 50%(원)로 정리하고, 6px·10px 하드코딩 7건을 토큰 참조로 치환합니다. 컷 칸의 7px/9px은 <code>var(--radius-sm)</code>로 통일합니다(손가락 타깃은 칸 크기로 이미 해결됨).</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">12</span>
+      <h3>font-size가 23종이고 27개 선언이 0.5px 단위 — 없는 굵기 750·650도 쓰고 있다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>9 / 9.5 / 10 / 10.5 / 11 / 11.5 / 12 / 12.5 / 13 / 13.5px이 0.5px씩 붙어 있어 서로 구분되지 않습니다. <code>font-weight: 750</code>·<code>650</code>은 로드된 Pretendard에 없는 굵기라 각각 <strong>800·700으로 튀어</strong> 렌더됩니다. 그 결과 회차 제목(22px/750→800)이 페이지 제목(21.6px/700)보다 크고 무거워 위계가 뒤집힙니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>"작은 글씨"가 필요할 때마다 새 값이 하나씩 늘어난 흔적이고, 스케일이 아니라 목록입니다. 한글 표 헤더에 걸린 <code>text-transform: uppercase</code>는 <strong>한글에 아무 효과가 없어</strong> 죽은 코드이고, 함께 딸려온 자간만 벌어져 라벨이 성기게 보입니다.</dd>
+      <dt>대안</dt>
+      <dd><code>--fs-xxs 11px</code> ~ <code>--fs-xl 20px</code> 7단계로 접고 0.5px을 전부 없앱니다(11px = 한글 가독 하한). 750→700, 650→600으로 교정하고, 한글 라벨의 <code>uppercase</code>와 <code>letter-spacing</code>은 삭제합니다. <code>line-height</code>도 12종 → 4단계(<code>1 / 1.35 / 1.5 / 1.7</code>)로 접습니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">13</span>
+      <h3>간격의 64%가 4px 격자 밖 — 같은 역할의 카드에 padding이 9종</h3>
+      <div class="tags"><span class="tag t-mid">보통</span><span class="tag t-eff">큼</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>7px 43곳, 9px 20곳, 11px·13px 각 11·12곳. 표면·테두리가 사실상 같은 카드인데 안쪽 여백만 16 / 14·16 / 11·12 / 12 / 11·13 / 14 / 10 / 8 / 7·8 아홉 갈래입니다. MONEY 한 화면을 스크롤하면 그중 다섯 종류를 연속으로 지나갑니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>1~2px 차이는 개별로는 버그로 보이지 않지만, 화면 전체가 "어딘가 흐릿하게 안 맞는" 느낌으로 누적됩니다. 탭 아래 첫 블록까지의 거리도 화면마다 10 / 14 / 18px이라 페이지를 옮길 때 리듬이 바뀝니다.</dd>
+      <dt>대안</dt>
+      <dd><code>--sp-1 4px</code> ~ <code>--sp-6 24px</code> 계단과 <code>--card-pad 16px</code> / <code>--card-pad-sm 12px</code> 두 개만 정의하고 기계적으로 치환합니다. 5·6·7 → 4 또는 8, 9·10·11 → 8 또는 12, 13·14·15 → 12 또는 16.</dd>
+    </dl>
+  </div>
+
+  <h2>5군 — 구조·레이아웃</h2>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">14</span>
+      <h3>사이드 패널이 콘텐츠를 밀어내지 않고 덮는다 — 1554px 미만에서 카드 오른쪽이 잘린다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">큼</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd><code>#panelhost</code>가 <code>position: fixed</code>라 흐름 밖이므로 <code>#content</code>는 전혀 줄지 않습니다. 1440px에서 57px, 1280px에서 137px이 덮입니다. 그런데 <code>css/shell.css</code>·<code>index.html</code>·<code>js/shell.js</code> 세 곳의 주석은 모두 "패널이 열리면 메인이 그만큼 줄어든다"고 <strong>반대로</strong> 적혀 있습니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>노트북 해상도에서 Inbox·Memo·Music·Timer를 열 때마다 콘텐츠 오른쪽이 가려집니다. 게다가 좌우 레일이 서로 다른 언어(왼쪽은 콘텐츠에 붙은 56px 둥근 카드, 오른쪽은 화면 끝에 붙은 41px 반쪽 탭)라 카드가 이미 중앙에서 37px 밀려 있어 겹침이 더 커집니다. 641~874px 구간에서는 레일이 카드 위를 26px 덮습니다.</dd>
+      <dt>대안</dt>
+      <dd>우측 레일을 <code>#app</code>의 flex 자식으로 되돌려 <strong>[56][18][콘텐츠][18][56]</strong> 대칭을 만들고, <code>#panelhost</code>는 <code>flex-basis</code> 전환으로 바꿔 실제로 콘텐츠를 밀게 합니다. 그러면 주석이 설명하는 동작과 코드가 일치하고 중간 폭 겹침도 자동으로 사라집니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">15</span>
+      <h3>캘린더가 뷰포트 기준 브레이크포인트라, 넓은 모니터에서 하루 칸이 49px</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>페이지 안쪽 폭은 660px인데 <code>.cal-layout</code>은 <code>1fr + 300px</code> 2단을 유지합니다. 1단으로 접는 분기가 <code>@media (max-width: 1000px)</code>라 <strong>뷰포트</strong> 기준이어서 1920px 모니터에서는 절대 발동하지 않습니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>화면이 아무리 넓어도 월간 달력은 49px짜리 칸에 일정을 두세 글자로 잘라 넣습니다. 셸은 콘텐츠 폭을 800px로 제한하는데 페이지 CSS는 화면 폭을 보고 판단해서, 두 기준이 서로 다른 세계를 봅니다.</dd>
+      <dt>대안</dt>
+      <dd>이미 <code>work.css</code>가 쓰고 있는 방식을 그대로 옮깁니다 — <code>.page { container-type: inline-size }</code> + <code>@container (max-width: 700px)</code>. 그러면 콘텐츠 폭 프리셋을 어떻게 바꿔도 달력이 스스로 접힙니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">16</span>
+      <h3>"탭" 역할에 시각 언어 6종 — MONEY 한 페이지에 밑줄·알약·박스가 3층으로 쌓인다</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">중간</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>1차는 밑줄 탭, 2차는 알약 탭, 3차는 박스 탭이 세로로 붙어 나옵니다. 선택 표현도 밑줄 / 옅은 배경+테두리 / 진한 배경+반전 글자 세 종류입니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>계층 깊이가 모양에서 읽히지 않고, 오히려 3차 탭이 2차 탭보다 무거워 보입니다. "이 중 하나를 고른다"는 같은 의미가 화면마다 다른 신호로 나타납니다.</dd>
+      <dt>대안</dt>
+      <dd>계층별로 하나씩만 남깁니다 — 1차 <code>.tabs</code>(밑줄, 현행 유지), 2차 <code>.subtab</code>, 3차/모드 선택 <code>.seg</code>. <code>.cal-views</code>와 <code>.todo-tab</code>은 삭제하고 각각 <code>.seg</code>·<code>.subtab</code>으로 치환합니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">17</span>
+      <h3>선이 과하다 — 접힌 카드 아래 2px 이중선, 모달 안 상자 4겹, 여백으로 충분한 자리의 가로선</h3>
+      <div class="tags"><span class="tag t-high">심각</span><span class="tag t-eff">작음</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>공정을 접으면 헤더의 <code>border-bottom</code>과 카드 자신의 아래 테두리가 틈 없이 붙어 그 카드만 아래 선이 2px가 됩니다. 작품 관리 모달은 "모달 → 목록 상자 → 행 → 미니 태그"로 테두리가 4겹이고, 회차가 20개면 그 안에서만 19개의 가로선이 그어집니다.</dd>
+      <dt>왜 문제</dt>
+      <dd>공정을 접어두고 쓰는 것이 기본 사용 방식이라, 펼친 카드(1px)와 접은 카드(2px)가 나란히 놓이면서 선 굵기가 카드마다 들쭉날쭉해 보입니다. 게슈탈트 근접성 관점에서 이미 여백·라벨·색으로 그룹이 표현된 자리에 선을 한 번 더 긋고 있습니다.</dd>
+      <dt>대안</dt>
+      <dd><code>.proc-head:last-child { border-bottom: 0 }</code> 한 줄로 이중선은 즉시 해결됩니다. 더 나아가 헤더 구분선 자체를 없애고 <code>.proc-body</code>의 위 여백을 4px 늘리면 카드 개수만큼 가로선이 사라집니다. 모달 회차 목록은 <code>border-bottom</code> 대신 <code>gap: 2px</code>로 나눕니다.</dd>
+    </dl>
+  </div>
+
+  <div class="item">
+    <div class="item-head">
+      <span class="num">18</span>
+      <h3>정해야 할 것 두 가지 — 그림자 19곳, 그리고 아무도 못 보는 다크 팔레트</h3>
+      <div class="tags"><span class="tag t-mid">보통</span><span class="tag t-eff">작음</span></div>
+    </div>
+    <dl class="row">
+      <dt>지금 상태</dt>
+      <dd>AGENTS.md에는 "그림자·입체감 없이"라고 적었는데 실제 CSS에는 <code>box-shadow</code>가 25건 있고, 그중 8건은 토큰을 우회한 하드코딩입니다(검정 계열과 네이비 계열 두 갈래). 한편 <code>tokens.css</code>의 <code>:root</code>에는 완전한 다크 팔레트가 정의돼 있는데, 설정의 테마 프리셋은 5개 전부 라이트이고 <code>data-theme</code>도 붙지 않아 <strong>UI에서 도달할 방법이 없습니다.</strong></dd>
+      <dt>왜 문제</dt>
+      <dd>원칙과 코드가 어긋난 채로 두면 다음에 누가 그림자를 더해도 근거가 없습니다. 다크 팔레트는 "있지만 안 보이는 코드"라 유지보수 때마다 판단을 흐리고, 실제로 의미색이 다크 기준으로만 정의된 원인(02번)이기도 합니다.</dd>
+      <dt>대안</dt>
+      <dd>둘 다 <strong>결정</strong>이 먼저입니다. 그림자는 ① 전부 제거하고 테두리로 통일 ② "떠 있는 것(패널·모달·토스트·미니바)에만 <code>var(--shadow)</code> 허용" 규칙을 AGENTS.md에 명시 — 둘 중 하나를 고르고 하드코딩 8건은 어느 쪽이든 토큰으로 모읍니다. 다크 팔레트는 프리셋에 다크를 추가해 살리거나, 안 쓸 거면 삭제해 라이트 기준으로 정리합니다.</dd>
+    </dl>
+  </div>
+
+  <h2>묶어서 처리하면 좋은 것</h2>
+
+  <div class="group">
+    <h3>A. 색 토큰 한 번에 (01·02·03·04) — 파일 두 개, 전 화면 반영</h3>
+    <p><code>css/tokens.css</code>의 프리셋 블록과 <code>js/shell.js</code>의 <code>applyTheme</code>만 고치면 됩니다. surface-0 분리 + 의미색 라이트 값 + text-dim 조정 + accent-ink 파생을 한 번에 하면, 마크업을 하나도 안 건드리고 대비 문제 대부분이 사라집니다. <strong>가장 적은 수정으로 가장 큰 변화</strong>가 나오는 묶음입니다.</p>
+  </div>
+
+  <div class="group">
+    <h3>B. 상태 규칙 한 번에 (05·06·07) — 전역 규칙 몇 줄</h3>
+    <p><code>:focus-visible</code>, <code>.field:disabled</code>, <code>--disabled-opacity</code>, 상태+hover 조합 규칙, 전환 시간 <code>--t-state</code> 통일까지 전부 <code>tokens.css</code>에 몰아서 선언할 수 있습니다. 개별 화면 수정이 거의 없습니다.</p>
+  </div>
+
+  <div class="group">
+    <h3>C. 아이콘 교체 (08·09) — <code>U.icon()</code> 하나 만들고 한 번에</h3>
+    <p>헬퍼를 먼저 만든 뒤 사이드바 → 툴레일 → BGM → 메모 → 공정 헤더 순으로 옮기면 됩니다. 이걸 끝내야 07번의 상태색 규칙이 실제로 화면에 나타나므로, B 다음에 하는 것이 좋습니다.</p>
+  </div>
+
+  <div class="group">
+    <h3>D. 토큰 정리 + 기계적 치환 (10·11·12·13) — 한 번에 하지 말 것</h3>
+    <p>범위가 넓어 한꺼번에 하면 회귀를 못 잡습니다. <strong>토큰 정의 → 한 파일씩 치환 → 화면 확인</strong> 순으로 <code>work.css</code> → <code>shell.css</code> → <code>calendar.css</code>/<code>ledger.css</code>/<code>widgets.css</code> 순서를 권합니다.</p>
+  </div>
+
+  <h2>부록 — 감사 원본 80건</h2>
+  <p class="note">근본 원인이 같은 항목들이 위에서 하나로 합쳐졌습니다. 아래는 차원별 원본 목록입니다.</p>
+  <div class="appendix">
+    <table>
+      <thead><tr><th>심각도</th><th>차원</th><th>발견</th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </div>
+
+  <h2>감사 방법</h2>
+  <div class="method">
+    <ul>
+      <li><strong>대상</strong> — <code>css/</code> 6개 파일과 마크업을 생성하는 <code>js/</code> 15개 파일 (약 12,400줄)</li>
+      <li><strong>차원</strong> — 색상·명도대비·타이포그래피·간격·컨트롤·아이콘·레이아웃·페이지 일관성·상태 표현·정보 밀도 10개 차원을 병렬로 감사(차원당 독립 에이전트 1개), 그림자·모션은 별도 확인</li>
+      <li><strong>근거</strong> — 모든 항목이 <code>파일:줄</code>과 실제 값을 인용합니다. 명도 대비는 실제 hex 값으로 계산했습니다.</li>
+      <li><strong>교차 확인</strong> — 코드 감사와 별개로 DASHBOARD·WORKFLOW·PLAN·MONEY·SETTINGS를 실제 렌더링해 확인했습니다(다크 팔레트 도달 불가, 제목 체계 불일치, 같은 버튼의 두 가지 모양 등은 이 과정에서 발견).</li>
+      <li><strong>제약</strong> — 모든 대안은 그림자·장식 도형·외부 라이브러리를 추가하지 않는 선에서 제시했습니다(AGENTS.md 디자인 원칙).</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+const DATA = [{"dim": "controls", "sev": "high", "title": "같은 한 줄에 36px 입력칸과 27px 버튼이 나란히 — 버튼 높이가 앱 전체에 12종"}, {"dim": "controls", "sev": "high", "title": "회차 편집 줄 버튼이 의도한 27px이 아니라 22px로 렌더 — CSS 우선순위가 같아 뒤 규칙이 이김"}, {"dim": "controls", "sev": "high", "title": "공정 헤더 한 줄에 모서리 4종(999px·6px·6px·4px)과 높이 4종(24·22·20·16px)이 동시에"}, {"dim": "controls", "sev": "medium", "title": "BGM 패널만 앱에 없는 모서리 값 4종(17·16·12·11px)을 씀 — 옆 패널은 전부 --radius-sm"}, {"dim": "controls", "sev": "medium", "title": "같은 \"곡 목록\"인데 설정 화면과 BGM 패널이 서로 다른 행 디자인을 씀"}, {"dim": "controls", "sev": "medium", "title": "한 행 안 아이콘 버튼 4개가 25/25/30/30px 크기에 글리프는 14/17/13/18px로 제각각"}, {"dim": "controls", "sev": "medium", "title": "캘린더 툴바에서 [월|주|일] 세그먼트만 36px, 옆의 버튼들은 전부 30px"}, {"dim": "controls", "sev": "low", "title": "모서리 값이 15종 — 토큰과 똑같은 6px·10px까지 하드코딩, 컷 버튼만 7px/9px"}, {"dim": "layout", "sev": "high", "title": "좌우 레일이 같은 언어가 아님 — 왼쪽은 콘텐츠에 붙고(18px), 오른쪽은 화면 끝에 붙어 콘텐츠 카드가 중앙에서 37px 밀림"}, {"dim": "layout", "sev": "high", "title": "사이드 패널이 콘텐츠 카드를 밀어내지 않고 그냥 덮음 — 1554px 미만 화면에서 카드 오른쪽이 가려짐"}, {"dim": "layout", "sev": "high", "title": "641~874px 구간에서 우측 레일이 콘텐츠 카드 위를 26px 덮음 — 데스크톱과 모바일 사이 중간 분기가 없음"}, {"dim": "layout", "sev": "high", "title": "페이지 안쪽 폭은 660px 뿐인데 캘린더는 1fr+300px 2단을 유지 — 데스크톱에서 하루 칸이 49px"}, {"dim": "layout", "sev": "medium", "title": "#main 의 70px/76px 은 손으로 계산한 매직넘버이고, 미니바가 숨겨져 있어도 76px 을 계속 잡아먹음"}, {"dim": "layout", "sev": "medium", "title": "페이지 공통 좌우 여백(24px)이 페이지마다 안 지켜짐 — 장부 표는 항상 넘치고, 캘린더 툴바는 8px 안쪽으로 들어가고, 작품 추가 패널의 max-width 는 죽은 값"}, {"dim": "layout", "sev": "medium", "title": "떠 있는 입력창·미니바가 카드 폭의 78%만 가려서, 양옆 79px 틈으로 본문이 그대로 스크롤되어 지나감"}, {"dim": "layout", "sev": "medium", "title": "존재하지 않는 하단 탭바 토큰(--tabbar-h)으로 토스트·알람 위치를 잡아, 모바일 도구 탭 위에 겹침"}, {"dim": "spacing", "sev": "high", "title": "태블릿(≤900px)에서 --proc-indent 하드코딩이 공정 이름↔컷 그리드 정렬을 8px 깨뜨림"}, {"dim": "spacing", "sev": "high", "title": "BGM 패널 헤더(17px)와 본문(13px) 좌우 padding 이 달라 제목이 아래 카드보다 4px 안쪽으로 들어감"}, {"dim": "spacing", "sev": "high", "title": "같은 역할의 \"테두리 있는 카드\"가 파일마다 9가지 padding — MONEY 한 화면에만 5종이 세로로 겹쳐 쌓임"}, {"dim": "spacing", "sev": "medium", "title": "간격 값의 64%가 4px 격자 밖 — 7px 43곳, 6px 62곳, 9px 20곳, 11px·13px 각 11·12곳"}, {"dim": "spacing", "sev": "medium", "title": "\"헤더 아래 첫 블록\" 간격이 10·12·14·15·16·18px 여섯 갈래 — 같은 .tabs 인데 화면마다 18/14/10px"}, {"dim": "spacing", "sev": "medium", "title": "목록 행 좌우 padding 이 6·7·8·10·12px 다섯 갈래, .today-row 만 상하>좌우로 뒤집혀 있음"}, {"dim": "spacing", "sev": "medium", "title": "#main 의 70px·76px·99px 은 손으로 계산한 매직넘버이고, 음악바가 숨겨져도 아래 100px 빈칸이 남음"}, {"dim": "spacing", "sev": "low", "title": "Inbox 날짜 지정 메뉴의 margin-left: 24px 이 실제 글자 열(32px)과 8px 어긋남"}, {"dim": "typography", "sev": "high", "title": "font-weight: 750 / 650 은 로드된 Pretendard 에 없는 굵기 — 각각 800·700 으로 튀어 렌더된다"}, {"dim": "typography", "sev": "high", "title": "font-size 가 23종 — 스케일이 아니라 그때그때 정한 값들의 목록이고, 27개 선언이 0.5px 단위다"}, {"dim": "typography", "sev": "high", "title": "한글 표 헤더에 text-transform: uppercase 와 letter-spacing 을 걸었다 — 대문자화는 무효고 자간만 벌어진다"}, {"dim": "typography", "sev": "medium", "title": "work.css 에 `position: relative; top: 1px` 이 6번 복사돼 있고, 근거로 적힌 \"이름(15px)\"은 실제 13px 이라 전제부터 틀렸다"}, {"dim": "typography", "sev": "medium", "title": "`.page-head h1` 만 유일하게 rem 단위(1.35rem) — 21.6px 이라 21px·22px 과 1px 안에 세 값이 겹치고, 브라우저 글꼴 설정에도 혼자 반응한다"}, {"dim": "typography", "sev": "medium", "title": "같은 h3(컨테이너 제목) 역할이 13/13.5/14/15/22px 다섯 크기로 갈리고, 음악 패널만 공용 규칙을 1px 덮어쓴다"}, {"dim": "typography", "sev": "medium", "title": "메모의 편집 모드와 보기 모드가 line-height 1.65 대 1.7 로 어긋나고, max-height: 8.9em 은 5.24줄이라 여섯 번째 줄이 반쯤 잘려 보인다"}, {"dim": "typography", "sev": "medium", "title": "line-height 가 12종으로 흩어져 있고, 본문 기본 1.6 과 소형 컨트롤 1.3 사이에 기준이 없다"}, {"dim": "density", "sev": "high", "title": "5개 프리셋 전부에서 --surface-0 과 --surface-1 이 같은 색이라, 표면 단계로 만든 그룹 구분이 전부 사라지고 테두리만 남는다"}, {"dim": "density", "sev": "high", "title": "접힌 공정 카드 아래쪽에 1px 선이 두 겹으로 겹쳐 2px 굵은 선이 생긴다"}, {"dim": "density", "sev": "high", "title": "작품 관리 모달 하나에 상자가 4겹으로 중첩되고 채움색이 5종 동시에 보인다"}, {"dim": "density", "sev": "medium", "title": "WORKFLOW 상단 60px 안에 전체폭 가로선 두 개가 접힌 제목 한 줄을 샌드위치처럼 감싼다"}, {"dim": "density", "sev": "medium", "title": ".ep-bar 회차 탭 상단에 1px 헤어라인이 두 줄로 겹치고, 활성 탭이 이어질 패널이 아래에 없다"}, {"dim": "density", "sev": "medium", "title": "이미 여백과 라벨로 나뉜 카드 내부를 가로선으로 한 번 더 쪼개 12px 카드 안에 선이 2개 들어간다"}, {"dim": "density", "sev": "medium", "title": "BGM 패널 한 곳에서만 모서리 반경 6종(17/16/12/12/11px)을 새로 만들어 써서 토큰(10/6px)과 어긋나고, 중첩 반경이 역전됐다"}, {"dim": "density", "sev": "medium", "title": "설정의 '카드색' 노브가 --surface-1 만 바꿔서, 카드 안의 surface-0 요소들이 흰색으로 남아 구멍처럼 뚫린다"}, {"dim": "contrast", "sev": "high", "title": "--accent 를 글자색으로 쓰는 25곳 전부가 대비 1.63~2.03:1 — 5개 프리셋 어디서도 읽히지 않음"}, {"dim": "contrast", "sev": "high", "title": "--text-dim 이 세 팔레트 전부에서 AA 미달(2.20~3.21:1)인데 60곳 넘게 본문·숫자에 쓰임 — WORKFLOW 컷 숫자 포함"}, {"dim": "contrast", "sev": "high", "title": "CSS 전체에 :focus-visible 이 0건 — 키보드로 이동하면 지금 어디에 있는지 전혀 알 수 없음"}, {"dim": "contrast", "sev": "high", "title": "토스트 경고·배지가 \"같은 계열 -dim 배경 + 같은 색 글자\" 패턴이라 1.34~2.39:1 — 경고문이 배경에 묻힘"}, {"dim": "contrast", "sev": "medium", "title": "U.onColor 의 임계값 0.42 가 잘못 놓여, 사용자 지정 강조색 구간에서 더 나쁜 글자색을 고름"}, {"dim": "contrast", "sev": "medium", "title": "opacity 로 만든 비활성 상태가 --text-dim 과 수치상 똑같아, 눌리는 버튼과 안 눌리는 버튼이 구분되지 않음"}, {"dim": "contrast", "sev": "medium", "title": "습관 격자 숫자색이 습관 자기 색이 아니라 테마 강조색에서 파생되어, 강조색을 어둡게 바꾸면 전 칸이 1.67:1로 무너짐"}, {"dim": "contrast", "sev": "medium", "title": "9.5~11px 초소형 글자에 --text-dim 을 그대로 써서 대비와 크기가 동시에 최저치"}, {"dim": "consistency", "sev": "high", "title": "같은 .btn-sm 이 WORKFLOW에서만 22px, 다른 페이지에서는 30px — 한 모달 안에 버튼 높이 4종"}, {"dim": "consistency", "sev": "high", "title": "\"탭\" 역할에 시각 언어 6종 — MONEY 한 페이지에 밑줄·알약·박스 탭이 3층으로 쌓임"}, {"dim": "consistency", "sev": "medium", "title": "같은 \"목록 한 줄\"이 패딩 4종·모서리 3종·기본 배경 3종 — 같은 곡 목록이 두 화면에서 다른 모양"}, {"dim": "consistency", "sev": "medium", "title": "박스 모서리가 6·10·11·12·16·17px으로 흩어지고 채움도 surface-0/1/2 혼용 — BGM 패널만 다른 앱처럼 보임"}, {"dim": "consistency", "sev": "medium", "title": "회차 제목(22px/750)이 페이지 제목(21.6px/700)보다 크고 굵음 — 게다가 750·650은 로드되지 않은 굵기"}, {"dim": "consistency", "sev": "medium", "title": "\"비어 있음\" 표시가 글자 11/12/13px, 여백 0/10/22/28/48px 다섯 가지"}, {"dim": "consistency", "sev": "medium", "title": "알약 배지가 6종 — 정산 페이지 배지는 공용 .chip을 아예 쓰지 않고, 글자 크기에 반픽셀 값이 섞임"}, {"dim": "consistency", "sev": "low", "title": "페이지 제목 영역이 5개 페이지에서 3가지 형태 — WORKFLOW만 가로선, 그것도 두 줄이 연달아"}, {"dim": "icons", "sev": "high", "title": "앱의 1차 내비게이션 아이콘 9개가 전부 컬러 이모지 — 6개 테마 어디서도 색이 따라오지 않고 hover/active 색 규칙이 죽어 있음"}, {"dim": "icons", "sev": "high", "title": "BGM 재생 버튼과 다음 곡 버튼이 똑같은 글자 ▶ — 크기 차이로만 구분됨"}, {"dim": "icons", "sev": "high", "title": "BGM 트랜스포트 한 줄에 컬러 이모지(🔀🔁🔇🔊)와 단색 글리프(◀▶❚❚)가 나란히 — `.mus-control.on` 의 강조색이 이모지에서만 무효"}, {"dim": "icons", "sev": "high", "title": "메모 카드 액션 4개가 서로 다른 4가지 글리프 체계 — 상태색이 ♥ 에서만 동작하고 🔒·🗑 에서는 죽음"}, {"dim": "icons", "sev": "medium", "title": "WORKFLOW 공정 헤더 한 줄에 점자·삼각형·대시·컬러 이모지·화살표가 동시에 — 📅 버튼은 16px 상자 안 10px 이모지"}, {"dim": "icons", "sev": "medium", "title": "펼침/접힘 캐럿이 앱 안에 네 종류(▼▶ / ▾▸ / ⌄) — WORKFLOW 한 화면에서 두 종류가 동시에 보임"}, {"dim": "icons", "sev": "medium", "title": "같은 톱니 아이콘이 컬러(⚙️)와 단색(⚙) 두 가지로 렌더 — 그리고 아이콘이 버튼 라벨·패널 제목·본문 문장 속에 흩어져 있음"}, {"dim": "icons", "sev": "medium", "title": "아이콘 크기·글리프에 단일 출처가 없음 — font-size 15종이 컴포넌트마다 손으로 박혀 있고 삭제 아이콘도 ✕/× 두 가지"}, {"dim": "color", "sev": "high", "title": "라이트 프리셋 5개 모두 --surface-0 와 --surface-1 이 완전히 같은 색 — 표면 위계가 존재하지 않음"}, {"dim": "color", "sev": "high", "title": "--accent 를 텍스트 색으로 쓰는데 프리셋 강조색 7종 전부 흰 배경 대비 1.66~2.03:1 — 활성 탭이 비활성 탭보다 안 보임"}, {"dim": "color", "sev": "high", "title": "--green/--red/--amber/--teal/--purple/--coral 이 다크 전용 값 1세트뿐 — 흰 카드 위 금액·경고 글자가 1.5~1.9:1"}, {"dim": "color", "sev": "medium", "title": "토요일=var(--accent) / 일요일=var(--coral) — peach·rose 프리셋에서 주말 두 색이 사실상 같은 색이 됨"}, {"dim": "color", "sev": "medium", "title": "--red 와 --coral 이 육안으로 구분 안 되는 두 색인데 \"마이너스 금액\" 하나의 의미를 무작위로 나눠 씀"}, {"dim": "color", "sev": "medium", "title": "\"완료\" 상태 색이 화면마다 --green 과 --accent 로 갈림 — accent 는 선택·완료·링크·오늘·토요일을 동시에 뜻함"}, {"dim": "color", "sev": "medium", "title": "프리셋 5개가 --accent 만 정의하고 --accent-dim / --accent-hover / --on-accent 는 정의하지 않음 — CSS 단독으로는 색이 뒤섞임"}, {"dim": "color", "sev": "low", "title": "토큰 밖 하드코딩 색이 shell.css 한 파일에만 15개 — 그림자 색이 검정과 네이비 두 계열로 갈림"}, {"dim": "states", "sev": "high", "title": "선택·활성 상태 규칙이 :hover 뒤에 선언돼, 선택된 요소는 hover 반응이 완전히 사라짐"}, {"dim": "states", "sev": "high", "title": "선택된 항목의 글자를 accent 로 칠해, 선택 상태가 화면에서 가장 안 읽히는 상태가 됨"}, {"dim": "states", "sev": "high", "title": ".field:disabled 규칙이 아예 없어, 비활성 입력창이 활성 입력창과 픽셀 단위로 동일하게 보임"}, {"dim": "states", "sev": "high", "title": "모든 입력창이 outline:none 으로 포커스 링을 지우고, 대체 표시는 1.3~2:1 테두리 색 하나뿐"}, {"dim": "states", "sev": "high", "title": "좌측 레일의 '현재 페이지' 표시가 1.10:1 배경 하나뿐이고, 세 단계 color 선언은 이모지라 전부 무효"}, {"dim": "states", "sev": "medium", "title": "클릭되는데 hover 반응이 아예 없는 요소 3개 + 있어도 1.2:1 이라 없는 것과 같은 요소 1개"}, {"dim": "states", "sev": "medium", "title": "hover transition 이 0.08s / 0.12s / 0.15s / 없음 네 종류로 갈려 화면마다 반응 속도가 다름"}, {"dim": "states", "sev": "medium", "title": "'선택됨' 을 표현하는 문법이 최소 4갈래로 갈려, 같은 의미가 화면마다 다른 무게로 보임"}];
+const sevLabel = { high: '심각', medium: '보통', low: '낮음' };
+const sevClass = { high: 't-high', medium: 't-mid', low: 't-low' };
+const dimLabel = {
+  controls: '컨트롤', layout: '레이아웃', spacing: '간격', typography: '타이포',
+  density: '밀도', contrast: '명도대비', consistency: '일관성', icons: '아이콘',
+  color: '색상', states: '상태'
+};
+const order = { high: 0, medium: 1, low: 2 };
+const tbody = document.getElementById('rows');
+DATA.slice().sort((a, b) => (order[a.sev] - order[b.sev]) || a.dim.localeCompare(b.dim))
+  .forEach(r => {
+    const tr = document.createElement('tr');
+    const td1 = document.createElement('td');
+    td1.className = 'sev ' + sevClass[r.sev];
+    td1.textContent = sevLabel[r.sev];
+    const td2 = document.createElement('td');
+    td2.className = 'dim-col';
+    td2.textContent = dimLabel[r.dim] || r.dim;
+    const td3 = document.createElement('td');
+    td3.textContent = r.title;
+    tr.append(td1, td2, td3);
+    tbody.appendChild(tr);
+  });
+</script>
+</body>
+</html>

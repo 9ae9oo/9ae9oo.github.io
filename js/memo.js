@@ -16,6 +16,23 @@ window.MW = window.MW || {};
   var search = '';
   var bookmarkOnly = false;
   var editingId = null;        // 인라인 편집 중인 메모 id (한 번에 하나)
+  var saveStatus = null;
+
+  /** 상태 안내는 편집칸 밖에 둡니다. 글을 쓰는 커서나 카드 위치를 움직이지 않습니다. */
+  function renderSaveStatus() {
+    if (!saveStatus) return;
+    var state = MW.store.saveState;
+    var messages = {
+      idle: '기존 메모의 수정 내용은 자동 저장됩니다.',
+      pending: '변경 내용 저장 중…',
+      error: '저장하지 못했습니다. 내용을 복사해 보관해 주세요.'
+    };
+    var at = state.savedAt ? new Date(state.savedAt) : null;
+    saveStatus.textContent = state.phase === 'saved'
+      ? '이 브라우저에 저장됨 · ' + U.pad2(at.getHours()) + ':' + U.pad2(at.getMinutes()) + ':' + U.pad2(at.getSeconds())
+      : messages[state.phase];
+    saveStatus.dataset.phase = state.phase;
+  }
 
   /* ------------------------------------------------------------ HTML 정제 */
 
@@ -252,7 +269,9 @@ window.MW = window.MW || {};
     if (editingId === m.id) {
       var e = makeEditor(m.body, {
         placeholder: '메모…',
-        onChange: function (h) { touchMemo(m.id, function (x) { x.body = h; }); },
+        onChange: function (h) {
+          if (h !== m.body) touchMemo(m.id, function (x) { x.body = h; });
+        },
         onCommit: closeEdit,
         onCancel: closeEdit,
         onBlur: closeEdit
@@ -368,6 +387,8 @@ window.MW = window.MW || {};
     var record = el('button.btn.btn-primary.btn-sm.memo-record', { type: 'button', text: '기록', onclick: submit });
     e.bar.appendChild(record);   // 서식 바 줄 오른쪽 끝에 [기록]
     composeHost.appendChild(e.wrap);
+    // 새 글의 임시 내용과 이미 기록한 메모의 자동 저장을 구분합니다.
+    composeHost.appendChild(el('div.memo-compose-hint', { text: '새 메모는 기록을 눌러 저장 · 기존 메모 수정은 자동 저장' }));
   }
 
   /* ------------------------------------------------------------ 리스트 · 렌더 */
@@ -420,7 +441,11 @@ window.MW = window.MW || {};
       composeHost = el('div.memo-compose');
       tagBarHost = el('div.memo-tagbar');
       float.node.insertBefore(composeHost, float.body);
+      saveStatus = el('div.memo-save-status', { role: 'status', 'aria-live': 'polite', 'aria-atomic': 'true' });
+      float.node.insertBefore(saveStatus, float.body);
       float.node.insertBefore(tagBarHost, float.body);
+      MW.store.onSave(renderSaveStatus);
+      renderSaveStatus();
 
       render();
     },

@@ -418,6 +418,9 @@ window.MW = window.MW || {};
       ? Math.min(800, Math.max(320, Math.round(t.contentWidthPx) || 760)) + 'px'
       : (CONTENT_WIDTHS[t.contentWidth] || CONTENT_WIDTHS.normal);
     root.style.setProperty('--content-max', contentMax);
+    // 대시보드의 모눈 한 줄 높이. 드래그 계산도 이 값을 읽어 눈금과 카드가 어긋나지 않게 합니다.
+    var dashRows = { low: 84, normal: 112, high: 140 };
+    root.style.setProperty('--dash-row', (dashRows[t.dashRowHeight] || dashRows.normal) + 'px');
   }
 
   /** 스토어는 건드리지 않고 화면만 임시로 바꿔봅니다 (색상 선택 중 실시간 미리보기) */

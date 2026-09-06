@@ -85,6 +85,19 @@ window.MW = window.MW || {};
     render();
   }
 
+  function editMusicTrack(playlistId, tr) {
+    var title = tr.title || tr.videoId;
+    var url = el('input.field', { value: tr.url || ('https://www.youtube.com/watch?v=' + tr.videoId), placeholder: 'YouTube 영상 주소' });
+    MW.shell.modal({
+      title: '"' + title + '" 링크 수정',
+      body: [el('div.form-row', {}, [el('label', { text: '링크' }), url])],
+      onOk: function () {
+        if (!url.value.trim()) { U.toast('링크를 입력해 주세요.', 'warn'); return false; }
+        if (!MW.music.updateTrack(playlistId, tr.id, url.value)) return false;
+      }
+    });
+  }
+
   function toggleAllMusicTracks() {
     if (!musicEdit) return;
     var allSelected = musicEdit.order.length > 0 && musicEdit.order.every(function (id) {
@@ -453,6 +466,10 @@ window.MW = window.MW || {};
               }),
               el('span.t-idx', { text: String(i + 1) }),
               el('span.t-title', { text: title, title: title }),
+              el('button.btn.btn-ghost.btn-icon.btn-sm.music-track-edit', {
+                type: 'button', text: '✎', title: '링크 수정', 'aria-label': title + ' 링크 수정',
+                onclick: function () { editMusicTrack(pl.id, tr); }
+              }),
               el('button.btn.btn-ghost.btn-icon.btn-sm.music-track-remove', {
                 type: 'button', text: '×', title: '이 곡 삭제', 'aria-label': title + ' 삭제',
                 onclick: function () { deleteMusicTrack(tr.id); }
@@ -740,6 +757,7 @@ window.MW = window.MW || {};
 
     var addHabit = function () { if (MW.habits.add(habitInput.value)) habitInput.value = ''; };
     var habitInput = el('input.field', {
+      id: 'new-habit-name',
       placeholder: '새 해빗 이름 (예: 물 마시기)',
       onkeydown: function (e) { if (e.key === 'Enter') addHabit(); }
     });
@@ -1074,7 +1092,16 @@ window.MW = window.MW || {};
       el('div.small.dim', { text: '화면이 넓어도 메인 영역은 선택한 너비까지만 넓어집니다. 모바일에서는 화면 너비에 맞춰 자동으로 줄어듭니다.', style: { marginBottom: '10px' } }),
       el('div.content-width-controls', {}, [seg, pxRow]),
       el('div.small.dim', { text: '좁게 640px · 보통 720px · 넓게 760px · 최대 800px', style: { marginTop: '8px' } }),
-      el('div.small.dim', { text: '직접 입력은 320~800px 사이에서 지정할 수 있습니다.', style: { marginTop: '3px' } })
+      el('div.small.dim', { text: '직접 입력은 320~800px 사이에서 지정할 수 있습니다.', style: { marginTop: '3px' } }),
+      // 폭과 높이를 같은 카드에서 고릅니다. 모눈 간격만 바꾸고 위젯의 칸 수는 유지합니다.
+      el('h3', { text: '대시보드 행 높이', style: { marginTop: '16px' } }),
+      el('div.seg', { 'aria-label': '대시보드 행 높이' }, [['low', '낮게'], ['normal', '보통'], ['high', '높게']].map(function (o) {
+        return el('button' + ((t.dashRowHeight || 'normal') === o[0] ? '.active' : ''), {
+          type: 'button', text: o[1], 'aria-pressed': (t.dashRowHeight || 'normal') === o[0] ? 'true' : 'false',
+          onclick: function () { setTheme({ dashRowHeight: o[0] }); }
+        });
+      })),
+      el('div.small.dim', { text: 'PC 위젯 한 칸의 높이입니다. 낮게 84px · 보통 112px · 높게 140px. 모바일은 내용에 맞춰 늘어납니다.', style: { marginTop: '8px' } })
     ]);
   }
 
@@ -1161,7 +1188,7 @@ window.MW = window.MW || {};
 
   var TABS = [
     { id: 'time', label: '시간 · 해빗', fn: renderTime },
-    { id: 'music', label: '음악', fn: renderMusic },
+    { id: 'music', label: '재생목록', fn: renderMusic },
     { id: 'categories', label: '장부 카테고리', fn: renderCategories },
     { id: 'theme', label: '테마', fn: renderTheme },
     { id: 'general', label: '일반 · 데이터', fn: renderGeneral }

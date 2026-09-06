@@ -51,9 +51,12 @@
 
 .sidebar-item {
   display: flex;
+  flex-direction: column;
+  gap: 5px;
   align-items: center;
   justify-content: center;
-  padding: 12px 8px;
+  padding: 10px 2px;
+  min-width: 0;
   border-radius: var(--radius-sm);
   color: var(--text-muted);
   cursor: pointer;
@@ -76,8 +79,13 @@
   text-align: center;
 }
 
-/* 라벨은 항상 숨김 — 아이콘 레일. 이름은 hover 툴팁(title)으로 확인 */
-.sidebar-item .label { display: none; }
+/* 아이콘 뜻을 외우지 않아도 되도록, 이름을 바로 아래에 작은 글자로 붙입니다. */
+.sidebar-item .label, .tool-item .label {
+  display: block;
+  font-size: 10px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
 
 /* ===== 그룹 B (서브 도구) = 우측 레일 + 패널. #app flex 흐름 밖, 화면 오른쪽에 고정 =====
    우측 레일 = 화면 오른쪽 세로 가운데의 작은 탭들. 패널 열리면 패널 왼쪽 가장자리로 이동. */
@@ -100,6 +108,8 @@
    한 글자씩 쪼개지는 것)를 애초에 피합니다. 이름은 title 툴팁으로 확인 */
 .tool-item {
   display: flex;
+  flex-direction: column;
+  gap: 4px;
   align-items: center;
   justify-content: center;
   padding: 10px;
@@ -113,7 +123,6 @@
   transition: background 0.15s, color 0.15s;
 }
 .tool-item .icon { font-size: 20px; line-height: 1; }
-.tool-item .label { display: none; }   /* 라벨은 항상 숨김 — sidebar-item과 동일한 패턴 */
 .tool-item:hover { background: var(--surface-3); color: var(--text); }
 .tool-item.active { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 
@@ -142,7 +151,7 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 }
 .quick-add-input {
   width: 100%;
-  height: 46px;
+  height: var(--control-quick-h);
   padding: 0 18px;
   border: 2px solid var(--border);
   border-radius: 999px;
@@ -155,6 +164,21 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 }
 .quick-add-input::placeholder { color: var(--text-dim); }
 .quick-add-input:focus { border-color: var(--accent); }
+
+/* 입력 문장을 정리한 교정지처럼 표시합니다. 새 배경 장식 없이 글자와 간격만 씁니다. */
+.quick-add-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 2px;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.quick-add-preview[hidden] { display: none; }
+.quick-add-summary { flex: 1; min-width: 0; max-height: 9em; overflow-y: auto; overflow-wrap: anywhere; }
+.quick-add-title { color: var(--text); }
+.quick-add-preview > button { flex-shrink: 0; }
 
 /* ---- 음악 미니바 — #content 하단 가운데에 떠 있음. [◀ ▶ ▶] │ 제목·시간 / 프로그레스 ---- */
 #musicmini {
@@ -183,8 +207,8 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   transition: background 0.12s, color 0.12s;
 }
 .mm-btn:hover { background: var(--surface-2); color: var(--text); }
-.mm-play { background: var(--accent); color: var(--on-accent); width: 30px; height: 30px; font-size: 12px; }
-.mm-play:hover { background: var(--accent-hover); color: var(--on-accent); }
+.mm-play { color: var(--text); width: 30px; height: 30px; font-size: 14px; }
+.mm-play:hover { background: none; color: var(--text); }
 
 .mm-sep { flex: 0 0 auto; width: 1px; align-self: stretch; margin: 2px 2px; background: var(--border); }
 
@@ -234,7 +258,6 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   border: 1px solid var(--border);
   border-radius: 17px;
   background: var(--surface-2);
-  box-shadow: 0 10px 28px rgba(35, 39, 55, 0.08);
 }
 .mus-now-top {
   display: grid; grid-template-columns: 78px minmax(0, 1fr);
@@ -247,7 +270,7 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   background-color: var(--accent-dim);
   background-image: linear-gradient(145deg, var(--accent), var(--surface-3));
   background-position: center; background-size: cover;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22), 0 10px 24px rgba(35, 39, 55, 0.14);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
 }
 .mus-cover.empty::after {
   content: '♪'; position: absolute; inset: 0;
@@ -299,13 +322,12 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .mus-control:hover { color: var(--text); background: var(--surface-3); }
 .mus-control:active { transform: scale(0.94); }
 .mus-control.on { color: var(--accent); background: var(--accent-dim); }
-.mus-control.mus-mode { font-size: 15px; }
+.mus-control.mus-mode, .mus-control.mus-mute { font-size: 15px; }
 .mus-play {
   width: 52px; height: 52px; padding-left: 2px;
-  color: var(--on-accent); background: var(--accent); font-size: 15px;
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent) 28%, transparent);
+  color: var(--text); font-size: 19px;
 }
-.mus-play:hover { color: var(--on-accent); background: var(--accent-hover); }
+.mus-control.mus-play:hover { color: var(--text); background: none; }
 
 .mus-list { margin-top: 13px; }
 .mus-playlist-select-wrap { position: relative; }
@@ -423,6 +445,8 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
 .track-select { border: 1px solid var(--border); background: var(--surface-0); font-size: 14px; }
 .track-select:hover { border-color: var(--accent); }
 .track-select.selected { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.music-track-edit { flex-shrink: 0; color: var(--text-dim); font-size: 13px; }
+.music-track-edit:hover { color: var(--accent); background: var(--accent-dim); }
 .music-track-remove { flex-shrink: 0; color: var(--text-dim); font-size: 18px; }
 .music-track-remove:hover { color: var(--red); background: var(--red-dim); }
 .music-selection-count { color: var(--accent); font-size: 12px; font-weight: 650; white-space: nowrap; }
@@ -469,11 +493,13 @@ body.anypanel-open #panelhost { width: var(--side-panel-w); }
   flex: 1;
   min-width: 0;
   overflow-y: auto;
+  scrollbar-gutter: stable;   /* 공정 카드를 접고 펼 때 세로 스크롤바가 생겼다 없어졌다 하면서
+                                 콘텐츠 폭이 같이 늘었다 줄었다 하는 것을 막습니다 */
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 70px;      /* 상단에 떠 있는 입력창 자리 */
+  padding-top: calc(var(--quickbar-h) + 24px);   /* 미리보기의 실제 높이만큼 본문 자리를 비웁니다. */
   padding-bottom: 76px;   /* 하단에 떠 있는 음악 미니바 자리 */
 }
 
@@ -703,7 +729,7 @@ body.panel-instant #panelhost { transition: none !important; }
   }
 
   /* 메뉴 — 화면 위 가장자리에 붙는 가로 바. 노치 영역은 안쪽 패딩으로 흡수합니다.
-     라벨은 base 규칙대로 계속 숨김(아이콘만) */
+     아이콘 아래 이름은 데스크톱과 같은 규칙으로 표시합니다. */
   #sidebar {
     flex: 0 0 auto;
     align-self: stretch;
@@ -713,7 +739,7 @@ body.panel-instant #panelhost { transition: none !important; }
     border-radius: 0;
     box-shadow: none;
   }
-  #sidebar .sidebar-nav { flex-direction: row; }
+  #sidebar .sidebar-nav { flex-direction: row; padding: 6px 2px; gap: 0; }
   .sidebar-item { flex: 1; }
 
   /* 컨텐츠만 떠 있는 카드로 남습니다 */
@@ -727,7 +753,7 @@ body.panel-instant #panelhost { transition: none !important; }
   /* 상단 메뉴는 흐름 안에 있어 겹치지 않음. 아래는 [도구 탭 + 입력창] 만큼 비움 */
   #content #main {
     padding-top: 8px;
-    padding-bottom: calc(99px + env(safe-area-inset-bottom));   /* 아이콘 도구 탭 높이에 맞춤 */
+    padding-bottom: var(--mobile-dock-h);   /* 입력창 높이에 안전 영역 패딩도 이미 포함됩니다. */
   }
   .page { padding: 16px 12px 24px; }
 
@@ -739,6 +765,8 @@ body.panel-instant #panelhost { transition: none !important; }
      base 의 top:14px / translateX 를 반드시 풀어야 위·아래가 동시에 걸려
      세로로 늘어나지 않습니다. */
   #quickbar {
+    display: flex;
+    flex-direction: column-reverse;   /* 모바일에서는 정리된 내용이 입력창 위에 보입니다. */
     position: fixed;
     top: auto;
     left: 0; right: 0;
@@ -760,7 +788,7 @@ body.panel-instant #panelhost { transition: none !important; }
     position: fixed;
     top: auto;
     left: 10px; right: 10px;
-    bottom: calc(62px + env(safe-area-inset-bottom));
+    bottom: calc(var(--quickbar-h) + var(--mobile-quickbar-pad-y) + env(safe-area-inset-bottom));
     transform: none;
     flex-direction: row;
     gap: 0;
@@ -769,7 +797,8 @@ body.panel-instant #panelhost { transition: none !important; }
   .tool-item {
     flex: 1;
     padding: 8px 4px;
-    min-height: 34px;
+    height: var(--control-tool-h);
+    min-height: var(--control-tool-h);
     border: 1px solid var(--border);
     border-bottom: none;   /* 입력창과 맞닿는 변 */
     border-radius: var(--radius-sm) var(--radius-sm) 0 0;   /* 바깥쪽(위)만 둥글게 */
@@ -784,7 +813,7 @@ body.panel-instant #panelhost { transition: none !important; }
     top: auto !important;
     left: 10px !important;
     right: 10px !important;
-    bottom: calc(99px + env(safe-area-inset-bottom)) !important;   /* 아이콘 도구 탭 높이에 맞춤 */
+    bottom: var(--mobile-dock-h) !important;
     width: auto !important;
     max-width: none !important;
     height: auto !important;
@@ -830,24 +859,31 @@ body.panel-instant #panelhost { transition: none !important; }
 }
 .home-money .value.minus { color: var(--red); }
 
-/* ------------------------------------------------ 홈: 2칸 그리드 + 카드 드래그 재배치 + 크기 조절 */
-#page-home-body {
+/* 고정 높이의 모눈 4칸. 내용은 카드 안에서 스크롤하고 편집 도구는 격자 밖에 둡니다. */
+.home-widget-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  grid-auto-flow: row dense;
-  align-items: start;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-auto-rows: var(--dash-row, 112px);
+  grid-auto-flow: row;
+  align-items: stretch;
   gap: 14px;
 }
 @media (max-width: 640px) {
-  #page-home-body { grid-template-columns: 1fr; }
+  .home-widget-grid { grid-template-columns: 1fr; grid-auto-rows: auto; }
   #page-home-body .home-card-wrap { grid-column: span 1 !important; grid-row: span 1 !important; }
 }
 
-.home-card-wrap { position: relative; }
-.home-card-wrap > .card { margin: 0; height: 100%; box-sizing: border-box; }
-.home-card-wrap > .home-image { margin: 0; height: 100%; }
-.home-card-wrap.resized { overflow: hidden; }
-.home-card-wrap.resized > .card { overflow: auto; }
+.home-card-wrap { position: relative; min-width: 0; min-height: 0; container-type: inline-size; }
+.home-card-wrap > .card { margin: 0; height: 100%; min-height: 0; overflow: auto; box-sizing: border-box; overflow-wrap: anywhere; }
+.home-card-wrap > .home-image { margin: 0; height: 100%; min-height: 0; }
+/* 1칸짜리 작은 카드에서는 날짜와 제목을 위아래로 읽습니다. 긴 글이 옆 칸을 밀지 않습니다. */
+@container (max-width: 240px) {
+  .today-row { display: grid; grid-template-columns: 8px minmax(0, 1fr); column-gap: 8px; row-gap: 2px; }
+  .today-row .today-dot { grid-column: 1; grid-row: 1 / 3; }
+  .today-row .today-time, .today-row .today-title { grid-column: 2; }
+  .home-money { flex-wrap: wrap; }
+}
+.home-card-wrap .empty { padding: 10px 0; }
 .home-card-wrap.dragging { opacity: 0.45; }
 .home-card-wrap.drag-over { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: var(--radius); }
 
@@ -864,7 +900,7 @@ body.panel-instant #panelhost { transition: none !important; }
   content: ''; position: absolute; left: 50%; bottom: 3px; transform: translateX(-50%);
   width: 32px; height: 3px; border-radius: 2px; background: var(--border);
 }
-.home-card-wrap.resizing .home-card-resize::after { background: var(--accent); }
+.home-card-wrap.resizing-xy .home-card-resize::after { background: var(--accent); }
 
 .home-card-resize-x {
   position: absolute; top: 0; bottom: 0; right: -8px; width: 16px;
@@ -886,7 +922,7 @@ body.panel-instant #panelhost { transition: none !important; }
 }
 .home-card-wrap.resizing-xy .home-card-resize-xy::after { background: var(--accent); }
 @media (max-width: 640px) {
-  .home-card-resize-x, .home-card-resize-xy { display: none; }   /* 모바일은 항상 1칸 폭·1줄 높이 고정 */
+  .home-card-resize, .home-card-resize-x, .home-card-resize-xy { display: none; }   /* 모바일은 한 열, 내용 높이로 읽습니다. */
 }
 
 .home-card-remove {
@@ -902,7 +938,7 @@ body.panel-instant #panelhost { transition: none !important; }
 
 /* --------------------------------------------------------------------- 홈 편집 툴바 */
 .home-edit-toolbar {
-  grid-column: 1 / -1;
+  margin-bottom: 14px;
   background: var(--surface-1); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 14px;
 }
@@ -930,7 +966,7 @@ body.panel-instant #panelhost { transition: none !important; }
 }
 .home-gallery-dot { width: 6px; height: 6px; border-radius: 50%; background: rgba(255, 255, 255, 0.5); }
 .home-gallery-dot.active { background: #fff; }
-.home-image.editing { display: flex; flex-direction: column; }
+.home-image.editing { display: flex; flex-direction: column; overflow: auto; }
 .home-image.editing .home-gallery, .home-image.editing img:not(.home-gallery-thumb img) { flex: 1; min-height: 90px; }
 .home-gallery-edit {
   flex: 0 0 auto; background: var(--surface-0); border-top: 1px solid var(--border);
@@ -964,7 +1000,7 @@ body.panel-instant #panelhost { transition: none !important; }
 .minical-cell.today.has::after { background: var(--on-accent); }
 
 /* --------------------------------------------------------------------------- HTML 임베드 위젯 */
-.home-embed { display: flex; flex-direction: column; height: 100%; }
+.home-embed { display: flex; flex-direction: column; height: 100%; overflow: auto; }
 .home-embed-frame { flex: 1; width: 100%; min-height: 90px; border: 0; border-radius: var(--radius); background: var(--surface-0); }
 .home-embed-edit { flex: 0 0 auto; margin-top: 8px; cursor: default; }
 .home-embed-edit textarea {

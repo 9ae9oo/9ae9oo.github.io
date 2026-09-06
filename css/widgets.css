@@ -371,3 +371,8 @@ input[type="checkbox"].chk:checked::after {
   .pomo-ring { width: calc(140px * var(--s)); height: calc(140px * var(--s)); }
   .pomo-time { font-size: calc(26px * var(--s)); }
 }
+/* 저장 신호는 메모 패널 안에 남겨 두어, 화면 아래 알림을 놓쳐도 확인할 수 있습니다. */
+.memo-save-status { padding: 6px 12px; font-size: 12px; line-height: 1.5; color: var(--text-muted); }
+.memo-save-status[data-phase="saved"] { color: var(--text); }
+.memo-save-status[data-phase="error"] { color: var(--red); }
+.memo-compose-hint { margin-top: 6px; font-size: 11px; line-height: 1.5; color: var(--text-muted); }

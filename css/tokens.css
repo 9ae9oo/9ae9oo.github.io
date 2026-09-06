@@ -76,8 +76,13 @@
   --control-h: 36px;
   --control-inline-h: 32px;
   --control-sm-h: 30px;
+  --control-quick-h: 46px;
+  --control-tool-h: 52px;   /* 아이콘 아래 작은 이름이 들어가는 도구 탭 */
   --topbar-h: 56px;
-  --sidebar-w: 56px;   /* 좌·우 아이콘 레일 */
+  --sidebar-w: 80px;   /* Dashboard 이름이 잘리지 않는 메뉴 폭 */
+  --quickbar-h: var(--control-quick-h);   /* 실제 높이는 빠른 입력의 관찰자가 갱신합니다. */
+  --mobile-quickbar-pad-y: 16px;
+  --mobile-dock-h: calc(var(--quickbar-h) + var(--mobile-quickbar-pad-y) + var(--control-tool-h) + env(safe-area-inset-bottom));
   --tabbar-h: 60px;
   --content-max: 720px;   /* 가운데 컨텐츠 최대폭 (설정 → 테마에서 변경, 최대 800px) */
   --shadow: 0 8px 32px rgba(0, 0, 0, 0.45);

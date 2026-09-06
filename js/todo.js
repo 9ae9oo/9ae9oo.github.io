@@ -13,6 +13,7 @@ window.MW = window.MW || {};
   var COLORS = ['#6b8afd', '#4ade80', '#fbbf24', '#fb7185', '#a78bfa', '#2dd4bf', '#8b90a5'];
   var panel = null;
   var filterGroup = 'all';
+  var showCompleted = false;   // 완료 기록도 같은 서랍에 두고, 보는 목록만 바꿉니다.
 
   function groups() { return MW.store.state.todoGroups; }
   function groupOf(id) { return groups().find(function (g) { return g.id === id; }) || null; }
@@ -134,7 +135,7 @@ window.MW = window.MW || {};
       }
       container.appendChild(el('div.todo-item' + (t.done ? '.done' : ''), { dataset: { id: t.id } }, [
         el('input.chk', {
-          type: 'checkbox', checked: t.done,
+          type: 'checkbox', checked: t.done, 'aria-label': t.title + (t.done ? ' 완료 취소' : ' 완료'),
           onchange: function () { toggle(t.id); }
         }),
         el('span.dot', { style: { background: colorOf(t) } }),
@@ -212,17 +213,36 @@ window.MW = window.MW || {};
       groups().map(function (g) { return mk(g.id, g.name); })
     ));
 
+    // 날짜 없는 항목만 Inbox에 남습니다. 카테고리 필터는 진행·완료에 똑같이 적용합니다.
+    function inGroup(t) { return !t.date && (filterGroup === 'all' || t.groupId === filterGroup); }
+    var statusTabs = el('div.todo-tabs', {}, [false, true].map(function (done) {
+      var count = MW.store.state.todos.filter(function (t) { return inGroup(t) && !!t.done === done; }).length;
+      return el('button.todo-tab' + (showCompleted === done ? '.active' : ''), {
+        type: 'button', text: (done ? '완료' : '진행 중') + ' ' + count,
+        'aria-pressed': String(showCompleted === done),
+        onclick: function () { showCompleted = done; renderPanel(); }
+      });
+    }));
+
     var listBox = el('div.todo-list');
     renderList(listBox, {
       filter: function (t) {
-        return !t.done && !t.date && (filterGroup === 'all' || t.groupId === filterGroup);
+        return inGroup(t) && !!t.done === showCompleted;
       },
-      emptyText: '인박스가 비어 있습니다.\n아래 입력창으로 추가하세요.',
-      onSchedule: scheduleMenu
+      emptyText: showCompleted ? '완료한 항목이 없습니다.' : '진행 중인 항목이 없습니다.\n빠른 입력창에 날짜 없이 내용을 적어 추가하세요.',
+      onSchedule: showCompleted ? null : scheduleMenu
     });
 
     host.appendChild(tabs);
-    host.appendChild(el('div.small.dim', { text: '📅 로 날짜를 지정하면 캘린더로 옮겨집니다.', style: { margin: '2px 2px 8px' } }));
+    host.appendChild(statusTabs);
+    host.appendChild(el('div.small.muted', {
+      text: showCompleted ? '체크를 해제하면 진행 중 목록으로 돌아갑니다.' : 'Inbox는 날짜 없는 할 일입니다. 날짜를 지정하면 Calendar에서 볼 수 있습니다.',
+      style: { margin: '2px 2px 8px' }
+    }));
+    if (!showCompleted) host.appendChild(el('button.btn.btn-sm', {
+      type: 'button', text: '할 일 입력',
+      onclick: function () { document.getElementById('quick-add-input').focus(); }
+    }));
     host.appendChild(listBox);
   }
 

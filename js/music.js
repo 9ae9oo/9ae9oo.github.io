@@ -23,6 +23,7 @@ window.MW = window.MW || {};
   var seeking = false;         // 미니바 플레이헤드 드래그 중
   var seekPct = 0;
   var playlistImporting = false;
+  var muted = false;
 
   /* ------------------------------------------------------------ 데이터 */
 
@@ -128,6 +129,7 @@ window.MW = window.MW || {};
       playerVars: { playsinline: 1 },
       events: {
         onReady: function () {
+          if (muted && player.mute) player.mute();
           if (pending) { var p = pending; pending = null; playTrack(p.index, p.autoplay); }
           renderBar();
         },
@@ -329,6 +331,14 @@ window.MW = window.MW || {};
     U.toast(mode === 'shuffle' ? '셔플 재생' : '순차 재생');
   }
 
+  function toggleMute() {
+    muted = !muted;
+    if (player && player.mute) {
+      if (muted) player.mute(); else player.unMute();
+    }
+    renderBar();
+  }
+
   function selectPlaylist(id) {
     errorStreak = 0;
     MW.store.update(function (s) { s.player.playlistId = id; s.player.index = 0; });
@@ -356,6 +366,12 @@ window.MW = window.MW || {};
       ui.mode.setAttribute('aria-label', ui.mode.title);
       ui.mode.classList.toggle('on', st().player.mode === 'shuffle');
     }
+    if (ui.mute) {
+      ui.mute.textContent = muted ? '🔇' : '🔊';
+      ui.mute.title = muted ? '음소거 해제' : '음소거';
+      ui.mute.setAttribute('aria-label', ui.mute.title);
+      ui.mute.classList.toggle('on', muted);
+    }
     if (ui.nowTitle) {
       ui.nowTitle.textContent = titleText;
       ui.nowTitle.title = apiFailed ? 'YouTube 플레이어를 불러올 수 없는 환경입니다' : titleText;
@@ -368,7 +384,7 @@ window.MW = window.MW || {};
     if (ui.cover) {
       ui.cover.classList.toggle('empty', !t);
       ui.cover.style.backgroundImage = t
-        ? 'linear-gradient(145deg, rgba(107,138,253,.12), rgba(28,31,43,.2)), url("https://i.ytimg.com/vi/' + t.videoId + '/mqdefault.jpg")'
+        ? 'url("https://i.ytimg.com/vi/' + t.videoId + '/mqdefault.jpg")'
         : '';
     }
 
@@ -533,6 +549,7 @@ window.MW = window.MW || {};
       type: 'button', title: '재생 모드', 'aria-label': '재생 모드',
       onclick: function () { setMode(st().player.mode === 'shuffle' ? 'seq' : 'shuffle'); }
     });
+    ui.mute = el('button.mus-control.mus-mute', { type: 'button', title: '음소거', 'aria-label': '음소거', onclick: toggleMute });
     ui.nowTitle = el('div.mus-now-title');
     ui.nowSub = el('div.mus-now-sub');
     ui.panelFill = el('span.mus-progress-fill');
@@ -553,7 +570,8 @@ window.MW = window.MW || {};
         ui.mode,
         el('button.mus-control', { type: 'button', text: '◀', title: '이전 곡', 'aria-label': '이전 곡', onclick: prevTrack }),
         ui.play,
-        el('button.mus-control', { type: 'button', text: '▶', title: '다음 곡', 'aria-label': '다음 곡', onclick: function () { nextTrack(false); } })
+        el('button.mus-control', { type: 'button', text: '▶', title: '다음 곡', 'aria-label': '다음 곡', onclick: function () { nextTrack(false); } }),
+        ui.mute
       ])
     ]));
     host.appendChild(ui.list);
@@ -616,6 +634,30 @@ window.MW = window.MW || {};
     return true;
   }
 
+  /** 곡의 링크를 다른 영상으로 교체 — ID 재추출 후 제목도 다시 조회 */
+  function updateTrack(playlistId, trackId, url) {
+    var id = videoId(url);
+    if (!id) { U.toast('유튜브 주소에서 영상 ID를 찾지 못했습니다.', 'err'); return false; }
+    MW.store.update(function (s) {
+      var pl = s.playlists.find(function (p) { return p.id === playlistId; });
+      var tr = pl && pl.tracks.find(function (t) { return t.id === trackId; });
+      if (tr) { tr.videoId = id; tr.url = String(url).trim(); tr.title = '유튜브 영상 ' + id; }
+    });
+    fetchTitle(id).then(function (title) {
+      if (!title) {
+        U.toast('제목 자동 조회에 실패했습니다. 재생하면 자동으로 채워지며, 직접 수정할 수도 있습니다.', 'warn');
+        return;
+      }
+      MW.store.update(function (s) {
+        s.playlists.forEach(function (pl) {
+          pl.tracks.forEach(function (tr) { if (tr.id === trackId) tr.title = title; });
+        });
+      });
+    });
+    renderBar();
+    return true;
+  }
+
   /** 공개 YouTube 재생목록의 곡을 현재 목록 끝에 한꺼번에 추가 */
   function importPlaylist(targetPlaylistId, url) {
     var id = playlistId(url);
@@ -662,6 +704,7 @@ window.MW = window.MW || {};
     render: renderBar,
     addPlaylist: addPlaylist,
     addTrack: addTrack,
+    updateTrack: updateTrack,
     importPlaylist: importPlaylist,
     videoId: videoId,
     playlistId: playlistId,
