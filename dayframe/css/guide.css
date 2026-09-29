@@ -41,3 +41,10 @@
   .guide { width: min(calc(100% - 32px), 960px); padding-top: 32px; }
   .tool-grid article { grid-template-columns: 140px minmax(0, 1fr); gap: 14px; }
 }
+.guide-table { width: 100%; margin: 0 0 20px; border-collapse: collapse; font-size: 14px; }
+.guide-table th, .guide-table td { padding: 12px 14px 12px 0; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; color: var(--muted); }
+.guide-table th { color: var(--ink); font-size: 13px; }
+.guide-table td:first-child { width: 170px; white-space: nowrap; }
+.guide ul { margin: 0 0 12px; padding-left: 20px; }
+.guide .product-kicker a { color: var(--accent); }
+@media (max-width: 560px) { .guide-table td:first-child { width: 110px; white-space: normal; } }

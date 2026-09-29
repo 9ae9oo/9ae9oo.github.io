@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Dayframe 워크플로우 사용법. 작품·회차·공정·컷으로 웹툰 작업 진행 상황을 관리하는 방법.">
+  <meta name="theme-color" content="#ffffff">
+  <title>워크플로우 사용법 - Dayframe</title>
+  <link rel="icon" href="../../assets/dayframe-icon.svg" type="image/svg+xml">
+  <link rel="icon" href="../../assets/favicon.ico" sizes="any">
+  <link rel="stylesheet" href="../../css/site.css">
+  <link rel="stylesheet" href="../../css/guide.css?v=4">
+</head>
+<body>
+  <a class="skip-link" href="#main">본문으로 건너뛰기</a>
+
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="../../" aria-label="Dayframe 첫 화면으로 이동">
+        <img class="brand-mark" src="../../assets/dayframe-icon.svg" alt="" width="24" height="24">
+        <span>Dayframe</span>
+      </a>
+      <nav class="site-nav" aria-label="주요 메뉴">
+        <a href="../">사용법</a>
+        <a href="#structure">구조</a>
+        <a href="#check">컷 체크</a>
+        <a href="#due">마감일</a>
+        <a href="#manage">관리</a>
+      </nav>
+      <a class="button button-small" href="../../#install">다운로드</a>
+    </div>
+  </header>
+
+  <main id="main" class="guide">
+    <header class="guide-title">
+      <p class="product-kicker"><a class="text-link" href="../">← 사용법</a></p>
+      <h1>워크플로우 사용법</h1>
+      <p>웹툰 한 화가 지금 어느 공정에서 몇 컷까지 왔는지, 컷 번호를 눌러 기록합니다.</p>
+    </header>
+
+    <section id="structure" aria-labelledby="w-structure">
+      <h2 id="w-structure">1. 구조 이해하기</h2>
+      <div class="step">
+        <div class="step-copy">
+          <p class="lead">작품 → 회차 → 공정 → 컷 순서로 나뉩니다.</p>
+          <ol>
+            <li><b>작품</b>: 연재 중인 웹툰 한 편. 위쪽 목록에서 작품을 바꿉니다.</li>
+            <li><b>회차</b>: 10화, 11화처럼 화별 탭으로 나뉩니다.</li>
+            <li><b>공정</b>: 콘티·스케치·선화·밑색·명암·후보정 같은 작업 단계입니다. 회차마다 따로 있습니다.</li>
+            <li><b>컷</b>: 공정 안의 번호 버튼입니다. 끝낸 컷을 누르면 색이 칠해집니다.</li>
+          </ol>
+          <p>퍼센트나 자동 판단 없이, 내가 누른 만큼만 보여 주는 단순한 체크판입니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-overview.png" alt="12화의 콘티 완료, 스케치 42/60컷 진행 중인 워크플로우 창" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="create" aria-labelledby="w-create">
+      <h2 id="w-create">2. 작품 만들기</h2>
+      <div class="step">
+        <div class="step-copy">
+          <p>워크플로우 창 오른쪽 아래의 <b>+ 작품 추가</b> 버튼을 누르면 옆에 작품 추가 창이 열립니다.</p>
+          <ol>
+            <li><b>작품 이름</b>을 적습니다.</li>
+            <li><b>회차수</b>와 <b>화별 기본 컷수</b>를 정합니다. 처음 60컷으로 시작해도 나중에 회차별로 고칠 수 있습니다.</li>
+            <li><b>공정 단계</b>를 정합니다. 기본은 콘티·스케치·선화·밑색·명암·후보정이며, 이름을 적고 <b>추가</b>를 누르면 늘어납니다. ⠿ 손잡이로 순서를 바꾸고 ✕로 뺍니다.</li>
+            <li>위의 <b>작품 추가</b> 버튼을 누르면 작품이 만들어집니다.</li>
+          </ol>
+          <p class="note">공정은 하나 이상 있어야 하고, 작품 이름이 비어 있으면 만들 수 없습니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-create.png" alt="작품 이름, 회차수, 기본 컷수, 공정 단계를 정하는 작품 추가 창" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="check" aria-labelledby="w-check">
+      <h2 id="w-check">3. 컷 체크하기</h2>
+      <p class="lead">한 공정에서 컷을 끝낼 때마다 번호를 눌러 칠합니다. 한 번에 여러 컷을 칠하는 방법도 있습니다.</p>
+      <table class="guide-table">
+        <thead><tr><th>방법</th><th>동작</th></tr></thead>
+        <tbody>
+          <tr><td><b>클릭</b></td><td>컷 하나를 완료로 칠하거나, 다시 눌러 지웁니다.</td></tr>
+          <tr><td><b>끌기</b></td><td>컷을 누른 채 지나가면 여러 컷이 한 번에 칠해집니다. 처음 누른 컷의 반대 상태(칠하기 ↔ 지우기)로 바뀝니다.</td></tr>
+          <tr><td><b>Shift + 클릭</b></td><td>직전에 누른 컷부터 지금 컷까지를 한 번에 칠합니다.</td></tr>
+          <tr><td><b>← → 방향키</b></td><td>컷 사이를 옮겨 다닙니다. Shift와 함께 누르면 지나가는 컷이 칠해집니다.</td></tr>
+          <tr><td><b>터치 길게 누르기</b></td><td>터치 화면에서는 컷을 길게 누른 뒤 끌면 여러 컷이 칠해집니다.</td></tr>
+          <tr><td><b>전체 버튼</b></td><td>공정 줄 오른쪽 상자 아이콘. 그 공정의 컷을 모두 완료로 바꿉니다. 모두 끝난 공정에서는 같은 자리가 ‘완료를 모두 해제’로 바뀝니다.</td></tr>
+        </tbody>
+      </table>
+      <p>공정 이름 옆에는 <b>완료 42/60컷</b>처럼 계산된 숫자가 보입니다. 숫자는 눌러서 고치는 값이 아니라 표시용입니다.</p>
+    </section>
+
+    <section id="due" aria-labelledby="w-due">
+      <h2 id="w-due">4. 마감일과 하루 작업량</h2>
+      <div class="step">
+        <div class="step-copy">
+          <p>마감일은 <b>공정마다 따로</b> 정합니다. 스케치는 이번 주, 채색은 다음 주처럼 공정별로 다를 수 있기 때문입니다.</p>
+          <ol>
+            <li>공정 이름 줄의 <b>달력 아이콘</b>을 누르고 날짜를 고릅니다. 고르면 바로 저장됩니다. Esc를 누르거나 밖을 누르면 그대로 닫힙니다.</li>
+            <li>공정 이름 옆에 <b>D-002</b>처럼 남은 날이 보입니다. 마감이 지났다면 <b>D+003 지남</b>으로 바뀝니다.</li>
+            <li>남은 컷이 있고 마감 전이면 오른쪽에 <b>하루 06컷 작업</b>이 나옵니다. 남은 컷을 (남은 날 + 오늘)로 나눠 올림한 값입니다.</li>
+          </ol>
+          <p>예시: 스케치가 42/60컷이고 마감이 이틀 뒤라면 남은 18컷 ÷ 3일 = 하루 6컷입니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-overview.png" alt="스케치 공정에 D-002와 하루 06컷 작업이 표시된 화면" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="fold" aria-labelledby="w-fold">
+      <h2 id="w-fold">5. 공정 접기·펼치기</h2>
+      <div class="step">
+        <div class="step-copy">
+          <p>공정 이름 왼쪽 화살표를 누르면 컷 격자가 접히고 한 줄만 남습니다. 접힌 줄에는 <b>완료 42/60컷</b>과 마감이 남은 공정의 <b>D-day</b>가 함께 보입니다.</p>
+          <p>이미 끝낸 공정은 접어 두고, 지금 하는 공정만 펼쳐 두면 작은 창에서도 한눈에 볼 수 있습니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-collapsed.png" alt="모든 공정을 접어 한 줄씩 보이는 워크플로우 창" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="episode" aria-labelledby="w-episode">
+      <h2 id="w-episode">6. 회차 다루기</h2>
+      <div class="step">
+        <div class="step-copy">
+          <h3>회차 추가</h3>
+          <p>회차 탭 끝의 <b>＋ 회차</b>를 누르면 대화상자가 열립니다.</p>
+          <ul>
+            <li><b>회차 번호</b>: 시작할 화 번호입니다. 이미 있는 번호는 만들 수 없습니다.</li>
+            <li><b>만들 화수</b>: 1보다 크게 하면 그 번호부터 이어서 한꺼번에 만듭니다. 예) 5화에서 3개 → 5·6·7화.</li>
+            <li><b>전체 컷 수</b>: 이번에 만드는 화의 컷 수입니다.</li>
+          </ul>
+          <p>작품의 기본 공정이 함께 만들어집니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-add-episode.png" alt="회차 번호, 만들 화수, 전체 컷 수를 입력하는 회차 추가 창" loading="lazy"></figure>
+      </div>
+      <div class="step">
+        <div class="step-copy">
+          <h3>회차 편집·삭제</h3>
+          <p>회차 제목 옆의 <b>편집</b>을 누르면 화 번호와 총 컷수를 바로 고칠 수 있는 입력칸이 나옵니다. <b>편집 확인</b>으로 저장하고, <b>회차 삭제</b>로 그 화를 지웁니다.</p>
+          <p class="note">회차를 삭제하면 그 화의 공정과 완료 기록이 함께 사라집니다. 지우기 전에 확인 창이 나옵니다.</p>
+          <p>회차가 20개를 넘으면 탭이 20화 단위 구간으로 나뉘고, 화살표로 이전·다음 구간을 넘깁니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-edit-episode.png" alt="화 번호와 총 컷수를 고치는 회차 편집 입력칸" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="process" aria-labelledby="w-process">
+      <h2 id="w-process">7. 공정 추가·순서·이름·삭제</h2>
+      <div class="step">
+        <div class="step-copy">
+          <h3>공정 추가</h3>
+          <p>공정 목록 맨 아래 점선의 <b>+ 공정 추가</b>를 누르고 이름(예: 배경)을 적어 저장합니다. 그 회차에만 추가됩니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-add-process.png" alt="공정 이름을 입력하는 공정 추가 창" loading="lazy"></figure>
+      </div>
+      <div class="step">
+        <div class="step-copy">
+          <h3>순서 변경 모드</h3>
+          <p>평소에는 화면을 깔끔하게 두고, 오른쪽 위의 <b>순서 변경</b>을 눌렀을 때만 편집 도구가 나타납니다.</p>
+          <ul>
+            <li>왼쪽 <b>손잡이</b>를 끌어 순서를 바꿉니다. <b>↑ ↓ 화살표</b>나 방향키로도 한 칸씩 옮깁니다.</li>
+            <li><b>연필</b>로 공정 이름을 고칩니다.</li>
+            <li><b>휴지통</b>으로 공정을 지웁니다. 완료한 컷 기록도 함께 사라지며, 지우기 전에 확인 창이 나옵니다.</li>
+            <li>끝내려면 <b>순서 변경 끝내기</b>를 누르거나 Esc를 누릅니다.</li>
+          </ul>
+        </div>
+        <figure><img src="../../assets/guide/wf-reorder.png" alt="공정마다 손잡이와 화살표, 연필, 휴지통이 보이는 순서 변경 모드" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section id="manage" aria-labelledby="w-manage">
+      <h2 id="w-manage">8. 작품 관리</h2>
+      <div class="step">
+        <div class="step-copy">
+          <p>작품 목록 옆의 <b>작품 관리</b>를 누르면 옆에 관리 창이 열립니다.</p>
+          <ul>
+            <li><b>기본 정보</b>: 작품 이름, 화별 기본 컷수, 기본 공정 태그. 앞으로 새 회차를 만들 때의 기본값입니다.</li>
+            <li><b>작품 회차별 정보</b>: 회차를 체크해 <b>선택 수정</b>(컷수·공정 일괄 변경), <b>선택 복제</b>, <b>선택 삭제</b>를 합니다. 체크한 항목만 바뀝니다.</li>
+            <li><b>변경 내용 저장</b>: 눌러야 실제로 적용됩니다. 저장 전에는 삭제 예정으로 표시된 회차를 되돌릴 수 있습니다.</li>
+            <li><b>작품 삭제</b>: 작품과 모든 회차·공정·완료 컷이 사라지며 되돌릴 수 없습니다.</li>
+          </ul>
+          <p class="note">컷수를 줄이거나 공정을 빼면 초과한 컷·해당 공정의 체크와 마감 기록이 지워집니다. 저장 직전에 무엇이 지워지는지 확인 창으로 알려 줍니다.</p>
+        </div>
+        <figure><img src="../../assets/guide/wf-manage.png" alt="기본 정보와 회차별 정보를 관리하는 작품 관리 창" loading="lazy"></figure>
+      </div>
+    </section>
+
+    <section aria-labelledby="w-tips">
+      <h2 id="w-tips">활용 예시</h2>
+      <ol>
+        <li>작품과 공정을 만들고 첫 회차를 마련합니다.</li>
+        <li>화마다 공정별 마감을 달력 아이콘으로 정합니다. 하루 작업량이 표시되니 그날 할 컷 수를 바로 알 수 있습니다.</li>
+        <li>작업이 끝난 컷을 눌러 칠하고, 끝낸 공정은 접어 둡니다.</li>
+        <li>일정에 맞춰 다음 화를 <b>＋ 회차</b>로 만듭니다.</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <a class="brand" href="../../"><img class="brand-mark" src="../../assets/dayframe-icon.svg" alt="" width="24" height="24"><span>Dayframe</span></a>
+    <p>© <span id="current-year">2026</span> Dayframe</p>
+  </footer>
+  <script src="../../js/site.js"></script>
+</body>
+</html>
