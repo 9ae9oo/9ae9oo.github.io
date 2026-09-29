@@ -20,9 +20,11 @@
 .guide figure { margin: 0; }
 .guide figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); }
 .step figure img { max-width: 320px; margin-left: auto; }
-.tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 20px; }
-.shot { height: 260px; margin-bottom: 12px; padding: 14px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
-.shot img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(48, 53, 60, .10); }
+.tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px 48px; }
+.tool-grid article { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
+.tool-grid article.no-image { display: block; align-self: start; }
+.shot img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 8px rgba(48, 53, 60, .10); }
+.tool-grid h3 { margin-top: 4px; }
 .tool-grid .no-image { padding: 16px; border-radius: var(--radius); background: var(--surface); }
 .tool-grid p { margin: 0; font-size: 13px; }
 .faq { margin-top: 32px; border-top: 1px solid var(--line); }
@@ -32,10 +34,10 @@
 @media (max-width: 900px) {
   .step { grid-template-columns: 1fr; gap: 20px; }
   .step figure { max-width: 360px; }
-  .tool-grid { grid-template-columns: repeat(2, 1fr); }
+  .tool-grid { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; gap: 24px; }
 }
 @media (max-width: 560px) {
   .guide { width: min(calc(100% - 32px), 960px); padding-top: 32px; }
-  .tool-grid { grid-template-columns: 1fr; }
+  .tool-grid article { grid-template-columns: 140px minmax(0, 1fr); gap: 14px; }
 }
