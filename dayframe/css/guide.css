@@ -18,10 +18,11 @@
 .step h3 { display: flex; align-items: center; gap: 10px; font-size: 19px; }
 .step h3 span { width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 13px; }
 .guide figure { margin: 0; }
-.guide figure img, .tool-grid img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.guide figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); }
 .step figure img { max-height: 420px; object-fit: cover; object-position: top; }
 .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 20px; }
-.tool-grid img { height: 170px; margin-bottom: 12px; object-fit: cover; object-position: top; background: #fff; }
+.shot { height: 260px; margin-bottom: 12px; padding: 14px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+.shot img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(48, 53, 60, .10); }
 .tool-grid .no-image { padding: 16px; border-radius: var(--radius); background: var(--surface); }
 .tool-grid p { margin: 0; font-size: 13px; }
 .faq { margin-top: 32px; border-top: 1px solid var(--line); }
