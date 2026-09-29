@@ -1,0 +1,40 @@
+.guide { width: min(calc(100% - 48px), 960px); margin: 0 auto; padding: 48px 0 72px; }
+.guide-title { margin-bottom: 48px; }
+.guide-title h1 { margin: 0; font-size: clamp(30px, 4vw, 44px); line-height: 1.25; word-break: keep-all; }
+.guide-title p:last-child { margin: 14px 0 0; color: var(--muted); }
+.guide section { margin-top: 48px; padding-top: 48px; border-top: 1px solid var(--line); }
+.guide h2 { margin: 0 0 20px; font-size: 26px; }
+.guide h3 { margin: 0 0 8px; font-size: 17px; }
+.guide p, .guide li { color: var(--muted); font-size: 15px; word-break: keep-all; }
+.guide b { color: var(--ink); }
+.guide code { padding: 1px 5px; border-radius: 4px; color: var(--ink); background: var(--surface-strong); }
+.guide ol { margin: 0 0 12px; padding-left: 20px; }
+.guide li { margin-bottom: 6px; }
+.lead { margin: 0 0 32px; font-size: 16px !important; }
+.note { padding: 10px 12px; border-radius: 6px; background: var(--accent-soft); font-size: 13px !important; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.step { margin-bottom: 40px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; align-items: center; }
+.step:last-child { display: block; margin-bottom: 0; }
+.step h3 { display: flex; align-items: center; gap: 10px; font-size: 19px; }
+.step h3 span { width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 13px; }
+.guide figure { margin: 0; }
+.guide figure img, .tool-grid img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); }
+.step figure img { max-height: 420px; object-fit: cover; object-position: top; }
+.tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 20px; }
+.tool-grid img { height: 170px; margin-bottom: 12px; object-fit: cover; object-position: top; background: #fff; }
+.tool-grid .no-image { padding: 16px; border-radius: var(--radius); background: var(--surface); }
+.tool-grid p { margin: 0; font-size: 13px; }
+.faq { margin-top: 32px; border-top: 1px solid var(--line); }
+.faq details { padding: 14px 0; border-bottom: 1px solid var(--line); }
+.faq summary { cursor: pointer; color: var(--ink); font-size: 15px; font-weight: 600; }
+.faq details p { margin: 10px 0 0; }
+@media (max-width: 900px) {
+  .step { grid-template-columns: 1fr; gap: 20px; }
+  .step figure { max-width: 360px; }
+  .tool-grid { grid-template-columns: repeat(2, 1fr); }
+  .two-col { grid-template-columns: 1fr; gap: 24px; }
+}
+@media (max-width: 560px) {
+  .guide { width: min(calc(100% - 32px), 960px); padding-top: 32px; }
+  .tool-grid { grid-template-columns: 1fr; }
+}
