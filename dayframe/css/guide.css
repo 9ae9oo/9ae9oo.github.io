@@ -19,7 +19,7 @@
 .step h3 span { width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 13px; }
 .guide figure { margin: 0; }
 .guide figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); }
-.step figure img { max-height: 420px; object-fit: cover; object-position: top; }
+.step figure img { max-width: 320px; margin-left: auto; }
 .tool-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 24px 20px; }
 .shot { height: 260px; margin-bottom: 12px; padding: 14px; display: grid; place-items: center; border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface); }
 .shot img { display: block; width: auto; height: auto; max-width: 100%; max-height: 100%; border: 1px solid var(--line); border-radius: 4px; box-shadow: 0 2px 8px rgba(48, 53, 60, .10); }
