@@ -133,7 +133,7 @@ code { font-family: Consolas, "Courier New", monospace; font-size: .88em; }
 .flow-list h3 span { width: 24px; height: 24px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 12px; }
 .flow-list p { margin: 0; color: var(--muted); font-size: 14px; word-break: keep-all; }
 
-.feature-grid { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); border-top: 2px solid var(--ink); list-style: none; }
+.feature-grid { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); border-top: 2px solid var(--ink); list-style: none; }
 .feature-grid li { padding: 20px 16px 4px 0; }
 .feature-grid h3 { margin: 0 0 4px; font-size: 17px; }
 .feature-grid p { margin: 0; color: var(--muted); font-size: 13px; }
