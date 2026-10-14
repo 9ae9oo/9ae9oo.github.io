@@ -133,7 +133,7 @@ code { font-family: Consolas, "Courier New", monospace; font-size: .88em; }
 .flow-list h3 span { width: 24px; height: 24px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 12px; }
 .flow-list p { margin: 0; color: var(--muted); font-size: 14px; word-break: keep-all; }
 
-.feature-grid { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(7, 1fr); border-top: 2px solid var(--ink); list-style: none; }
+.feature-grid { margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, 1fr); border-top: 2px solid var(--ink); list-style: none; }
 .feature-grid li { padding: 20px 16px 4px 0; }
 .feature-grid h3 { margin: 0 0 4px; font-size: 17px; }
 .feature-grid p { margin: 0; color: var(--muted); font-size: 13px; }
@@ -150,7 +150,7 @@ code { font-family: Consolas, "Courier New", monospace; font-size: .88em; }
 .site-footer p { margin: 0; }
 
 @media (max-width: 900px) {
-  .site-nav { display: none; }
+  .site-nav { gap: 4px; }
   .header-inner { gap: 16px; }
   .header-inner .button { margin-left: auto; }
   .hero { min-height: 0; grid-template-columns: 1fr; gap: 32px; }
@@ -181,3 +181,34 @@ code { font-family: Consolas, "Courier New", monospace; font-size: .88em; }
   html { scroll-behavior: auto; }
   *, *::before, *::after { transition-duration: .01ms !important; }
 }
+
+/* 페이지 이동은 모든 화면 폭에서 유지하고, 본문 목차는 별도 줄로 구분합니다. */
+.header-inner { gap: 24px; }
+.site-nav { gap: 8px; flex-wrap: wrap; }
+.site-nav a { min-height: 44px; display: inline-flex; align-items: center; padding: 8px 12px; font-size: 16px; text-decoration: none; border-bottom: 2px solid transparent; }
+.site-nav a[aria-current="page"] { color: var(--ink); border-bottom-color: var(--accent); }
+.page-nav { width: min(calc(100% - 48px), var(--max-width)); margin: 0 auto; padding: 12px 0; display: flex; flex-wrap: wrap; gap: 4px 8px; border-bottom: 1px solid var(--line); }
+.page-nav a { display: inline-flex; align-items: center; min-height: 40px; padding: 8px 12px; font-size: 14px; color: var(--muted); text-decoration: none; }
+.page-nav a:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 4px; }
+.page-nav a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.hero-actions .button-guide { min-height: 48px; padding: 12px 20px; font-size: 16px; color: var(--ink); border-color: var(--ink); }
+section[id] { scroll-margin-top: 96px; }
+@media (max-width: 760px) {
+ .header-inner { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; padding: 8px 0; }
+ .header-inner .brand { grid-column: 1; grid-row: 1; }
+ .header-inner > .button { grid-column: 2; grid-row: 1; margin-left: 0; }
+ .site-nav { grid-column: 1 / -1; grid-row: 2; display: flex; margin-left: 0; gap: 4px; }
+ .site-nav a { font-size: 16px; }
+ .page-nav { width: min(calc(100% - 32px), var(--max-width)); }
+ section[id] { scroll-margin-top: 144px; }
+}
+
+/* 나란한 주요 버튼은 글자·높이·안쪽 여백·너비를 같은 단계로 맞춥니다. */
+.hero-actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: stretch; gap: 12px; }
+.hero-actions .button { width: 100%; min-height: 48px; padding: 12px 20px; font-size: 16px; line-height: 1.5; }
+@media (max-width: 560px) { .hero-actions { grid-template-columns: 1fr; } }
+
+/* 긴 한국어 설명은 자연스럽게 감싸고, 주소나 긴 단어만 필요할 때 나눕니다. */
+main :is(p, li), figcaption { text-wrap: pretty; overflow-wrap: anywhere; }
+.hero h1, .section-title, .install h2 { text-wrap: balance; }
+.install-copy p + p { margin-top: 12px; }

@@ -9,7 +9,8 @@
 .guide h3 { margin: 0 0 8px; font-size: 17px; }
 .guide p, .guide li { color: var(--muted); font-size: 15px; word-break: keep-all; }
 .guide b { color: var(--ink); }
-.guide code { padding: 1px 5px; border-radius: 4px; color: var(--ink); background: var(--surface-strong); }
+/* 저장 경로가 작은 화면의 폭을 밀어내지 않도록 필요한 위치에서 줄바꿈합니다. */
+.guide code { overflow-wrap: anywhere; padding: 1px 5px; border-radius: 4px; color: var(--ink); background: var(--surface-strong); }
 .guide ol { margin: 0 0 12px; padding-left: 20px; }
 .guide li { margin-bottom: 6px; }
 .lead { margin: 0 0 32px; font-size: 16px !important; }
@@ -54,3 +55,30 @@
 .guide summary:focus-visible, .guide a:focus-visible { outline: 3px solid rgba(173, 88, 74, .28); outline-offset: 3px; }
 .guide details > summary { min-height: 24px; }
 .two-col figure img { max-width: 320px; }
+
+/* 종류별 예시를 전체 창 사진으로 나란히 보여 주고 좁은 화면에서는 세로로 읽습니다. */
+.workflow-examples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
+.workflow-examples figure { min-width: 0; }
+.workflow-examples figcaption { margin-bottom: 12px; font-size: 14px; color: var(--muted); }
+.workflow-examples img { max-width: 400px; }
+@media (max-width: 560px) { .workflow-examples { grid-template-columns: 1fr; } }
+
+/* 일간·주간·월간은 넓게 촬영한 사진을 위에 두어 PC에서 한 줄로 비교합니다. */
+.calendar-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px; margin-bottom: 40px; }
+.calendar-tools article { min-width: 0; }
+.calendar-tools h3 { margin-top: 16px; }
+.calendar-tools p { margin: 0; font-size: 13px; }
+@media (max-width: 760px) { .calendar-tools { grid-template-columns: 1fr; } }
+
+/* 넓은 설명 구역도 한 줄이 과도하게 길어지지 않게 읽는 폭만 제한합니다. 사진과 열 배치는 유지합니다. */
+.guide > section > :is(p, ol, ul) { max-inline-size: 48em; }
+.guide :is(p, li, figcaption) { text-wrap: pretty; overflow-wrap: anywhere; }
+.tool-grid .tool-link { margin-top: 8px; }
+
+/* 같은 주제의 예시·사용법·주의사항을 구역 안에서 연결합니다. 기존 글자·사진·색은 유지합니다. */
+.guide-topic { margin-top: 32px; scroll-margin-top: 80px; }
+.guide-topic > :is(p, ol, ul), .step-text .step-copy { max-inline-size: 48em; }
+.guide-topic h3 { margin-bottom: 16px; }
+.topic-tool { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; margin-bottom: 32px; }
+.topic-tool p { font-size: 13px; }
+@media (max-width: 560px) { .topic-tool { grid-template-columns: 140px minmax(0, 1fr); gap: 14px; } }
