@@ -28,7 +28,7 @@
 .tool-grid article { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
 .tool-grid article.no-image { display: block; align-self: start; }
 .shot img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: 6px; box-shadow: 0 2px 8px rgba(48, 53, 60, .10); }
-.tool-grid h3 { margin-top: 4px; }
+.tool-grid h3 { margin-top: 0; }
 .tool-grid .no-image { padding: 16px; border-radius: var(--radius); background: var(--surface); }
 .tool-grid p { margin: 0; font-size: 13px; }
 .faq { margin-top: 32px; border-top: 1px solid var(--line); }
@@ -92,7 +92,9 @@
 
 
 /* 각 설명은 해당 이미지와 같은 행에서 시작하고, 예시별 설명은 해당 사진 바로 아래에 둡니다. */
-.workflow-guide .step-copy > :first-child { margin-top: 0; }
+.guide .step-copy > :first-child { margin-top: 0; }
 .workflow-examples > article { min-width: 0; }
 .workflow-examples > article > .guide-topic { margin-top: 24px; }
 .workflow-examples > article > figure > figcaption { min-height: 24px; }
+
+.topic-tool > div > :first-child { margin-top: 0; }
