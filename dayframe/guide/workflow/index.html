@@ -20,21 +20,10 @@
   <main id="main" class="guide workflow-guide">
 <header class="guide-title"><p class="product-kicker">사용법</p><h1>워크플로우 사용법</h1><p>Dayframe 0.3.0 · 체크 보드와 작업량 기록으로 공정별 진행 상황을 관리합니다.</p></header>
 <!-- 0.3.0 공정별 분량과 합산 기록의 실제 조작법을 설명합니다. 이전 화면 사진은 사용하지 않습니다. -->
-<section id="create" aria-labelledby="w-create"><h2 id="w-create">1. 작품 만들기</h2><div id="structure"><p>작품 안에 회차를 만들고, 각 회차의 공정별로 진행 상황을 관리합니다.<br>
-공정마다 종류·분량·단위를 정할 수 있습니다.</p></div><div class="step"><div class="step-copy"><ol><li><b>작품 추가</b> 열기 → 작품 이름·회차수 입력하기</li><li>체크 보드·작업량 기록의 기본 분량·단위 정하기</li><li>기본 공정 이름·종류 선택 → <b>작품 추가</b>로 저장하기</li></ol><p>기본 구성은 새 회차를 만들 때 사용합니다.<br>
+<section id="create" aria-labelledby="w-create"><h2 id="w-create">1. 작품 만들기</h2><div id="structure" class="step"><div class="step-copy"><p>작품 안에 회차를 만들고, 각 회차의 공정별로 진행 상황을 관리합니다.<br>
+공정마다 종류·분량·단위를 정할 수 있습니다.</p><ol><li><b>작품 추가</b> 열기 → 작품 이름·회차수 입력하기</li><li>체크 보드·작업량 기록의 기본 분량·단위 정하기</li><li>기본 공정 이름·종류 선택 → <b>작품 추가</b>로 저장하기</li></ol><p>기본 구성은 새 회차를 만들 때 사용합니다.<br>
 이미 만든 회차는 작품 관리에서 선택해 수정합니다.</p></div><figure><img src="../../assets/guide/wf030-create.jpg?updated=20261018" width="400" height="650" alt="작품 추가의 이름·회차수·기본 공정 구성" loading="lazy"></figure></div></section>
-<section id="progress" aria-labelledby="w-progress"><h2 id="w-progress">2. 진행 상황 기록</h2><div class="workflow-examples"><article><figure><figcaption><b>체크 보드 예시</b> · 스케치 22/60컷 완료</figcaption><img src="../../assets/guide/wf030-board-example.jpg?updated=20261018" width="400" height="827" alt="체크 보드에서 60칸 중 22칸을 완료한 전체 창 예시" loading="lazy"></figure><div id="check" class="guide-topic"><h3 id="w-check">체크 보드 · 번호 체크</h3><p>완료한 번호를 누르면 체크되고, 다시 누르면 해제됩니다.<br>
-드래그로 여러 칸을 칠하거나 Shift로 범위를 선택할 수 있습니다.<br>
-펼친 공정의 전체 완료 버튼은 모든 번호를 완료하거나 해제합니다.</p><p>완료량은 공정의 분량·단위에 맞춰 표시합니다.<br>
-분량을 줄일 때 범위 밖 완료 칸이 생기면 확인을 받습니다.<br>
-해당 체크는 보관되며 분량을 다시 늘리면 나타납니다.</p></div></article><article><figure><figcaption><b>작업량 기록 예시</b> · 현재 작업량과 메모 입력</figcaption><img src="../../assets/guide/wf030-quantity-example.jpg?updated=20261018" width="400" height="827" alt="현재 작업량 2페이지와 메모를 입력한 기록 전 화면" loading="lazy"></figure><div id="quantity" class="guide-topic"><h3 id="w-quantity">작업량 기록 · 분량 입력</h3><div class="step step-text"><div class="step-copy"><ol><li>작업량 기록 공정 펼치기</li><li><b>현재 작업량</b>에 이번 작업 분량 입력하기<br>메모 입력(선택)</li><li><b>기록</b> 선택하기</li></ol><p>각 기록의 분량을 모두 더해 완료량을 계산합니다.<br>
-3페이지와 2페이지를 기록하면 완료량은 5페이지입니다.<br>
-같은 누적 총량을 반복해서 입력하면 그 값들도 더해집니다.</p><p>0 이상의 정수를 기록할 수 있습니다.<br>
-목표를 넘겨도 실제 완료량과 진행률을 표시하며 진행 바는 100%까지만 채웁니다.</p><p>기록의 연필로 분량·메모를 수정합니다.<br>
-체크 또는 Enter로 적용하고 × 또는 Esc로 취소합니다.</p>
-<p>기록 시각은 유지됩니다.<br>
-휴지통으로 삭제하면 확인 후 합계를 다시 계산합니다.</p>
-<p>최신 기록이 위에 표시되며, 기록이 많으면 목록 안에서 스크롤합니다.</p></div></div></div></article></div></section>
+<section id="progress" aria-labelledby="w-progress"><h2 id="w-progress">2. 진행 상황 기록</h2><div class="workflow-examples"><article><figure><figcaption><b>체크 보드 예시</b> · 스케치 22/60컷 완료</figcaption><img src="../../assets/guide/wf030-board-example.jpg?updated=20261018" width="400" height="827" alt="체크 보드에서 60칸 중 22칸을 완료한 전체 창 예시" loading="lazy"></figure><div id="check" class="guide-topic"><h3 id="w-check">체크 보드</h3><p>드래그로 여러 칸을 칠하거나<br>전체 완료 버튼을 눌러 한 번에 체크할 수 있습니다.</p><p>완료량은 공정의 분량·단위에 맞춰 표시합니다.</p></div></article><article><figure><figcaption><b>작업량 기록 예시</b> · 현재 작업량과 메모 입력</figcaption><img src="../../assets/guide/wf030-quantity-example.jpg?updated=20261018" width="400" height="827" alt="현재 작업량 2페이지와 메모를 입력한 기록 전 화면" loading="lazy"></figure><div id="quantity" class="guide-topic"><h3 id="w-quantity">작업량 기록 · 분량 입력</h3><ol><li>작업량 기록 공정 펼치기</li><li><b>현재 작업량</b>에 이번 작업 분량 입력하기 + 메모 입력(선택사항)</li><li><b>기록</b> 선택하기</li></ol></div></article></div></section>
 <section id="edit" aria-labelledby="w-edit"><h2 id="w-edit">3. 공정 설정</h2><div class="step"><div class="step-copy"><p>공정에 마우스를 올리거나 키보드 포커스를 옮기면 편집·삭제 버튼이 나타납니다.<br>
 연필로 편집을 열어 이름·종류·분량·단위·마감일을 정합니다.</p>
 <p>적용하면 저장되고, 취소·닫기·Esc는 수정 내용을 버립니다.</p><p>완료 체크나 작업량 기록이 있으면 <b>종류와 단위</b>가 잠깁니다.<br>
