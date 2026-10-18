@@ -89,3 +89,7 @@
 .activity-images img { display: block; width: 100%; height: auto; }
 .activity-description { max-width: 48em; }
 @media (max-width: 560px) { .activity-images { gap: 16px; } }
+
+/* 작품 관리와 회차 추가 화면은 설명 열 옆에서 기존 사진 폭으로 읽습니다. */
+.workflow-management-images { display: grid; gap: 24px; width: 100%; max-width: 320px; }
+.workflow-management-images img { width: 100%; height: auto; }
