@@ -15,15 +15,15 @@
   <a class="skip-link" href="#main">본문으로 건너뛰기</a>
 
   <header class="site-header"><div class="header-inner"><a class="brand" href="../../" aria-label="Dayframe 첫 화면"><img class="brand-mark" src="../../assets/dayframe-icon.svg" alt="" width="24" height="24"><span>Dayframe</span></a><nav class="site-nav" aria-label="페이지 이동"><a href="../../">첫 화면</a><a href="../../guide/">사용법</a><a href="../../guide/workflow/" aria-current="page">워크플로우</a></nav><a class="button button-small" href="../../#install">설치·다운로드</a></div></header>
-<nav class="page-nav" aria-label="이 페이지 목차"><a href="#create">작품 만들기</a><a href="#progress">진행 기록</a><a href="#edit">공정 설정</a><a href="#manage">작품·회차 관리</a></nav>
+<nav class="page-nav" aria-label="이 페이지 목차"><a href="#create">작품 만들기</a><a href="#progress">진행 기록</a><a href="#edit">공정 설정</a><a href="#manage">작품·회차 관리</a><a href="#calculator">마감 계산기</a></nav>
 
   <main id="main" class="guide">
 <header class="guide-title"><p class="product-kicker">사용법</p><h1>워크플로우 사용법</h1><p>Dayframe 0.3.0 · 체크 보드와 작업량 기록으로 공정별 진행 상황과 하루 목표를 관리합니다.</p></header>
 <!-- 0.3.0 공정별 분량과 합산 기록의 실제 조작법을 설명합니다. 이전 화면 사진은 사용하지 않습니다. -->
 <section id="create" aria-labelledby="w-create"><h2 id="w-create">1. 작품 만들기</h2><div id="structure"><p>작품 안에 회차를 만들고, 각 회차의 공정별로 진행 상황을 관리합니다.<br>
 공정마다 종류·분량·단위를 정할 수 있습니다.</p></div><div class="step"><div class="step-copy"><ol><li><b>작품 추가</b> 열기 → 작품 이름·회차수 입력하기</li><li>체크 보드·작업량 기록의 기본 분량·단위 정하기</li><li>기본 공정 이름·종류 선택 → <b>작품 추가</b>로 저장하기</li></ol><p>기본 구성은 새 회차를 만들 때 사용합니다.<br>
-이미 만든 회차는 작품 관리에서 선택해 수정합니다.</p></div><figure><img src="../../assets/guide/wf030-create.png?full=3" width="400" height="720" alt="작품 추가의 이름·회차수·기본 공정 구성" loading="lazy"></figure></div></section>
-<section id="progress" aria-labelledby="w-progress"><h2 id="w-progress">2. 진행 상황 기록</h2><div class="workflow-examples"><figure><figcaption><b>체크 보드 예시</b> · 선화 8/20컷 완료</figcaption><img src="../../assets/guide/wf030-board-example.png?examples=1" width="400" height="920" alt="체크 보드에서 20칸 중 8칸을 완료한 전체 창 예시" loading="lazy"></figure><figure><figcaption><b>작업량 기록 예시</b> · 3페이지＋2페이지＝5페이지</figcaption><img src="../../assets/guide/wf030-quantity-example.png?examples=1" width="400" height="920" alt="작업량 3페이지와 2페이지를 기록해 합계 5페이지를 보여주는 전체 창 예시" loading="lazy"></figure></div><div id="check" class="guide-topic"><h3 id="w-check">체크 보드 · 번호 체크</h3><p>완료한 번호를 누르면 체크되고, 다시 누르면 해제됩니다.<br>
+이미 만든 회차는 작품 관리에서 선택해 수정합니다.</p></div><figure><img src="../../assets/guide/wf030-create.jpg?updated=20261018" width="400" height="650" alt="작품 추가의 이름·회차수·기본 공정 구성" loading="lazy"></figure></div></section>
+<section id="progress" aria-labelledby="w-progress"><h2 id="w-progress">2. 진행 상황 기록</h2><div class="workflow-examples"><figure><figcaption><b>체크 보드 예시</b> · 스케치 22/60컷 완료</figcaption><img src="../../assets/guide/wf030-board-example.jpg?updated=20261018" width="400" height="827" alt="체크 보드에서 60칸 중 22칸을 완료한 전체 창 예시" loading="lazy"></figure><figure><figcaption><b>작업량 기록 예시</b> · 현재 작업량과 메모 입력</figcaption><img src="../../assets/guide/wf030-quantity-example.jpg?updated=20261018" width="400" height="827" alt="현재 작업량 2페이지와 메모를 입력한 기록 전 화면" loading="lazy"></figure></div><div id="check" class="guide-topic"><h3 id="w-check">체크 보드 · 번호 체크</h3><p>완료한 번호를 누르면 체크되고, 다시 누르면 해제됩니다.<br>
 드래그로 여러 칸을 칠하거나 Shift로 범위를 선택할 수 있습니다.<br>
 펼친 공정의 전체 완료 버튼은 모든 번호를 완료하거나 해제합니다.</p><p>완료량은 공정의 분량·단위에 맞춰 표시합니다.<br>
 분량을 줄일 때 범위 밖 완료 칸이 생기면 확인을 받습니다.<br>
@@ -48,19 +48,21 @@
 접어도 진행 상황은 유지됩니다.</p><p><b>순서 변경</b>을 누르면 공정을 선택한 뒤 맨 위로·위로·아래로·맨 아래로 버튼으로 옮길 수 있습니다.<br>
 순서 변경 중에는 편집·삭제·전체 완료 버튼을 숨깁니다.</p>
 <p>순서 변경을 끝내거나 Esc로 일반 화면에 돌아갑니다.</p><p>공정을 삭제하면 해당 공정의 완료 체크와 작업량 기록도 삭제됩니다.<br>
-사용 화면의 삭제는 확인을 받습니다.</p></div></div><figure><img src="../../assets/guide/wf030-edit.png?compact=4" width="400" height="580" alt="종류·단위 잠금과 하루 목표 계산이 보이는 공정 수정 화면" loading="lazy"></figure></div></section>
+사용 화면의 삭제는 확인을 받습니다.</p></div></div><figure><img src="../../assets/guide/wf030-edit.jpg?updated=20261018" width="400" height="580" alt="이름·종류·분량·단위·마감일을 바꾸는 공정 수정 화면" loading="lazy"></figure></div></section>
+<figure class="workflow-reorder-shot"><img src="../../assets/guide/wf030-reorder.jpg?updated=20261018" width="400" height="767" alt="워크플로우 순서 변경 모드에서 콘티를 선택한 화면" loading="lazy"></figure>
 <section id="manage" aria-labelledby="w-manage"><h2 id="w-manage">4. 작품·회차 관리</h2><p>관리 화면의 변경 취소나 저장하지 않고 닫기는 확인 후 관리 초안을 버립니다.<br>
 작품 삭제는 작품의 모든 회차와 기록을 함께 삭제합니다.</p><h3>기본 공정과 순서</h3><div class="step"><div class="step-copy"><p>작품 목록 옆의 <b>작품 관리</b>를 엽니다.<br>
 기본 공정에서 이름·종류를 정하고 각 행 오른쪽 위·아래 버튼으로 기본 순서를 바꿉니다.<br><b>＋ 공정 추가</b>로 추가하고 X로 기본 공정을 제거합니다.</p><p>기본 분량·단위·공정 구성과 순서는 이후 새 회차를 만들 때 사용합니다.<br>
-이미 만든 회차의 공정을 바꾸려면 아래 회차 공정 관리에서 해당 회차를 선택하세요.</p></div><figure><img src="../../assets/guide/wf030-manage.png?full=3" width="400" height="920" alt="작품 관리의 기본 공정 순서 버튼과 회차 선택 영역" loading="lazy"></figure></div><div id="episode" class="guide-topic"><h3 id="w-episode">회차 추가·복제·삭제</h3><p><b>＋ 회차</b>에서 추가 시작 회차와 만들 화수를 정합니다.<br>
+이미 만든 회차의 공정을 바꾸려면 아래 회차 공정 관리에서 해당 회차를 선택하세요.</p></div><figure><img src="../../assets/guide/wf030-manage.jpg?updated=20261018" width="400" height="920" alt="작품 관리의 기본 공정 순서 버튼과 회차 선택 영역" loading="lazy"></figure></div><div id="episode" class="guide-topic"><h3 id="w-episode">회차 추가·복제·삭제</h3><p><b>＋ 회차</b>에서 추가 시작 회차와 만들 화수를 정합니다.<br>
 기존 회차 번호와 겹치면 추가할 수 없습니다.<br>
 새 회차는 기본 공정 구성으로 만들고 완료 체크·작업량 기록은 빈 상태로 시작합니다.</p><p>작품 관리에서 회차를 선택해 <b>선택 수정</b>·<b>선택 복제</b>·<b>선택 삭제</b>를 실행합니다.<br>
 복제는 공정 구성을 가져오며 완료 체크·작업량 기록·마감일은 복사하지 않습니다.<br>
 선택 삭제는 해당 회차와 기록을 삭제합니다.</p>
 <p>관리에서 바꾼 내용은 최종 저장으로 확정합니다.</p></div><h3>회차를 선택해 세부 수정</h3><div class="step"><div class="step-copy"><ol><li>회차 공정 관리에서 수정할 회차 체크하기<br>여러 회차·전체 선택 가능</li><li><b>선택 수정</b> → 오른쪽 세부 시트 열기</li><li>공정 이름·종류·분량·단위 수정하기<br>공정 추가·삭제 가능 / 기록이 있으면 종류·단위 잠김</li><li><b>수정 적용</b> → 관리 초안에 반영하기</li><li><b>변경 내용 저장</b> → 수정 확정하기</li></ol><p>여러 회차를 함께 수정하면 직접 바꾼 항목만 적용됩니다.<br>
 서로 다른 값은 ‘서로 다름’으로 표시되며 일부 회차에만 있는 공정은 그 공정이 있는 회차에 적용됩니다.</p>
-<p>시트의 취소·닫기는 시트의 미적용 입력을 버립니다.</p></div><figure><img src="../../assets/guide/wf030-manage-detail.png?compact=4" width="400" height="580" alt="12화 수정 시트의 공정 이름·종류·분량·단위와 기록 잠금 안내" loading="lazy"></figure></div><h3>선택한 회차의 공정 순서 변경</h3><div class="step"><div class="step-copy"><ol><li>선택 수정 시트에서 <b>순서 변경</b> 선택하기</li><li>옮길 공정 선택하기</li><li><b>맨 위로·위로·아래로·맨 아래로</b>로 위치 옮기기</li><li><b>공정 설정</b> → 설정 화면으로 돌아가기</li><li><b>수정 적용 → 변경 내용 저장</b>으로 확정하기</li></ol><p>함께 선택한 회차들의 공정 구성이 다르면 순서 변경을 사용할 수 없습니다.<br>
-이때는 회차별로 선택해 순서를 수정합니다.</p></div><figure><img src="../../assets/guide/wf030-manage-order.png?compact=4" width="400" height="580" alt="세부 시트의 순서 변경 모드에서 선화 공정을 선택한 화면" loading="lazy"></figure></div></section>
+<p>시트의 취소·닫기는 시트의 미적용 입력을 버립니다.</p></div><figure><img src="../../assets/guide/wf030-manage-detail.jpg?updated=20261018" width="400" height="920" alt="1화 수정 시트의 공정 이름·종류·분량·단위와 기록 잠금 안내" loading="lazy"></figure></div><figure><img src="../../assets/guide/wf030-add-episode.jpg?updated=20261018" width="400" height="920" alt="추가 시작 회차와 만들 화수를 입력하는 회차 추가 창" loading="lazy"></figure><h3>선택한 회차의 공정 순서 변경</h3><div class="step"><div class="step-copy"><ol><li>선택 수정 시트에서 <b>순서 변경</b> 선택하기</li><li>옮길 공정 선택하기</li><li><b>맨 위로·위로·아래로·맨 아래로</b>로 위치 옮기기</li><li><b>공정 설정</b> → 설정 화면으로 돌아가기</li><li><b>수정 적용 → 변경 내용 저장</b>으로 확정하기</li></ol><p>함께 선택한 회차들의 공정 구성이 다르면 순서 변경을 사용할 수 없습니다.<br>
+이때는 회차별로 선택해 순서를 수정합니다.</p></div><figure><img src="../../assets/guide/wf030-manage-order.jpg?updated=20261018" width="400" height="920" alt="세부 시트의 순서 변경 모드에서 콘티 공정을 선택한 화면" loading="lazy"></figure></div></section>
+<section id="calculator" aria-labelledby="w-calculator"><h2 id="w-calculator">5. 마감 계산기</h2><div class="step"><div class="step-copy"><p>워크플로우에서 <b>마감 계산</b>을 누르면 별도 창이 열립니다.</p><ol><li>공정을 고르고 전체 분량과 작업한 분량을 입력합니다.</li><li>시작일·마감일·휴일 수를 정합니다. 마감일이 전달일이면 <b>마감일은 작업 전달일</b>을 켭니다.</li><li><b>계산</b>을 눌러 남은 분량과 작업일 수에 따른 하루 목표를 확인합니다.</li></ol><p>예를 들어 남은 분량이 10페이지이고 작업일이 1일이면 하루 목표는 10페이지입니다.</p><p><b>예상 작업시간</b>에는 하루 작업시간과 하나당 걸리는 시간을 넣습니다. 남은 10페이지에 페이지당 20분이면 총 3시간 20분, 하루 8시간 기준 약 0.42일로 표시됩니다.</p></div><figure><img src="../../assets/guide/wf030-calculator.jpg?updated=20261018" width="400" height="680" alt="마감 계산기에서 남은 10페이지와 작업일 1일로 하루 10페이지, 예상 작업시간 3시간 20분을 계산한 화면" loading="lazy"></figure></div></section>
 </main>
 
   <footer class="site-footer">
