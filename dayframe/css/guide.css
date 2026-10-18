@@ -16,14 +16,14 @@
 .lead { margin: 0 0 32px; font-size: 16px !important; }
 .note { padding: 10px 12px; border-radius: 6px; background: var(--accent-soft); font-size: 13px !important; }
 .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
-.step { margin-bottom: 40px; display: grid; grid-template-columns: minmax(0, 1fr) 320px; gap: 40px; align-items: start; }
+.step { margin-bottom: 40px; display: grid; grid-template-columns: minmax(0, 1fr) 400px; gap: 40px; align-items: start; }
 .step:last-child { margin-bottom: 0; }
 .step-text { grid-template-columns: minmax(0, 1fr); }
 .step h3 { display: flex; align-items: center; gap: 10px; font-size: 19px; }
 .step h3 span { width: 26px; height: 26px; display: inline-grid; place-items: center; border-radius: 50%; color: #fff; background: var(--accent); font-size: 13px; }
 .guide figure { margin: 0; }
 .guide figure img { display: block; width: 100%; height: auto; border: 1px solid var(--line); border-radius: var(--radius); }
-.step figure img { max-width: 320px; }
+.step figure img { max-width: 400px; }
 .tool-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 40px 48px; }
 .tool-grid article { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
 .tool-grid article.no-image { display: block; align-self: start; }
@@ -37,7 +37,7 @@
 .faq details p { margin: 10px 0 0; }
 @media (max-width: 900px) {
   .step { grid-template-columns: 1fr; gap: 20px; }
-  .step figure { max-width: 360px; }
+  .step figure { max-width: 400px; }
   .tool-grid { grid-template-columns: 1fr; }
   .two-col { grid-template-columns: 1fr; gap: 24px; }
 }
@@ -54,7 +54,7 @@
 @media (max-width: 560px) { .guide-table td:first-child { width: 110px; white-space: normal; } }
 .guide summary:focus-visible, .guide a:focus-visible { outline: 3px solid rgba(173, 88, 74, .28); outline-offset: 3px; }
 .guide details > summary { min-height: 24px; }
-.two-col figure img { max-width: 320px; }
+.two-col figure img { max-width: 400px; }
 
 /* 종류별 예시를 전체 창 사진으로 나란히 보여 주고 좁은 화면에서는 세로로 읽습니다. */
 .workflow-examples { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 24px; margin-top: 24px; }
@@ -84,7 +84,7 @@
 @media (max-width: 560px) { .topic-tool { grid-template-columns: 140px minmax(0, 1fr); gap: 14px; } }
 
 /* 작업 기록 설정과 앱 자동 분류는 같은 크기로 나란히 두고 설명은 아래에서 읽습니다. */
-.activity-images { display: grid; grid-template-columns: repeat(2, minmax(0, 320px)); gap: 24px; max-width: 664px; margin-bottom: 24px; align-items: start; }
+.activity-images { display: grid; grid-template-columns: repeat(2, minmax(0, 400px)); gap: 24px; max-width: 824px; margin-bottom: 24px; align-items: start; }
 .activity-images figure { min-width: 0; }
 .activity-images img { display: block; width: 100%; height: auto; }
 .activity-description { max-width: 48em; }
@@ -98,3 +98,6 @@
 .workflow-examples > article > figure > figcaption { min-height: 24px; }
 
 .topic-tool > div > :first-child { margin-top: 0; }
+
+/* 캡처는 최대 400px로 표시하고 작은 원본은 원래 픽셀 폭을 넘겨 늘리지 않습니다. */
+.guide :is(figure, .shot) img { width: auto; max-width: min(100%, 400px); height: auto; }
