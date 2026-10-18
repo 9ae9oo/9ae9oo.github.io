@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Dayframe 0.3.0 워크플로우 사용법. 체크 보드, 작업량 기록, 공정별 분량과 하루 목표, 작품·회차 관리.">
+  <meta name="description" content="Dayframe 0.3.0 워크플로우 사용법. 체크 보드, 작업량 기록, 공정별 분량, 작품·회차 관리, 별도 마감 계산기.">
   <meta name="theme-color" content="#ffffff">
   <title>워크플로우 사용법 - Dayframe</title>
   <link rel="icon" href="../../assets/dayframe-icon.svg" type="image/svg+xml">
@@ -18,7 +18,7 @@
 <nav class="page-nav" aria-label="이 페이지 목차"><a href="#create">작품 만들기</a><a href="#progress">진행 기록</a><a href="#edit">공정 설정</a><a href="#manage">작품·회차 관리</a><a href="#calculator">마감 계산기</a></nav>
 
   <main id="main" class="guide">
-<header class="guide-title"><p class="product-kicker">사용법</p><h1>워크플로우 사용법</h1><p>Dayframe 0.3.0 · 체크 보드와 작업량 기록으로 공정별 진행 상황과 하루 목표를 관리합니다.</p></header>
+<header class="guide-title"><p class="product-kicker">사용법</p><h1>워크플로우 사용법</h1><p>Dayframe 0.3.0 · 체크 보드와 작업량 기록으로 공정별 진행 상황을 관리합니다.</p></header>
 <!-- 0.3.0 공정별 분량과 합산 기록의 실제 조작법을 설명합니다. 이전 화면 사진은 사용하지 않습니다. -->
 <section id="create" aria-labelledby="w-create"><h2 id="w-create">1. 작품 만들기</h2><div id="structure"><p>작품 안에 회차를 만들고, 각 회차의 공정별로 진행 상황을 관리합니다.<br>
 공정마다 종류·분량·단위를 정할 수 있습니다.</p></div><div class="step"><div class="step-copy"><ol><li><b>작품 추가</b> 열기 → 작품 이름·회차수 입력하기</li><li>체크 보드·작업량 기록의 기본 분량·단위 정하기</li><li>기본 공정 이름·종류 선택 → <b>작품 추가</b>로 저장하기</li></ol><p>기본 구성은 새 회차를 만들 때 사용합니다.<br>
@@ -36,15 +36,11 @@
 휴지통으로 삭제하면 확인 후 합계를 다시 계산합니다.</p>
 <p>최신 기록이 위에 표시되며, 기록이 많으면 목록 안에서 스크롤합니다.</p></div></div></div></section>
 <section id="edit" aria-labelledby="w-edit"><h2 id="w-edit">3. 공정 설정</h2><div class="step"><div class="step-copy"><p>공정에 마우스를 올리거나 키보드 포커스를 옮기면 편집·삭제 버튼이 나타납니다.<br>
-연필로 편집을 열어 이름·종류·분량·단위·마감일·하루 목표 계산을 정합니다.</p>
+연필로 편집을 열어 이름·종류·분량·단위·마감일을 정합니다.</p>
 <p>적용하면 저장되고, 취소·닫기·Esc는 수정 내용을 버립니다.</p><p>완료 체크나 작업량 기록이 있으면 <b>종류와 단위</b>가 잠깁니다.<br>
-이름·분량·마감일·하루 목표 계산은 수정할 수 있습니다.<br>
+이름·분량·마감일은 수정할 수 있습니다.<br>
 목표 분량을 바꾸어도 작업량 기록은 유지되며 진행률을 다시 계산합니다.</p><p>마감일은 공정 편집에서 정합니다.<br>
-공정 목록에는 남은 날짜 또는 마감이 지난 상태가 표시됩니다.</p><div id="due" class="guide-topic"><h3 id="w-due">하루 목표 계산</h3><p>남은 분량을 오늘부터 마감일까지의 날짜 수로 나누어 올림합니다.<br>
-공정 편집에서 계산 방식을 고릅니다.</p><ul><li><b>하루 고정</b>: 그날 처음 표시한 목표를 유지합니다.<br>
-작업을 체크하거나 기록해도 그날 목표는 그대로입니다.</li><li><b>실시간 계산</b>: 남은 분량에 따라 목표를 다시 계산합니다.</li></ul><p>날짜·목표 분량·마감일·계산 방식이 바뀌면 다시 계산합니다.<br>
-마감일이 없거나 지났을 때 임의의 새 마감일을 정하지 않습니다.<br>
-작업을 완료하면 완료 상태를 표시합니다.</p></div></div><figure><img src="../../assets/guide/wf030-edit.jpg?updated=20261018" width="400" height="580" alt="이름·종류·분량·단위·마감일을 바꾸는 공정 수정 화면" loading="lazy"></figure></div><div id="process" class="step guide-topic"><div class="step-copy"><h3 id="w-process">접기·순서 변경·삭제</h3><p>공정 왼쪽 화살표로 내용을 접거나 펼칩니다.<br>
+공정 목록에는 남은 날짜 또는 마감이 지난 상태가 표시됩니다.</p></div><figure><img src="../../assets/guide/wf030-edit.jpg?updated=20261018" width="400" height="580" alt="이름·종류·분량·단위·마감일을 바꾸는 공정 수정 화면" loading="lazy"></figure></div><div id="process" class="step guide-topic"><div class="step-copy"><h3 id="w-process">접기·순서 변경·삭제</h3><p>공정 왼쪽 화살표로 내용을 접거나 펼칩니다.<br>
 접어도 진행 상황은 유지됩니다.</p><p><b>순서 변경</b>을 누르면 공정을 선택한 뒤 맨 위로·위로·아래로·맨 아래로 버튼으로 옮길 수 있습니다.<br>
 순서 변경 중에는 편집·삭제·전체 완료 버튼을 숨깁니다.</p>
 <p>순서 변경을 끝내거나 Esc로 일반 화면에 돌아갑니다.</p><p>공정을 삭제하면 해당 공정의 완료 체크와 작업량 기록도 삭제됩니다.<br>
